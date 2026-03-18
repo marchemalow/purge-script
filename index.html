@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Purge-Script Pro</title>
+    <title>Purge-Script Pro | Sauvegarde Sécurisée</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
     
@@ -36,31 +36,24 @@
             background: transparent;
         }
 
-        /* Textarea transparent pour laisser voir le surlignage dessous */
         #textarea { color: transparent; caret-color: #1e293b; z-index: 2; resize: none; outline: none; }
-        
-        /* Couleur du texte visible (Couche de rendu) */
         #highlight-layer { z-index: 1; pointer-events: none; color: #1e293b; }
 
-        /* Styles de surlignage */
         mark { background: none; color: inherit; }
         mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); border-radius: 2px; }
         mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; border-radius: 2px; }
         mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; font-weight: 600; }
 
-        /* Sidebar interactive */
-        .sidebar-item { cursor: pointer; transition: all 0.2s; }
-        .sidebar-item:hover { background-color: rgba(255,255,255,0.1); }
-        .sidebar-item.active-focus { border: 1px solid var(--focus-color); background-color: rgba(240, 46, 101, 0.2) !important; }
+        .sidebar-item { cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
+        .sidebar-item:hover { background-color: rgba(255,255,255,0.05); }
+        .sidebar-item.active-focus { border-color: var(--focus-color); background-color: rgba(240, 46, 101, 0.2) !important; }
 
-        /* --- CORRECTIF MODE SOMBRE --- */
+        /* MODE SOMBRE */
         body.dark-mode { background-color: #0f172a; color: #f1f5f9; }
         .dark-mode .bg-white { background-color: #1e293b; border-color: #334155; }
         .dark-mode .text-slate-900 { color: #f8fafc; }
         .dark-mode .text-slate-500 { color: #94a3b8; }
         .dark-mode .border-slate-200 { border-color: #334155; }
-        
-        /* Correction visibilité texte sur fond noir */
         .dark-mode #highlight-layer { color: #e2e8f0 !important; }
         .dark-mode #textarea { caret-color: #ffffff; }
         .dark-mode #moon-icon { color: #ffffff !important; filter: drop-shadow(0 0 5px rgba(255,255,255,0.8)); }
@@ -77,7 +70,7 @@
         <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 border-b border-slate-200 dark:border-slate-700 pb-8">
             <div>
                 <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Purge-Script<span class="text-[var(--accent-color)]">.</span></h1>
-                <p class="text-slate-500 mt-1 text-sm font-medium italic">Intervalle : 70 mots | Sauvegarde automatique active</p>
+                <p class="text-slate-500 mt-1 text-sm font-medium italic italic">Sauvegarde automatique temps réel activée</p>
             </div>
 
             <div class="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
@@ -95,18 +88,18 @@
             <div class="lg:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
                     <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Tics</p>
-                    <p id="total-parasites" class="text-2xl font-extrabold text-slate-800 dark:text-white">0</p>
+                    <p id="total-parasites" class="text-2xl font-extrabold">0</p>
                 </div>
                 <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
                     <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Répétitions</p>
                     <p id="total-repeats" class="text-2xl font-extrabold text-amber-500">0</p>
                 </div>
                 <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Total Mots</p>
-                    <p id="total-words" class="text-2xl font-extrabold text-slate-800 dark:text-white">0</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Mots</p>
+                    <p id="total-words" class="text-2xl font-extrabold">0</p>
                 </div>
                 <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-slate-800 dark:border-l-white">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Focus Actif</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Focus</p>
                     <p id="focus-display" class="text-xl font-extrabold text-zinc-300">Aucun</p>
                 </div>
             </div>
@@ -114,22 +107,22 @@
             <div class="lg:col-span-8 space-y-4">
                 <div class="editor-container border border-slate-200 shadow-sm overflow-hidden bg-white">
                     <div id="highlight-layer" class="sync-text editor-font"></div>
-                    <textarea id="textarea" class="sync-text editor-font" placeholder="Collez votre script ici..." spellcheck="false"></textarea>
+                    <textarea id="textarea" class="sync-text editor-font" placeholder="Écrivez ici..." spellcheck="false"></textarea>
                 </div>
                 <div class="flex gap-4">
-                    <button onclick="copyText()" class="bg-[var(--accent-color)] text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest">Copier</button>
-                    <button onclick="clearText()" class="text-slate-400 hover:text-red-500 font-bold transition text-xs uppercase px-4">Effacer</button>
+                    <button onclick="copyText()" class="bg-[var(--accent-color)] text-white px-8 py-3.5 rounded-2xl font-bold uppercase text-xs tracking-widest">Copier</button>
+                    <button onclick="clearText()" class="text-slate-400 hover:text-red-500 font-bold text-xs uppercase px-4">Effacer</button>
                 </div>
             </div>
 
             <div class="lg:col-span-4 space-y-6">
                 <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8">
                     <div>
-                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">Tics (cliquable)</h2>
+                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">Tics (Focus)</h2>
                         <ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul>
                     </div>
                     <div>
-                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">Répétitions (cliquable)</h2>
+                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">Répétitions (Focus)</h2>
                         <ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul>
                     </div>
                 </div>
@@ -145,14 +138,7 @@
             { name: 'Rose', hex: '#d946ef' }, { name: 'Rose/Rouge', hex: '#f43f5e' }
         ];
 
-        const parasiteDictionary = [
-            "du coup", "en fait", "voilà", "un petit peu", "euh", "globalement", "concrètement", "effectivement", "donc", 
-            "c'est-à-dire", "au final", "disons que", "typiquement", "clairement", "tout simplement", "en gros", "pour le coup", 
-            "un peu", "voilà quoi", "tu vois", "franchement", "honnêtement", "en réalité", "pour ainsi dire", "alors", 
-            "en quelque sorte", "justement", "au niveau de", "quelque part", "on va dire", "fondamentalement", "véritablement",
-            "pour ma part", "en soi", "entre guillemets", "si vous voulez", "de base", "sur la fin"
-        ];
-
+        const parasiteDictionary = ["du coup", "en fait", "voilà", "un petit peu", "euh", "globalement", "concrètement", "effectivement", "donc", "c'est-à-dire", "au final", "disons que", "typiquement", "clairement", "tout simplement", "en gros", "pour le coup", "un peu", "voilà quoi", "tu vois", "franchement", "honnêtement", "en réalité", "pour ainsi dire", "alors", "en quelque sorte", "justement", "au niveau de", "quelque part", "on va dire", "fondamentalement", "véritablement", "pour ma part", "en soi", "entre guillemets", "si vous voulez", "de base", "sur la fin"];
         const stopWords = ["je", "me", "moi", "tu", "te", "toi", "il", "elle", "on", "nous", "vous", "ils", "elles", "le", "la", "les", "un", "une", "des", "du", "de", "ce", "cet", "cette", "ces", "se", "soi", "lui", "leur", "y", "en", "mon", "ton", "son", "ma", "ta", "sa", "mes", "tes", "ses", "notre", "votre", "nos", "vos", "leurs", "qui", "que", "quoi", "dont", "où", "quel", "quels", "quelle", "quelles", "et", "ou", "mais", "est", "sont", "pour", "dans", "par", "avec", "pas", "ne", "si", "ici", "là", "ont", "aux", "très"];
 
         let activeFocusWord = null;
@@ -182,18 +168,15 @@
 
         function process() {
             const text = textarea.value;
-            // SAUVEGARDE SUR LE NAVIGATEUR
-            localStorage.setItem('purge-content', text);
+            // SAUVEGARDE IMMEDIATE
+            localStorage.setItem('purge-script-v3', text);
 
             let parasiteIndices = new Set();
             let parasiteCounts = {};
-            let totalParasites = 0;
-
             parasiteDictionary.forEach(word => {
                 const regex = new RegExp(`\\b(${word})\\b`, 'gi');
                 let match;
                 while ((match = regex.exec(text)) !== null) {
-                    totalParasites++;
                     parasiteCounts[word.toLowerCase()] = (parasiteCounts[word.toLowerCase()] || 0) + 1;
                     for (let i = 0; i < match[0].length; i++) parasiteIndices.add(match.index + i);
                 }
@@ -204,7 +187,6 @@
             let badRepeatIndices = new Set();
             let repeatCounts = {};
             let wordCounter = 0;
-
             let match;
             while ((match = wordRegex.exec(text)) !== null) {
                 wordCounter++;
@@ -261,11 +243,10 @@
             }
 
             highlightLayer.innerHTML = finalHtml + (text.endsWith('\n') ? '\n ' : '');
-            document.getElementById('total-parasites').innerText = totalParasites;
+            document.getElementById('total-parasites').innerText = Object.values(parasiteCounts).reduce((a, b) => a + b, 0);
             document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
             document.getElementById('total-words').innerText = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
             document.getElementById('focus-display').innerText = activeFocusWord || "Aucun";
-            
             updateSidebars(parasiteCounts, repeatCounts);
             syncScroll();
         }
@@ -279,9 +260,13 @@
 
         function syncScroll() { highlightLayer.scrollTop = textarea.scrollTop; highlightLayer.scrollLeft = textarea.scrollLeft; }
         function copyText() { navigator.clipboard.writeText(textarea.value); alert('Script copié !'); }
-        function clearText() { if(confirm("Effacer tout le contenu enregistré ?")) { textarea.value = ''; localStorage.removeItem('purge-content'); process(); } }
+        function clearText() { if(confirm("Effacer tout ?")) { textarea.value = ''; localStorage.removeItem('purge-script-v3'); process(); } }
 
-        window.onload = () => {
+        // SECURITE SUPPLEMENTAIRE
+        window.addEventListener('visibilitychange', () => localStorage.setItem('purge-script-v3', textarea.value));
+        window.addEventListener('beforeunload', () => localStorage.setItem('purge-script-v3', textarea.value));
+
+        document.addEventListener('DOMContentLoaded', () => {
             const picker = document.getElementById('theme-picker');
             themes.forEach(t => {
                 const b = document.createElement('button');
@@ -290,18 +275,17 @@
                 b.onclick = () => setTheme(t.hex);
                 picker.appendChild(b);
             });
-
-            // RESTAURATION DES DONNÉES
             if(localStorage.getItem('purge-dark') === 'true') toggleDarkMode();
             setTheme(localStorage.getItem('purge-accent') || '#6366f1');
             
-            // Restauration du texte
-            textarea.value = localStorage.getItem('purge-content') || "";
+            // CHARGEMENT PRIORITAIRE
+            const saved = localStorage.getItem('purge-script-v3');
+            if(saved) textarea.value = saved;
             
             textarea.addEventListener('input', process);
             textarea.addEventListener('scroll', syncScroll);
             process();
-        };
+        });
     </script>
 </body>
 </html>
