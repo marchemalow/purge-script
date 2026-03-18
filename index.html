@@ -77,12 +77,12 @@
         <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 border-b border-slate-200 dark:border-slate-700 pb-8">
             <div>
                 <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Purge-Script<span class="text-[var(--accent-color)]">.</span></h1>
-                <p class="text-slate-500 mt-1 text-sm font-medium italic">Intervalle : 70 mots | Cliquez sur un mot pour le focus</p>
+                <p class="text-slate-500 mt-1 text-sm font-medium italic">Intervalle : 70 mots | Sauvegarde automatique active</p>
             </div>
 
             <div class="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
                 <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:scale-105 transition">
-                    <svg id="sun-icon" class="w-5 h-5 hidden text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg>
+                    <svg id="sun-icon" class="w-5 h-5 hidden text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg>
                     <svg id="moon-icon" class="w-5 h-5 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
                 </button>
                 <div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-700"></div>
@@ -95,7 +95,7 @@
             <div class="lg:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
                     <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Tics</p>
-                    <p id="total-parasites" class="text-2xl font-extrabold">0</p>
+                    <p id="total-parasites" class="text-2xl font-extrabold text-slate-800 dark:text-white">0</p>
                 </div>
                 <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
                     <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Répétitions</p>
@@ -103,9 +103,9 @@
                 </div>
                 <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
                     <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Total Mots</p>
-                    <p id="total-words" class="text-2xl font-extrabold">0</p>
+                    <p id="total-words" class="text-2xl font-extrabold text-slate-800 dark:text-white">0</p>
                 </div>
-                <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-slate-800">
+                <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-slate-800 dark:border-l-white">
                     <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Focus Actif</p>
                     <p id="focus-display" class="text-xl font-extrabold text-zinc-300">Aucun</p>
                 </div>
@@ -114,7 +114,7 @@
             <div class="lg:col-span-8 space-y-4">
                 <div class="editor-container border border-slate-200 shadow-sm overflow-hidden bg-white">
                     <div id="highlight-layer" class="sync-text editor-font"></div>
-                    <textarea id="textarea" class="sync-text editor-font" placeholder="Collez votre script..." spellcheck="false"></textarea>
+                    <textarea id="textarea" class="sync-text editor-font" placeholder="Collez votre script ici..." spellcheck="false"></textarea>
                 </div>
                 <div class="flex gap-4">
                     <button onclick="copyText()" class="bg-[var(--accent-color)] text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest">Copier</button>
@@ -165,6 +165,7 @@
             const isDark = document.body.classList.contains('dark-mode');
             document.getElementById('sun-icon').classList.toggle('hidden', !isDark);
             document.getElementById('moon-icon').classList.toggle('hidden', isDark);
+            process();
         }
 
         function setTheme(hex) {
@@ -181,6 +182,7 @@
 
         function process() {
             const text = textarea.value;
+            // SAUVEGARDE SUR LE NAVIGATEUR
             localStorage.setItem('purge-content', text);
 
             let parasiteIndices = new Set();
@@ -276,20 +278,26 @@
         }
 
         function syncScroll() { highlightLayer.scrollTop = textarea.scrollTop; highlightLayer.scrollLeft = textarea.scrollLeft; }
-        function copyText() { navigator.clipboard.writeText(textarea.value); }
-        function clearText() { if(confirm("Effacer ?")) { textarea.value = ''; process(); } }
+        function copyText() { navigator.clipboard.writeText(textarea.value); alert('Script copié !'); }
+        function clearText() { if(confirm("Effacer tout le contenu enregistré ?")) { textarea.value = ''; localStorage.removeItem('purge-content'); process(); } }
 
         window.onload = () => {
+            const picker = document.getElementById('theme-picker');
             themes.forEach(t => {
                 const b = document.createElement('button');
                 b.className = 'w-5 h-5 rounded-full border border-white/20 hover:scale-125 transition';
                 b.style.backgroundColor = t.hex;
                 b.onclick = () => setTheme(t.hex);
-                document.getElementById('theme-picker').appendChild(b);
+                picker.appendChild(b);
             });
+
+            // RESTAURATION DES DONNÉES
             if(localStorage.getItem('purge-dark') === 'true') toggleDarkMode();
             setTheme(localStorage.getItem('purge-accent') || '#6366f1');
+            
+            // Restauration du texte
             textarea.value = localStorage.getItem('purge-content') || "";
+            
             textarea.addEventListener('input', process);
             textarea.addEventListener('scroll', syncScroll);
             process();
