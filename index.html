@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purge-Script | Nettoyeur Professionnel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Polices : Inter pour l'interface, IBM Plex Sans pour l'éditeur -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --accent-color: #6366f1;
+            --accent-soft: rgba(99, 102, 241, 0.15);
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8fafc;
+        }
+
+        /* Police de l'éditeur */
+        .editor-font {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 1.1rem;
+            line-height: 1.7;
+        }
+
+        .editor-container {
+            position: relative;
+            min-height: 550px;
+            background: white;
+            border-radius: 1.5rem; /* Rectangles bien arrondis */
+        }
+
+        .sync-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 30px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-y: auto;
+            border: none;
+            margin: 0;
+        }
+
+        #textarea {
+            background: transparent;
+            color: transparent;
+            caret-color: #1e293b;
+            z-index: 2;
+            resize: none;
+            outline: none;
+        }
+
+        #highlight-layer {
+            color: #334155;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        mark {
+            background-color: var(--accent-soft);
+            color: inherit;
+            border-bottom: 2px solid var(--accent-color);
+            border-radius: 4px;
+        }
+
+        .bg-accent { background-color: var(--accent-color); }
+        .text-accent { color: var(--accent-color); }
+
+        /* Scrollbar élégante */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
+    </style>
+</head>
+<body class="text-slate-800 antialiased">
+
+    <div class="max-w-7xl mx-auto px-6 py-10">
+        
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 border-b border-slate-200 pb-8">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">
+                    Purge-Script<span class="text-accent">.</span>
+                </h1>
+                <p class="text-slate-500 mt-1 text-sm font-medium">Analyse sémantique et nettoyage de tics.</p>
+            </div>
+
+            <!-- Palette de couleurs -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+                <p class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-3 px-1 text-center">Couleur d'accent</p>
+                <div class="flex flex-wrap justify-center gap-2" id="theme-picker"></div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Statistiques (Bulles Rectangles Arrondis) -->
+            <div class="lg:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Parasites</p>
+                    <p id="total-parasites" class="text-3xl font-extrabold text-slate-800">0</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Densité</p>
+                    <p id="percentage-parasites" class="text-3xl font-extrabold text-accent">0%</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Mots Totaux</p>
+                    <p id="total-words" class="text-3xl font-extrabold text-slate-800">0</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm transition-all hover:shadow-md border-l-4 border-l-slate-800">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Score Pureté</p>
+                    <p id="purity-score" class="text-3xl font-extrabold text-slate-800">100%</p>
+                </div>
+            </div>
+
+            <!-- Éditeur -->
+            <div class="lg:col-span-9 space-y-4">
+                <div class="editor-container border border-slate-200 shadow-sm overflow-hidden ring-1 ring-slate-200">
+                    <div id="highlight-layer" class="sync-text editor-font"></div>
+                    <textarea id="textarea" class="sync-text editor-font" placeholder="Collez votre script ici..." spellcheck="false"></textarea>
+                </div>
+                
+                <div class="flex gap-4 items-center">
+                    <button onclick="copyText()" class="bg-accent text-white px-10 py-4 rounded-xl font-bold hover:opacity-90 transition shadow-lg flex items-center gap-2 text-sm uppercase tracking-wider">
+                        Copier le script
+                    </button>
+                    <button onclick="clearText()" class="text-slate-400 hover:text-red-500 font-bold transition text-xs uppercase tracking-widest px-4">Réinitialiser</button>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="lg:col-span-3 space-y-6">
+                <div class="bg-slate-900 text-white p-6 rounded-3xl shadow-xl">
+                    <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-6">Récurrences</h2>
+                    <ul id="word-list" class="space-y-3">
+                        <li class="text-slate-500 text-xs italic">En attente de texte...</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-2 text-xs uppercase tracking-wider text-accent">Analyse Contextuelle</h3>
+                    <p class="text-[11px] text-slate-500 leading-relaxed font-medium">
+                        L'algorithme intelligent ignore les mots selon leur entourage (ex: « ce genre de » ou « un prix juste » ne sont pas signalés).
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const themes = [
+            { name: 'Rouge', hex: '#ef4444' },
+            { name: 'Orange', hex: '#f97316' },
+            { name: 'Jaune', hex: '#eab308' },
+            { name: 'Vert', hex: '#22c55e' },
+            { name: 'Vert Menthe', hex: '#10b981' },
+            { name: 'Bleu', hex: '#2563eb' },
+            { name: 'Turquoise', hex: '#06b6d4' },
+            { name: 'Bleu Clair', hex: '#0ea5e9' },
+            { name: 'Bleu Violet', hex: '#6366f1' },
+            { name: 'Rose', hex: '#d946ef' },
+            { name: 'Rose/Rouge', hex: '#f43f5e' }
+        ];
+
+        // Dictionnaire avec logique sémantique
+        const parasiteDictionary = [
+            "du coup", "en fait", "voilà", "un petit peu", "euh", "globalement", 
+            "concrètement", "effectivement", "donc", "qu'on se le dise", "c'est-à-dire", 
+            "au final", "disons que", "typiquement", "clairement", "tout simplement",
+            "en gros", "pour le coup", "un peu", "voilà quoi", "tu vois", "voyez-vous",
+            "franchement", "honnêtement", "disons", "en réalité", "pour ainsi dire",
+            "alors", "voilà voilà", "en quelque sorte", "justement", "au niveau de",
+            "quelque part", "on va dire", "fondamentalement", "véritablement", "totalement",
+            "pour ma part", "en l'occurrence", "en soi", "entre guillemets",
+            "si vous voulez", "de base", "sur la fin", "en gros",
+            { word: "genre", ignoreFollowedBy: ["humain", "musical", "littéraire", "cinématographique", "de vie", "de jeu"], ignorePrecededBy: ["ce", "un", "le", "du"] },
+            { word: "juste", ignoreFollowedBy: ["cause", "prix", "valeur", "titre"], ignorePrecededBy: ["un", "le", "de"] }
+        ];
+
+        const textarea = document.getElementById('textarea');
+        const highlightLayer = document.getElementById('highlight-layer');
+        const totalParasitesDisplay = document.getElementById('total-parasites');
+        const percentageDisplay = document.getElementById('percentage-parasites');
+        const totalWordsDisplay = document.getElementById('total-words');
+        const purityDisplay = document.getElementById('purity-score');
+        const wordListContainer = document.getElementById('word-list');
+        const themePicker = document.getElementById('theme-picker');
+
+        function initThemes() {
+            themes.forEach(t => {
+                const btn = document.createElement('button');
+                btn.className = 'w-6 h-6 rounded-full border-2 border-white shadow-sm hover:scale-125 transition-transform';
+                btn.style.backgroundColor = t.hex;
+                btn.onclick = () => setTheme(t.hex);
+                themePicker.appendChild(btn);
+            });
+        }
+
+        function setTheme(hex) {
+            document.documentElement.style.setProperty('--accent-color', hex);
+            document.documentElement.style.setProperty('--accent-soft', hex + '26');
+        }
+
+        function isParasite(entry, fullText, index) {
+            if (typeof entry === 'string') return true;
+            const textAfter = fullText.substring(index + entry.word.length).toLowerCase().trim();
+            const textBefore = fullText.substring(0, index).toLowerCase().trim();
+            if (entry.ignoreFollowedBy?.some(f => textAfter.startsWith(f))) return false;
+            if (entry.ignorePrecededBy?.some(f => textBefore.endsWith(f))) return false;
+            return true;
+        }
+
+        function process() {
+            const text = textarea.value;
+            const words = text.trim() ? text.trim().split(/\s+/) : [];
+            const wordsCount = words.length;
+            
+            let parasiteCounts = {};
+            let totalParasites = 0;
+
+            parasiteDictionary.forEach(entry => {
+                const wordToSearch = typeof entry === 'string' ? entry : entry.word;
+                const regex = new RegExp(`\\b(${wordToSearch})\\b`, 'gi');
+                let match;
+                while ((match = regex.exec(text)) !== null) {
+                    if (isParasite(entry, text, match.index)) {
+                        totalParasites++;
+                        parasiteCounts[wordToSearch.toLowerCase()] = (parasiteCounts[wordToSearch.toLowerCase()] || 0) + 1;
+                    }
+                }
+            });
+
+            let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const sortedEntries = [...parasiteDictionary].sort((a, b) => {
+                const wa = typeof a === 'string' ? a : a.word;
+                const wb = typeof b === 'string' ? b : b.word;
+                return wb.length - wa.length;
+            });
+
+            sortedEntries.forEach(entry => {
+                const wordToSearch = typeof entry === 'string' ? entry : entry.word;
+                html = html.replace(new RegExp(`\\b(${wordToSearch})\\b`, 'gi'), (matched, p1, offset) => {
+                    return isParasite(entry, text, offset) ? `<mark>${matched}</mark>` : matched;
+                });
+            });
+
+            highlightLayer.innerHTML = html + (text.endsWith('\n') ? '\n ' : '');
+            
+            totalWordsDisplay.innerText = wordsCount;
+            totalParasitesDisplay.innerText = totalParasites;
+            const density = wordsCount > 0 ? ((totalParasites / wordsCount) * 100).toFixed(1) : 0;
+            percentageDisplay.innerText = density + "%";
+            purityDisplay.innerText = Math.max(0, (100 - density * 5)).toFixed(0) + "%";
+
+            updateSidebarList(parasiteCounts);
+            syncScroll();
+        }
+
+        function updateSidebarList(counts) {
+            const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+            if (sorted.length === 0) {
+                wordListContainer.innerHTML = '<li class="text-slate-500 text-xs italic">Aucun parasite détecté.</li>';
+                return;
+            }
+            wordListContainer.innerHTML = sorted.map(([word, count]) => `
+                <li class="flex justify-between items-center bg-slate-800 p-3 rounded-xl border border-slate-700">
+                    <span class="text-[10px] font-bold uppercase text-slate-200 tracking-wide">${word}</span>
+                    <span class="text-accent text-xs font-black">${count}</span>
+                </li>
+            `).join('');
+        }
+
+        function syncScroll() {
+            highlightLayer.scrollTop = textarea.scrollTop;
+            highlightLayer.scrollLeft = textarea.scrollLeft;
+        }
+
+        function clearText() {
+            if(confirm("Effacer tout le texte ?")) {
+                textarea.value = '';
+                process();
+            }
+        }
+
+        function copyText() {
+            navigator.clipboard.writeText(textarea.value);
+            const originalText = event.target.innerText;
+            event.target.innerText = "COPIÉ !";
+            setTimeout(() => event.target.innerText = originalText, 2000);
+        }
+
+        textarea.addEventListener('input', process);
+        textarea.addEventListener('scroll', syncScroll);
+        window.addEventListener('resize', syncScroll);
+
+        initThemes();
+        process();
+    </script>
+</body>
+</html>
