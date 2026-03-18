@@ -3,153 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Purge-Script | Nettoyeur Professionnel</title>
+    <title>Purge-Script Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Polices : Inter pour l'interface, IBM Plex Sans pour l'éditeur -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
     
     <style>
         :root {
             --accent-color: #6366f1;
             --accent-soft: rgba(99, 102, 241, 0.15);
+            --focus-color: #f02e65;
         }
 
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #f8fafc;
-        }
-
-        /* Police de l'éditeur */
-        .editor-font {
-            font-family: 'IBM Plex Sans', sans-serif;
-            font-size: 1.1rem;
-            line-height: 1.7;
-        }
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease; }
+        .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.6; }
 
         .editor-container {
             position: relative;
-            min-height: 550px;
+            min-height: 600px;
+            border-radius: 1.5rem;
             background: white;
-            border-radius: 1.5rem; /* Rectangles bien arrondis */
         }
 
         .sync-text {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             padding: 30px;
             white-space: pre-wrap;
             word-wrap: break-word;
             overflow-y: auto;
             border: none;
             margin: 0;
-        }
-
-        #textarea {
             background: transparent;
-            color: transparent;
-            caret-color: #1e293b;
-            z-index: 2;
-            resize: none;
-            outline: none;
         }
 
-        #highlight-layer {
-            color: #334155;
-            z-index: 1;
-            pointer-events: none;
-        }
+        /* Textarea transparent pour laisser voir le surlignage dessous */
+        #textarea { color: transparent; caret-color: #1e293b; z-index: 2; resize: none; outline: none; }
+        
+        /* Couleur du texte visible (Couche de rendu) */
+        #highlight-layer { z-index: 1; pointer-events: none; color: #1e293b; }
 
-        mark {
-            background-color: var(--accent-soft);
-            color: inherit;
-            border-bottom: 2px solid var(--accent-color);
-            border-radius: 4px;
-        }
+        /* Styles de surlignage */
+        mark { background: none; color: inherit; }
+        mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); border-radius: 2px; }
+        mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; border-radius: 2px; }
+        mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; font-weight: 600; }
 
-        .bg-accent { background-color: var(--accent-color); }
-        .text-accent { color: var(--accent-color); }
+        /* Sidebar interactive */
+        .sidebar-item { cursor: pointer; transition: all 0.2s; }
+        .sidebar-item:hover { background-color: rgba(255,255,255,0.1); }
+        .sidebar-item.active-focus { border: 1px solid var(--focus-color); background-color: rgba(240, 46, 101, 0.2) !important; }
 
-        /* Scrollbar élégante */
+        /* --- CORRECTIF MODE SOMBRE --- */
+        body.dark-mode { background-color: #0f172a; color: #f1f5f9; }
+        .dark-mode .bg-white { background-color: #1e293b; border-color: #334155; }
+        .dark-mode .text-slate-900 { color: #f8fafc; }
+        .dark-mode .text-slate-500 { color: #94a3b8; }
+        .dark-mode .border-slate-200 { border-color: #334155; }
+        
+        /* Correction visibilité texte sur fond noir */
+        .dark-mode #highlight-layer { color: #e2e8f0 !important; }
+        .dark-mode #textarea { caret-color: #ffffff; }
+        .dark-mode #moon-icon { color: #ffffff !important; filter: drop-shadow(0 0 5px rgba(255,255,255,0.8)); }
+
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
+        .dark-mode ::-webkit-scrollbar-thumb { background: #475569; }
     </style>
 </head>
-<body class="text-slate-800 antialiased">
+<body class="text-slate-800 bg-slate-50">
 
     <div class="max-w-7xl mx-auto px-6 py-10">
         
-        <!-- Header -->
-        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 border-b border-slate-200 pb-8">
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 border-b border-slate-200 dark:border-slate-700 pb-8">
             <div>
-                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">
-                    Purge-Script<span class="text-accent">.</span>
-                </h1>
-                <p class="text-slate-500 mt-1 text-sm font-medium">Analyse sémantique et nettoyage de tics.</p>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Purge-Script<span class="text-[var(--accent-color)]">.</span></h1>
+                <p class="text-slate-500 mt-1 text-sm font-medium italic">Intervalle : 70 mots | Cliquez sur un mot pour le focus</p>
             </div>
 
-            <!-- Palette de couleurs -->
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                <p class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-3 px-1 text-center">Couleur d'accent</p>
-                <div class="flex flex-wrap justify-center gap-2" id="theme-picker"></div>
+            <div class="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
+                <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:scale-105 transition">
+                    <svg id="sun-icon" class="w-5 h-5 hidden text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg>
+                    <svg id="moon-icon" class="w-5 h-5 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                </button>
+                <div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-700"></div>
+                <div class="flex flex-wrap gap-1.5 max-w-[200px]" id="theme-picker"></div>
             </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            <!-- Statistiques (Bulles Rectangles Arrondis) -->
-            <div class="lg:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Parasites</p>
-                    <p id="total-parasites" class="text-3xl font-extrabold text-slate-800">0</p>
+            <div class="lg:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Tics</p>
+                    <p id="total-parasites" class="text-2xl font-extrabold">0</p>
                 </div>
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Densité</p>
-                    <p id="percentage-parasites" class="text-3xl font-extrabold text-accent">0%</p>
+                <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Répétitions</p>
+                    <p id="total-repeats" class="text-2xl font-extrabold text-amber-500">0</p>
                 </div>
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm transition-all hover:shadow-md">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Mots Totaux</p>
-                    <p id="total-words" class="text-3xl font-extrabold text-slate-800">0</p>
+                <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Total Mots</p>
+                    <p id="total-words" class="text-2xl font-extrabold">0</p>
                 </div>
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm transition-all hover:shadow-md border-l-4 border-l-slate-800">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Score Pureté</p>
-                    <p id="purity-score" class="text-3xl font-extrabold text-slate-800">100%</p>
+                <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-slate-800">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Focus Actif</p>
+                    <p id="focus-display" class="text-xl font-extrabold text-zinc-300">Aucun</p>
                 </div>
             </div>
 
-            <!-- Éditeur -->
-            <div class="lg:col-span-9 space-y-4">
-                <div class="editor-container border border-slate-200 shadow-sm overflow-hidden ring-1 ring-slate-200">
+            <div class="lg:col-span-8 space-y-4">
+                <div class="editor-container border border-slate-200 shadow-sm overflow-hidden bg-white">
                     <div id="highlight-layer" class="sync-text editor-font"></div>
-                    <textarea id="textarea" class="sync-text editor-font" placeholder="Collez votre script ici..." spellcheck="false"></textarea>
+                    <textarea id="textarea" class="sync-text editor-font" placeholder="Collez votre script..." spellcheck="false"></textarea>
                 </div>
-                
-                <div class="flex gap-4 items-center">
-                    <button onclick="copyText()" class="bg-accent text-white px-10 py-4 rounded-xl font-bold hover:opacity-90 transition shadow-lg flex items-center gap-2 text-sm uppercase tracking-wider">
-                        Copier le script
-                    </button>
-                    <button onclick="clearText()" class="text-slate-400 hover:text-red-500 font-bold transition text-xs uppercase tracking-widest px-4">Réinitialiser</button>
+                <div class="flex gap-4">
+                    <button onclick="copyText()" class="bg-[var(--accent-color)] text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest">Copier</button>
+                    <button onclick="clearText()" class="text-slate-400 hover:text-red-500 font-bold transition text-xs uppercase px-4">Effacer</button>
                 </div>
             </div>
 
-            <!-- Sidebar -->
-            <div class="lg:col-span-3 space-y-6">
-                <div class="bg-slate-900 text-white p-6 rounded-3xl shadow-xl">
-                    <h2 class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-6">Récurrences</h2>
-                    <ul id="word-list" class="space-y-3">
-                        <li class="text-slate-500 text-xs italic">En attente de texte...</li>
-                    </ul>
-                </div>
-
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <h3 class="font-bold text-slate-800 mb-2 text-xs uppercase tracking-wider text-accent">Analyse Contextuelle</h3>
-                    <p class="text-[11px] text-slate-500 leading-relaxed font-medium">
-                        L'algorithme intelligent ignore les mots selon leur entourage (ex: « ce genre de » ou « un prix juste » ne sont pas signalés).
-                    </p>
+            <div class="lg:col-span-4 space-y-6">
+                <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8">
+                    <div>
+                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">Tics (cliquable)</h2>
+                        <ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul>
+                    </div>
+                    <div>
+                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">Répétitions (cliquable)</h2>
+                        <ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -157,152 +139,161 @@
 
     <script>
         const themes = [
-            { name: 'Rouge', hex: '#ef4444' },
-            { name: 'Orange', hex: '#f97316' },
-            { name: 'Jaune', hex: '#eab308' },
-            { name: 'Vert', hex: '#22c55e' },
-            { name: 'Vert Menthe', hex: '#10b981' },
-            { name: 'Bleu', hex: '#2563eb' },
-            { name: 'Turquoise', hex: '#06b6d4' },
-            { name: 'Bleu Clair', hex: '#0ea5e9' },
-            { name: 'Bleu Violet', hex: '#6366f1' },
-            { name: 'Rose', hex: '#d946ef' },
-            { name: 'Rose/Rouge', hex: '#f43f5e' }
+            { name: 'Rouge', hex: '#ef4444' }, { name: 'Orange', hex: '#f97316' }, { name: 'Jaune', hex: '#eab308' },
+            { name: 'Vert', hex: '#22c55e' }, { name: 'Menthe', hex: '#10b981' }, { name: 'Bleu', hex: '#2563eb' },
+            { name: 'Turquoise', hex: '#06b6d4' }, { name: 'Bleu Clair', hex: '#0ea5e9' }, { name: 'Bleu Violet', hex: '#6366f1' },
+            { name: 'Rose', hex: '#d946ef' }, { name: 'Rose/Rouge', hex: '#f43f5e' }
         ];
 
-        // Dictionnaire avec logique sémantique
         const parasiteDictionary = [
-            "du coup", "en fait", "voilà", "un petit peu", "euh", "globalement", 
-            "concrètement", "effectivement", "donc", "qu'on se le dise", "c'est-à-dire", 
-            "au final", "disons que", "typiquement", "clairement", "tout simplement",
-            "en gros", "pour le coup", "un peu", "voilà quoi", "tu vois", "voyez-vous",
-            "franchement", "honnêtement", "disons", "en réalité", "pour ainsi dire",
-            "alors", "voilà voilà", "en quelque sorte", "justement", "au niveau de",
-            "quelque part", "on va dire", "fondamentalement", "véritablement", "totalement",
-            "pour ma part", "en l'occurrence", "en soi", "entre guillemets",
-            "si vous voulez", "de base", "sur la fin", "en gros",
-            { word: "genre", ignoreFollowedBy: ["humain", "musical", "littéraire", "cinématographique", "de vie", "de jeu"], ignorePrecededBy: ["ce", "un", "le", "du"] },
-            { word: "juste", ignoreFollowedBy: ["cause", "prix", "valeur", "titre"], ignorePrecededBy: ["un", "le", "de"] }
+            "du coup", "en fait", "voilà", "un petit peu", "euh", "globalement", "concrètement", "effectivement", "donc", 
+            "c'est-à-dire", "au final", "disons que", "typiquement", "clairement", "tout simplement", "en gros", "pour le coup", 
+            "un peu", "voilà quoi", "tu vois", "franchement", "honnêtement", "en réalité", "pour ainsi dire", "alors", 
+            "en quelque sorte", "justement", "au niveau de", "quelque part", "on va dire", "fondamentalement", "véritablement",
+            "pour ma part", "en soi", "entre guillemets", "si vous voulez", "de base", "sur la fin"
         ];
 
+        const stopWords = ["je", "me", "moi", "tu", "te", "toi", "il", "elle", "on", "nous", "vous", "ils", "elles", "le", "la", "les", "un", "une", "des", "du", "de", "ce", "cet", "cette", "ces", "se", "soi", "lui", "leur", "y", "en", "mon", "ton", "son", "ma", "ta", "sa", "mes", "tes", "ses", "notre", "votre", "nos", "vos", "leurs", "qui", "que", "quoi", "dont", "où", "quel", "quels", "quelle", "quelles", "et", "ou", "mais", "est", "sont", "pour", "dans", "par", "avec", "pas", "ne", "si", "ici", "là", "ont", "aux", "très"];
+
+        let activeFocusWord = null;
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
-        const totalParasitesDisplay = document.getElementById('total-parasites');
-        const percentageDisplay = document.getElementById('percentage-parasites');
-        const totalWordsDisplay = document.getElementById('total-words');
-        const purityDisplay = document.getElementById('purity-score');
-        const wordListContainer = document.getElementById('word-list');
-        const themePicker = document.getElementById('theme-picker');
 
-        function initThemes() {
-            themes.forEach(t => {
-                const btn = document.createElement('button');
-                btn.className = 'w-6 h-6 rounded-full border-2 border-white shadow-sm hover:scale-125 transition-transform';
-                btn.style.backgroundColor = t.hex;
-                btn.onclick = () => setTheme(t.hex);
-                themePicker.appendChild(btn);
-            });
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('purge-dark', document.body.classList.contains('dark-mode'));
+            const isDark = document.body.classList.contains('dark-mode');
+            document.getElementById('sun-icon').classList.toggle('hidden', !isDark);
+            document.getElementById('moon-icon').classList.toggle('hidden', isDark);
         }
 
         function setTheme(hex) {
             document.documentElement.style.setProperty('--accent-color', hex);
             document.documentElement.style.setProperty('--accent-soft', hex + '26');
+            localStorage.setItem('purge-accent', hex);
+            process();
         }
 
-        function isParasite(entry, fullText, index) {
-            if (typeof entry === 'string') return true;
-            const textAfter = fullText.substring(index + entry.word.length).toLowerCase().trim();
-            const textBefore = fullText.substring(0, index).toLowerCase().trim();
-            if (entry.ignoreFollowedBy?.some(f => textAfter.startsWith(f))) return false;
-            if (entry.ignorePrecededBy?.some(f => textBefore.endsWith(f))) return false;
-            return true;
+        function toggleFocus(word) {
+            activeFocusWord = (activeFocusWord === word) ? null : word;
+            process();
         }
 
         function process() {
             const text = textarea.value;
-            const words = text.trim() ? text.trim().split(/\s+/) : [];
-            const wordsCount = words.length;
-            
+            localStorage.setItem('purge-content', text);
+
+            let parasiteIndices = new Set();
             let parasiteCounts = {};
             let totalParasites = 0;
 
-            parasiteDictionary.forEach(entry => {
-                const wordToSearch = typeof entry === 'string' ? entry : entry.word;
-                const regex = new RegExp(`\\b(${wordToSearch})\\b`, 'gi');
+            parasiteDictionary.forEach(word => {
+                const regex = new RegExp(`\\b(${word})\\b`, 'gi');
                 let match;
                 while ((match = regex.exec(text)) !== null) {
-                    if (isParasite(entry, text, match.index)) {
-                        totalParasites++;
-                        parasiteCounts[wordToSearch.toLowerCase()] = (parasiteCounts[wordToSearch.toLowerCase()] || 0) + 1;
-                    }
+                    totalParasites++;
+                    parasiteCounts[word.toLowerCase()] = (parasiteCounts[word.toLowerCase()] || 0) + 1;
+                    for (let i = 0; i < match[0].length; i++) parasiteIndices.add(match.index + i);
                 }
             });
 
-            let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            const sortedEntries = [...parasiteDictionary].sort((a, b) => {
-                const wa = typeof a === 'string' ? a : a.word;
-                const wb = typeof b === 'string' ? b : b.word;
-                return wb.length - wa.length;
-            });
+            const wordRegex = /[a-zA-ZàâäéèêëîïôöûüùçÀÂÄÉÈÊËÎÏÔÖÛÜÙÇ]{3,}/g;
+            let lastSeenAt = {}; 
+            let badRepeatIndices = new Set();
+            let repeatCounts = {};
+            let wordCounter = 0;
 
-            sortedEntries.forEach(entry => {
-                const wordToSearch = typeof entry === 'string' ? entry : entry.word;
-                html = html.replace(new RegExp(`\\b(${wordToSearch})\\b`, 'gi'), (matched, p1, offset) => {
-                    return isParasite(entry, text, offset) ? `<mark>${matched}</mark>` : matched;
-                });
-            });
+            let match;
+            while ((match = wordRegex.exec(text)) !== null) {
+                wordCounter++;
+                const word = match[0].toLowerCase();
+                if (!stopWords.includes(word) && !parasiteIndices.has(match.index)) {
+                    if (lastSeenAt[word] && (wordCounter - lastSeenAt[word].count <= 70)) {
+                        for (let i = 0; i < word.length; i++) {
+                            badRepeatIndices.add(match.index + i);
+                            badRepeatIndices.add(lastSeenAt[word].pos + i);
+                        }
+                        repeatCounts[word] = (repeatCounts[word] || 0) + 1;
+                    }
+                    lastSeenAt[word] = { count: wordCounter, pos: match.index };
+                }
+            }
 
-            highlightLayer.innerHTML = html + (text.endsWith('\n') ? '\n ' : '');
+            let focusIndices = new Set();
+            if (activeFocusWord) {
+                const fRegex = new RegExp(`\\b(${activeFocusWord})\\b`, 'gi');
+                let fMatch;
+                while ((fMatch = fRegex.exec(text)) !== null) {
+                    for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i);
+                }
+            }
+
+            let finalHtml = "";
+            let i = 0;
+            while (i < text.length) {
+                if (focusIndices.has(i)) {
+                    finalHtml += `<mark class="focus-active">`;
+                    while (i < text.length && focusIndices.has(i)) {
+                        finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        i++;
+                    }
+                    finalHtml += `</mark>`;
+                } else if (parasiteIndices.has(i)) {
+                    finalHtml += `<mark class="parasite">`;
+                    while (i < text.length && parasiteIndices.has(i)) {
+                        finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        i++;
+                    }
+                    finalHtml += `</mark>`;
+                } else if (badRepeatIndices.has(i)) {
+                    finalHtml += `<mark class="repeat">`;
+                    while (i < text.length && badRepeatIndices.has(i)) {
+                        finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        i++;
+                    }
+                    finalHtml += `</mark>`;
+                } else {
+                    finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    i++;
+                }
+            }
+
+            highlightLayer.innerHTML = finalHtml + (text.endsWith('\n') ? '\n ' : '');
+            document.getElementById('total-parasites').innerText = totalParasites;
+            document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
+            document.getElementById('total-words').innerText = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
+            document.getElementById('focus-display').innerText = activeFocusWord || "Aucun";
             
-            totalWordsDisplay.innerText = wordsCount;
-            totalParasitesDisplay.innerText = totalParasites;
-            const density = wordsCount > 0 ? ((totalParasites / wordsCount) * 100).toFixed(1) : 0;
-            percentageDisplay.innerText = density + "%";
-            purityDisplay.innerText = Math.max(0, (100 - density * 5)).toFixed(0) + "%";
-
-            updateSidebarList(parasiteCounts);
+            updateSidebars(parasiteCounts, repeatCounts);
             syncScroll();
         }
 
-        function updateSidebarList(counts) {
-            const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-            if (sorted.length === 0) {
-                wordListContainer.innerHTML = '<li class="text-slate-500 text-xs italic">Aucun parasite détecté.</li>';
-                return;
-            }
-            wordListContainer.innerHTML = sorted.map(([word, count]) => `
-                <li class="flex justify-between items-center bg-slate-800 p-3 rounded-xl border border-slate-700">
-                    <span class="text-[10px] font-bold uppercase text-slate-200 tracking-wide">${word}</span>
-                    <span class="text-accent text-xs font-black">${count}</span>
-                </li>
-            `).join('');
+        function updateSidebars(pCounts, rCounts) {
+            const pList = document.getElementById('word-list');
+            const rList = document.getElementById('repeat-list');
+            pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus('${w}')" class="sidebar-item ${activeFocusWord===w?'active-focus':''} flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span>${w}</span><span class="text-[var(--accent-color)]">${c}</span></li>`).join('') || 'RAS';
+            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus('${w}')" class="sidebar-item ${activeFocusWord===w?'active-focus':''} flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span>${w}</span><span class="text-amber-500">${c+1}x</span></li>`).join('') || 'RAS';
         }
 
-        function syncScroll() {
-            highlightLayer.scrollTop = textarea.scrollTop;
-            highlightLayer.scrollLeft = textarea.scrollLeft;
-        }
+        function syncScroll() { highlightLayer.scrollTop = textarea.scrollTop; highlightLayer.scrollLeft = textarea.scrollLeft; }
+        function copyText() { navigator.clipboard.writeText(textarea.value); }
+        function clearText() { if(confirm("Effacer ?")) { textarea.value = ''; process(); } }
 
-        function clearText() {
-            if(confirm("Effacer tout le texte ?")) {
-                textarea.value = '';
-                process();
-            }
-        }
-
-        function copyText() {
-            navigator.clipboard.writeText(textarea.value);
-            const originalText = event.target.innerText;
-            event.target.innerText = "COPIÉ !";
-            setTimeout(() => event.target.innerText = originalText, 2000);
-        }
-
-        textarea.addEventListener('input', process);
-        textarea.addEventListener('scroll', syncScroll);
-        window.addEventListener('resize', syncScroll);
-
-        initThemes();
-        process();
+        window.onload = () => {
+            themes.forEach(t => {
+                const b = document.createElement('button');
+                b.className = 'w-5 h-5 rounded-full border border-white/20 hover:scale-125 transition';
+                b.style.backgroundColor = t.hex;
+                b.onclick = () => setTheme(t.hex);
+                document.getElementById('theme-picker').appendChild(b);
+            });
+            if(localStorage.getItem('purge-dark') === 'true') toggleDarkMode();
+            setTheme(localStorage.getItem('purge-accent') || '#6366f1');
+            textarea.value = localStorage.getItem('purge-content') || "";
+            textarea.addEventListener('input', process);
+            textarea.addEventListener('scroll', syncScroll);
+            process();
+        };
     </script>
 </body>
 </html>
