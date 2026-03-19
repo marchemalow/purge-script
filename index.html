@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Purge-Script Pro | Cloud Edition</title>
     
-    <!-- Bibliothèques -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     
@@ -26,52 +25,54 @@
             transition: background-color 0.3s ease; 
             background-color: #f8fafc;
             height: 100vh;
-            overflow: hidden; /* Fixe la page */
+            overflow: hidden;
         }
 
         .editor-font { 
             font-family: 'IBM Plex Sans', sans-serif; 
             font-size: 1.05rem; 
             line-height: 1.6;
+            font-variant-ligatures: none;
         }
 
-        /* Conteneur principal avec largeur limitée pour l'éditeur */
-        .main-content {
+        /* Layout */
+        .main-app-layout {
             display: grid;
-            grid-template-columns: 60px 1fr 380px;
+            grid-template-columns: 60px 1fr 350px;
             gap: 24px;
             max-width: 1400px;
             margin: 0 auto;
-            height: calc(100vh - 140px);
+            height: calc(100vh - 160px);
             padding: 0 20px;
         }
 
-        /* Toolbar verticale à gauche */
+        /* Toolbar gauche */
         .toolbar-v {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
             background: white;
-            padding: 10px;
+            padding: 12px;
             border-radius: 18px;
             border: 1px solid #e2e8f0;
             height: fit-content;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
 
-        /* Zone de texte (Largeur réduite) */
-        .editor-wrapper {
+        /* Zone de texte REDUITE */
+        .editor-container {
             position: relative;
-            background: white;
+            background: white; /* VISIBILITÉ RESTAURÉE */
             border-radius: 2rem;
             border: 1px solid #e2e8f0;
             overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            max-width: 900px; /* Largeur réduite demandée */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            max-width: 850px;
             width: 100%;
             justify-self: center;
         }
 
-        .sync-layer {
+        .layer {
             position: absolute;
             top: 0;
             left: 0;
@@ -85,32 +86,31 @@
             overflow-y: auto;
         }
 
-        /* L'éditeur est au-dessus */
         #editor {
             z-index: 2;
             background: transparent;
-            color: inherit;
+            color: #1e293b;
         }
 
-        /* Le calque de couleur est en-dessous et CACHE LE TEXTE (évite le glitch) */
+        /* FIX DU GLITCH : Texte invisible mais présent pour l'alignement */
         #highlight-layer {
             z-index: 1;
             pointer-events: none;
-            color: transparent !important; /* EMPÊCHE LE DOUBLE TEXTE */
+            color: transparent !important;
+            -webkit-text-fill-color: transparent !important;
         }
 
-        /* Styles de titres pour l'alignement */
         #editor h1, #highlight-layer h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; }
         #editor h2, #highlight-layer h2 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.8rem; }
 
         /* Surlignages */
-        mark { background: none; color: inherit; }
+        mark { background: none; color: inherit; padding: 0; margin: 0; }
         .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); }
         .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; }
-        .show-montage mark.montage { background-color: var(--montage-color) !important; border-radius: 5px; }
+        .show-montage mark.montage { background-color: var(--montage-color) !important; border-radius: 4px; }
         mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; }
 
-        /* Sidebar avec Box de Scroll Fixes */
+        /* Sidebar avec BOX FIXES */
         .sidebar {
             background: #0f172a;
             border-radius: 2.5rem;
@@ -118,20 +118,27 @@
             color: white;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 25px;
             overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
         }
 
         .scroll-box {
             background: rgba(255,255,255,0.03);
-            border-radius: 1.5rem;
-            padding: 15px;
+            border-radius: 1.2rem;
+            padding: 12px;
             overflow-y: auto;
-            max-height: 200px; /* Box précise pour ne pas descendre en bas */
+            max-height: 180px; /* HAUTEUR BLOQUÉE */
             border: 1px solid rgba(255,255,255,0.05);
         }
 
-        /* UI Switches */
+        /* Dark Mode */
+        body.dark-mode { background-color: #0f172a; }
+        .dark-mode .bg-white, .dark-mode .toolbar-v, .dark-mode .editor-container { background: #1e293b; border-color: #334155; }
+        .dark-mode #editor { color: #f1f5f9; }
+        .dark-mode h1 { color: white; }
+
+        /* UI elements */
         .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider-ui { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 34px; }
@@ -139,53 +146,47 @@
         input:checked + .slider-ui { background-color: var(--accent-color); }
         input:checked + .slider-ui:before { transform: translateX(14px); }
 
-        /* Dark Mode */
-        body.dark-mode { background-color: #0f172a; }
-        .dark-mode .bg-white, .dark-mode .toolbar-v, .dark-mode .editor-wrapper { background: #1e293b; border-color: #334155; }
-        .dark-mode #editor { color: #f1f5f9; }
-
         .tool-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; transition: 0.2s; color: #64748b; font-weight: bold; }
         .tool-btn:hover { background: var(--accent-soft); color: var(--accent-color); }
-        
-        #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
 
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+        
+        #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
     </style>
 </head>
 <body class="text-slate-800">
 
-    <!-- MODAL PARTAGE (Original Restoré) -->
+    <!-- MODAL PARTAGE -->
     <div id="share-modal">
         <div class="bg-white dark:bg-slate-900 p-8 rounded-[2rem] shadow-2xl w-[450px] border dark:border-slate-700">
             <h3 class="text-2xl font-black mb-4">Partager le script</h3>
             <div class="space-y-4">
                 <div class="bg-slate-50 dark:bg-slate-800 p-5 rounded-2xl border">
-                    <label class="text-[10px] font-bold uppercase text-slate-400 block mb-2">Inviter un collaborateur</label>
+                    <label class="text-[10px] font-bold uppercase text-slate-400 block mb-2">Inviter par email</label>
                     <input type="email" id="share-email" placeholder="email@exemple.com" class="w-full p-3 rounded-xl border mb-3 dark:bg-slate-900 outline-none">
                     <select id="share-role" class="w-full p-3 rounded-xl border dark:bg-slate-900 mb-4">
-                        <option value="editors">Peut modifier (Éditeur)</option>
-                        <option value="viewers">Peut lire (Lecteur)</option>
+                        <option value="editors">Éditeur (Peut modifier)</option>
+                        <option value="viewers">Lecteur (Lecture seule)</option>
                     </select>
-                    <button onclick="inviteUser()" class="w-full py-3 rounded-xl text-white font-bold" style="background: var(--accent-color)">Envoyer l'invitation</button>
+                    <button onclick="inviteUser()" class="w-full py-3 rounded-xl text-white font-bold" style="background: var(--accent-color)">Inviter</button>
                 </div>
-                <div id="collaborators-list" class="space-y-2">
-                    <!-- Liste des gens avec qui on a partagé -->
+                <div id="collabs-list" class="space-y-2 max-h-32 overflow-y-auto">
+                    <!-- Liste collaborateurs -->
                 </div>
             </div>
             <button onclick="closeModal()" class="mt-6 w-full text-slate-400 font-bold uppercase text-xs">Fermer</button>
         </div>
     </div>
 
-    <!-- HEADER (Original Restoré) -->
+    <!-- HEADER -->
     <header class="px-10 py-6 flex justify-between items-center bg-white dark:bg-slate-900 border-b dark:border-slate-800 mb-8">
         <div>
-            <h1 class="text-3xl font-black tracking-tighter">Purge-Script<span style="color: var(--accent-color)">.</span></h1>
+            <h1 class="text-3xl font-black tracking-tighter text-slate-900 dark:text-white">Purge-Script<span style="color: var(--accent-color)">.</span></h1>
             <p id="save-status" class="text-[10px] font-bold uppercase transition-opacity" style="color: var(--accent-color); opacity: 0;">Synchronisé</p>
         </div>
 
         <div class="flex items-center gap-6">
-            <!-- Switches originaux -->
             <div class="flex gap-4 bg-slate-50 dark:bg-slate-800 px-5 py-3 rounded-2xl border dark:border-slate-700 text-[10px] font-bold uppercase">
                 <div class="flex items-center gap-2"><span>Tics</span><label class="switch"><input type="checkbox" id="toggle-parasites" checked onchange="process()"><span class="slider-ui"></span></label></div>
                 <div class="flex items-center gap-2 border-l pl-4 dark:border-slate-700"><span>Répé.</span><label class="switch"><input type="checkbox" id="toggle-repeats" checked onchange="process()"><span class="slider-ui"></span></label></div>
@@ -201,40 +202,40 @@
         </div>
     </header>
 
-    <main class="main-content">
-        <!-- TOOLBAR VERTICALE -->
+    <main class="main-app-layout">
+        <!-- TOOLBAR GAUCHE -->
         <aside class="toolbar-v">
             <button class="tool-btn" onclick="format('bold')">B</button>
             <button class="tool-btn" onclick="format('italic')">I</button>
             <button class="tool-btn" onclick="format('underline')">U</button>
-            <div class="h-px bg-slate-200 dark:bg-slate-700 mx-1 my-1"></div>
+            <div class="h-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
             <button class="tool-btn" onclick="format('formatBlock', 'h1')">H1</button>
             <button class="tool-btn" onclick="format('formatBlock', 'h2')">H2</button>
             <button class="tool-btn" onclick="format('formatBlock', 'p')">P</button>
-            <div class="h-px bg-slate-200 dark:bg-slate-700 mx-1 my-1"></div>
+            <div class="h-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
             <button class="tool-btn text-red-500" onclick="format('removeFormat')">Ø</button>
         </aside>
 
         <!-- ZONE EDITEUR -->
-        <div class="flex flex-col gap-5">
-            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border flex items-center gap-6">
+        <div class="flex flex-col gap-5 overflow-hidden">
+            <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border flex items-center gap-6 shadow-sm">
                 <span class="text-[10px] font-bold uppercase text-slate-400">Débit diction :</span>
                 <input type="range" id="wpm-slider" min="100" max="250" value="150" class="flex-1" style="accent-color: var(--accent-color)" oninput="process()">
                 <span id="wpm-val" class="font-black text-sm w-10" style="color: var(--accent-color)">150</span>
             </div>
 
-            <div class="editor-wrapper show-parasites show-repeats show-montage">
-                <div id="highlight-layer" class="sync-layer editor-font"></div>
-                <div id="editor" class="sync-layer editor-font" contenteditable="true" spellcheck="false" onscroll="syncScroll()"></div>
+            <div class="editor-container show-parasites show-repeats show-montage">
+                <div id="highlight-layer" class="layer editor-font"></div>
+                <div id="editor" class="layer editor-font" contenteditable="true" spellcheck="false" onscroll="syncScroll()"></div>
             </div>
 
             <div class="flex gap-4">
-                <div class="bg-white dark:bg-slate-800 px-6 py-3 rounded-2xl border flex gap-8 items-center">
-                    <div><span class="text-[9px] font-bold text-slate-400 uppercase block">Mots</span><span id="word-count" class="font-black">0</span></div>
-                    <div class="border-l pl-8"><span class="text-[9px] font-bold text-slate-400 uppercase block">Durée</span><span id="duration" class="font-black" style="color: var(--accent-color)">0s</span></div>
-                    <div class="border-l pl-8"><span class="text-[9px] font-bold text-slate-400 uppercase block">Focus</span><span id="focus-val" class="font-black text-slate-300">Aucun</span></div>
+                <div class="bg-white dark:bg-slate-800 px-6 py-3 rounded-2xl border flex gap-8 items-center shadow-sm">
+                    <div><span class="text-[9px] font-bold text-slate-400 uppercase">Mots</span><p id="word-count" class="font-black">0</p></div>
+                    <div class="border-l pl-8"><span class="text-[9px] font-bold text-slate-400 uppercase">Durée</span><p id="duration" class="font-black" style="color: var(--accent-color)">0s</p></div>
+                    <div class="border-l pl-8"><span class="text-[9px] font-bold text-slate-400 uppercase">Focus</span><p id="focus-val" class="font-black text-slate-300">Aucun</p></div>
                 </div>
-                <button onclick="copyContent()" class="px-8 py-3 rounded-2xl text-white font-bold text-xs uppercase" style="background: var(--accent-color)">Copier</button>
+                <button onclick="copyContent()" class="px-8 py-3 rounded-2xl text-white font-bold text-xs uppercase shadow-lg" style="background: var(--accent-color)">Copier</button>
             </div>
         </div>
 
@@ -243,26 +244,26 @@
             <div>
                 <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Tics de langage</h3>
                 <div class="scroll-box">
-                    <ul id="tic-list" class="space-y-2"></ul>
+                    <ul id="tic-list" class="space-y-2 text-[11px] font-bold uppercase"></ul>
                 </div>
             </div>
 
             <div>
                 <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Répétitions</h3>
                 <div class="scroll-box">
-                    <ul id="rep-list" class="space-y-2"></ul>
+                    <ul id="rep-list" class="space-y-2 text-[11px] font-bold uppercase"></ul>
                 </div>
             </div>
 
             <div id="ignored-box" class="hidden border-t border-slate-800 pt-5">
-                <h3 class="text-[10px] font-bold text-red-400 uppercase mb-3">Mots ignorés</h3>
-                <div id="ignored-list" class="flex flex-wrap gap-2"></div>
+                <h3 class="text-[10px] font-bold text-red-400 uppercase mb-3 text-[10px]">Mots ignorés</h3>
+                <div id="ignored-list" class="flex flex-wrap gap-1"></div>
             </div>
 
             <div id="shared-box" class="hidden border-t border-slate-800 pt-5">
                 <h3 class="text-[10px] font-bold text-indigo-400 uppercase mb-3">Scripts Partagés</h3>
-                <div class="scroll-box" style="max-height: 120px;">
-                    <ul id="shared-list" class="space-y-2"></ul>
+                <div class="scroll-box" style="max-height: 100px;">
+                    <ul id="shared-list" class="space-y-2 text-[10px] font-bold uppercase"></ul>
                 </div>
             </div>
         </aside>
@@ -284,7 +285,6 @@
         function format(c, v=null) { document.execCommand(c, false, v); process(); }
         function syncScroll() { hLayer.scrollTop = editor.scrollTop; }
 
-        // --- AUTH & CLOUD ---
         auth.onAuthStateChanged(async u => {
             user = u;
             const p = new URLSearchParams(window.location.search);
@@ -311,26 +311,23 @@
             editor.contentEditable = (role !== 'viewers'); process();
         }
 
-        // --- PARTAGE ---
         async function inviteUser() {
             const email = document.getElementById('share-email').value.trim();
             const r = document.getElementById('share-role').value;
             if(!email) return;
-            await db.collection('scripts').doc(activeId).set({
-                collabs: { [email.replace(/\./g, '_')]: r }
-            }, { merge: true });
-            alert("Invitation envoyée !"); updateCollabs();
+            await db.collection('scripts').doc(activeId).set({ collabs: { [email.replace(/\./g, '_')]: r } }, { merge: true });
+            alert("Invité !"); updateCollabs();
         }
 
         async function updateCollabs() {
             const doc = await db.collection('scripts').doc(activeId).get();
-            const list = document.getElementById('collaborators-list');
-            list.innerHTML = '<p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Accès partagés :</p>';
+            const list = document.getElementById('collabs-list');
+            list.innerHTML = "";
             const collabs = doc.data().collabs || {};
             Object.entries(collabs).forEach(([email, r]) => {
                 const div = document.createElement('div');
-                div.className = "flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-2 rounded-lg text-[11px]";
-                div.innerHTML = `<span>${email.replace(/_/g, '.')} (${r})</span><button onclick="revoke('${email}')" class="text-red-500 font-bold uppercase">X</button>`;
+                div.className = "flex justify-between items-center bg-slate-100 dark:bg-slate-800 p-2 rounded-lg text-[10px] font-bold";
+                div.innerHTML = `<span>${email.replace(/_/g, '.')} (${r})</span><button onclick="revoke('${email}')" class="text-red-500">X</button>`;
                 list.appendChild(div);
             });
         }
@@ -340,7 +337,6 @@
             updateCollabs();
         }
 
-        // --- ANALYSE ---
         function process() {
             const raw = editor.innerText;
             const wpm = parseInt(document.getElementById('wpm-slider').value);
@@ -351,35 +347,35 @@
             const sec = Math.round((words.length / wpm) * 60);
             document.getElementById('duration').innerText = `${Math.floor(sec/60)}m ${sec%60}s`;
 
-            let mIdx = new Set(); const mRegex = /\[.*?\]/g; let match;
-            while ((match = mRegex.exec(raw)) !== null) { for (let i = 0; i < match[0].length; i++) mIdx.add(match.index + i); }
+            let mIdx = new Set(); const mRegex = /\[.*?\]/g; let m;
+            while ((m = mRegex.exec(raw)) !== null) { for (let i = 0; i < m[0].length; i++) mIdx.add(m.index + i); }
 
             let tIdx = new Set(); let tC = {};
             parasites.forEach(p => {
                 const regex = new RegExp(`\\b(${p})\\b`, 'gi');
-                while ((match = regex.exec(raw)) !== null) {
-                    if (mIdx.has(match.index)) continue;
+                while ((m = regex.exec(raw)) !== null) {
+                    if (mIdx.has(m.index)) continue;
                     tC[p] = (tC[p] || 0) + 1;
-                    for (let i = 0; i < match[0].length; i++) tIdx.add(match.index + i);
+                    for (let i = 0; i < m[0].length; i++) tIdx.add(m.index + i);
                 }
             });
 
             let rIdx = new Set(); let rC = {}; let last = {};
             const wRegex = /[a-zA-ZàâäéèêëîïôöûüùçÀÂÄÉÈÊËÎÏÔÖÛÜÙÇ]{3,}/g;
-            let counter = 0; while ((match = wRegex.exec(raw)) !== null) {
-                counter++; const w = match[0].toLowerCase();
-                if (!stopWords.includes(w) && !tIdx.has(match.index) && !mIdx.has(match.index) && !ignored.has(w)) {
-                    if (last[w] && (counter - last[w].c <= 70)) {
+            let count = 0; while ((m = wRegex.exec(raw)) !== null) {
+                count++; const w = m[0].toLowerCase();
+                if (!stopWords.includes(w) && !tIdx.has(m.index) && !mIdx.has(m.index) && !ignored.has(w)) {
+                    if (last[w] && (count - last[w].c <= 70)) {
                         for (let i = 0; i < w.length; i++) { rIdx.add(match.index + i); rIdx.add(last[w].p + i); }
                         rC[w] = (rC[w] || 0) + 1;
                     }
-                    last[w] = { c: counter, p: match.index };
+                    last[w] = { c: count, p: m.index };
                 }
             }
 
             let fIdx = new Set(); if (focus) {
                 const fr = new RegExp(`\\b(${focus})\\b`, 'gi');
-                while ((match = fr.exec(raw)) !== null) { for (let i = 0; i < match[0].length; i++) fIdx.add(match.index + i); }
+                while ((m = fr.exec(raw)) !== null) { for (let i = 0; i < m[0].length; i++) fIdx.add(m.index + i); }
             }
 
             hLayer.innerHTML = injectMarks(editor.innerHTML, tIdx, rIdx, mIdx, fIdx);
@@ -396,8 +392,7 @@
 
             function walk(node) {
                 if (node.nodeType === 3) {
-                    let v = node.nodeValue; let out = "";
-                    let i = 0;
+                    let v = node.nodeValue; let out = ""; let i = 0;
                     while (i < v.length) {
                         let cls = "";
                         if (fI.has(pos)) cls = "focus-active";
@@ -421,25 +416,16 @@
                     node.parentNode.replaceChild(span, node);
                 } else {
                     if (node.tagName === 'BR') pos++;
-                    else {
-                        Array.from(node.childNodes).forEach(walk);
-                        if (['DIV','P','H1','H2'].includes(node.tagName)) pos++;
-                    }
+                    else { Array.from(node.childNodes).forEach(walk); if(['DIV','P','H1','H2'].includes(node.tagName)) pos++; }
                 }
             }
             walk(temp); return temp.innerHTML;
         }
 
         function updateSidebar(tC, rC) {
-            document.getElementById('tic-list').innerHTML = Object.entries(tC).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="setFocus('${w}')" class="flex justify-between p-3 bg-slate-800/50 rounded-xl cursor-pointer font-bold text-[11px] uppercase hover:bg-slate-700"><span>${w}</span><span style="color:var(--accent-color)">${c}</span></li>`).join('');
-            document.getElementById('rep-list').innerHTML = Object.entries(rC).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li class="flex justify-between p-3 bg-slate-800/50 rounded-xl font-bold text-[11px] uppercase hover:bg-slate-700">
-                <span onclick="setFocus('${w}')" class="cursor-pointer">${w}</span>
-                <div class="flex gap-2 items-center"><span class="text-amber-500">${c+1}x</span><button onclick="ignore('${w}')" class="text-red-400">✕</button></div>
-            </li>`).join('');
-            const box = document.getElementById('ignored-box'); if (ignored.size > 0) {
-                box.classList.remove('hidden');
-                document.getElementById('ignored-list').innerHTML = Array.from(ignored).map(w => `<span onclick="unignore('${w}')" class="bg-red-900/40 p-2 rounded-lg cursor-pointer text-[9px] uppercase font-bold">#${w}</span>`).join('');
-            } else box.classList.add('hidden');
+            document.getElementById('tic-list').innerHTML = Object.entries(tC).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="setFocus('${w}')" class="flex justify-between p-3 bg-slate-800 rounded-xl cursor-pointer hover:bg-slate-700"><span>${w}</span><span style="color:var(--accent-color)">${c}</span></li>`).join('');
+            document.getElementById('rep-list').innerHTML = Object.entries(rC).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li class="flex justify-between p-3 bg-slate-800 rounded-xl hover:bg-slate-700"><span onclick="setFocus('${w}')" class="cursor-pointer">${w}</span><div class="flex gap-2"><span>${c+1}x</span><button onclick="ignore('${w}')" class="text-red-500">✕</button></div></li>`).join('');
+            if (ignored.size > 0) { document.getElementById('ignored-box').classList.remove('hidden'); document.getElementById('ignored-list').innerHTML = Array.from(ignored).map(w => `<span onclick="unignore('${w}')" class="bg-red-900/40 p-1 rounded cursor-pointer text-[9px]">#${w}</span>`).join(''); } else document.getElementById('ignored-box').classList.add('hidden');
         }
 
         async function fetchShared() {
@@ -448,7 +434,7 @@
             snap.forEach(doc => {
                 const d = doc.data(); if (d.collabs && d.collabs[user.email.replace(/\./g, '_')]) {
                     document.getElementById('shared-box').classList.remove('hidden');
-                    const li = document.createElement('li'); li.className = "cursor-pointer p-3 bg-slate-800/40 rounded-xl uppercase font-bold text-[10px] hover:bg-indigo-900";
+                    const li = document.createElement('li'); li.className = "cursor-pointer p-3 bg-slate-800/40 rounded-xl hover:bg-indigo-900";
                     li.innerText = `Script de ${d.ownerEmail.split('@')[0]}`;
                     li.onclick = () => loadScript(doc.id); list.appendChild(li);
                 }
