@@ -1,4 +1,3 @@
---- START OF FILE index.html ---
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -16,24 +15,53 @@
     <style>
         :root { --accent-color: #6366f1; --accent-soft: rgba(99, 102, 241, 0.15); --focus-color: #f02e65; }
         body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease; }
-        .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.6; }
+        
+        /* Correction de l'alignement : Fixer l'interlignage et le rendu des polices */
+        .editor-font { 
+            font-family: 'IBM Plex Sans', sans-serif; 
+            font-size: 1.05rem; 
+            line-height: 1.6; 
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            letter-spacing: normal;
+        }
+
         .editor-container { position: relative; min-height: 600px; border-radius: 1.5rem; background: white; }
         
-        .sync-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 30px; white-space: pre-wrap; word-wrap: break-word; overflow-y: auto; border: none; margin: 0; background: transparent; }
+        .sync-text { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            padding: 30px; 
+            white-space: pre-wrap; 
+            word-wrap: break-word; 
+            overflow-y: auto; 
+            border: 1px solid transparent; /* Aligner avec la bordure invisible */
+            margin: 0; 
+            background: transparent; 
+            box-sizing: border-box;
+        }
         
         #textarea { z-index: 2; outline: none; color: #1e293b; background: transparent; }
         #highlight-layer { z-index: 1; pointer-events: none; color: transparent !important; }
         
-        /* Styles des éléments dans l'éditeur */
-        #textarea h1 { font-size: 2em; font-weight: 800; }
-        #textarea h2 { font-size: 1.5em; font-weight: 700; }
-        #textarea ul { list-style-type: disc; padding-left: 20px; }
-        #textarea ol { list-style-type: decimal; padding-left: 20px; }
-        #textarea a { color: var(--accent-color); text-decoration: underline; }
+        /* Masquer la scrollbar du calque de fond pour éviter les décalages horizontaux */
+        #highlight-layer::-webkit-scrollbar { display: none; }
+        #highlight-layer { -ms-overflow-style: none; scrollbar-width: none; }
 
-        mark { background: none; color: inherit; }
-        .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); border-radius: 2px; }
-        .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; border-radius: 2px; }
+        /* RESET DES MARGES : Indispensable pour que les blocs H1, P, etc. s'alignent */
+        #textarea h1, #highlight-layer h1 { font-size: 2em; font-weight: 800; margin: 0 0 1rem 0; line-height: 1.2; }
+        #textarea h2, #highlight-layer h2 { font-size: 1.5em; font-weight: 700; margin: 1rem 0 0.5rem 0; line-height: 1.3; }
+        #textarea p, #highlight-layer p { margin: 0 0 1rem 0; }
+        #textarea ul, #highlight-layer ul { list-style-type: disc; padding-left: 20px; margin-bottom: 1rem; }
+        #textarea ol, #highlight-layer ol { list-style-type: decimal; padding-left: 20px; margin-bottom: 1rem; }
+        #textarea a, #highlight-layer a { color: var(--accent-color); text-decoration: underline; }
+
+        mark { background: none; color: inherit; border-radius: 2px; }
+        .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); }
+        .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; }
         mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; font-weight: 600; }
         
         .sidebar-item { cursor: pointer; transition: all 0.2s; }
@@ -356,7 +384,13 @@
             if(localStorage.getItem('purge-dark') === 'true') toggleDarkMode();
             textarea.innerHTML = localStorage.getItem('purge-content-html') || "";
             textarea.addEventListener('input', process);
-            textarea.addEventListener('scroll', () => highlightLayer.scrollTop = textarea.scrollTop);
+            
+            // Correction synchro scroll (Vertical + Horizontal)
+            textarea.addEventListener('scroll', () => {
+                highlightLayer.scrollTop = textarea.scrollTop;
+                highlightLayer.scrollLeft = textarea.scrollLeft;
+            });
+            
             process();
         };
     </script>
