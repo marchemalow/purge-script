@@ -16,11 +16,11 @@
         :root { --accent-color: #6366f1; --accent-soft: rgba(99, 102, 241, 0.15); --focus-color: #f02e65; }
         body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease; }
         .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.6; }
-        .editor-container { position: relative; min-height: 600px; border-radius: 1.5rem; background: white; }
+        .editor-container { position: relative; min-height: 600px; border-radius: 1.5rem; }
         
         .sync-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 30px; white-space: pre-wrap; word-wrap: break-word; overflow-y: auto; border: none; margin: 0; background: transparent; }
         
-        #textarea { z-index: 2; outline: none; color: #1e293b; background: transparent; }
+        #textarea { z-index: 2; outline: none; background: transparent; }
         #highlight-layer { z-index: 1; pointer-events: none; color: transparent !important; }
         
         /* Styles des éléments dans l'éditeur */
@@ -31,139 +31,133 @@
         #textarea a { color: var(--accent-color); text-decoration: underline; }
 
         mark { background: none; color: inherit; }
-        .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); border-radius: 2px; }
-        .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; border-radius: 2px; }
-        mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; font-weight: 600; }
+        .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); border-radius: 2px; padding-bottom: 1px; }
+        .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; border-radius: 2px; padding-bottom: 1px; }
+        mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; font-weight: 600; padding-bottom: 1px; }
         
         .sidebar-item { cursor: pointer; transition: all 0.2s; }
         .sidebar-item:hover { background-color: rgba(255,255,255,0.1); }
-        .sidebar-item.active-focus { border: 1px solid var(--focus-color); background-color: rgba(240, 46, 101, 0.2) !important; }
+        .sidebar-item.active-focus { background-color: var(--focus-color) !important; color: white; }
+        .sidebar-item.active-focus span { color: white !important; }
         
-        body.dark-mode { background-color: #0f172a; color: #f1f5f9; }
-        .dark-mode .bg-white { background-color: #1e293b; border-color: #334155; }
-        .dark-mode .text-slate-900 { color: #f8fafc; }
-        .dark-mode .text-slate-500 { color: #94a3b8; }
-        .dark-mode .border-slate-200 { border-color: #334155; }
+        /* DARK MODE STYLES */
+        body.dark-mode { background-color: #111827; color: #f1f5f9; }
+        .dark-mode .panel-bg { background-color: #1f2937; border-color: #374151; }
+        .dark-mode .text-main { color: #f8fafc; }
+        .dark-mode .text-soft { color: #9ca3af; }
+        .dark-mode .border-color { border-color: #374151; }
         .dark-mode #textarea { color: #e2e8f0; }
         
         .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #4b5563; transition: .4s; border-radius: 34px; }
         .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--accent-color); }
         input:checked + .slider:before { transform: translateX(14px); }
         
-        /* Toolbar style */
-        .toolbar-group { display: flex; gap: 2px; background: #f8fafc; padding: 4px; border-radius: 10px; border: 1px solid #e2e8f0; }
-        .dark-mode .toolbar-group { background: #1e293b; border-color: #334155; }
-        .toolbar-btn { padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; transition: all 0.2s; color: #475569; }
-        .dark-mode .toolbar-btn { color: #94a3b8; }
+        .toolbar-group { display: flex; gap: 2px; background: #374151; padding: 4px; border-radius: 10px; border: 1px solid #4b5563; }
+        .toolbar-btn { padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 14px; transition: all 0.2s; color: #d1d5db; }
         .toolbar-btn:hover { background: var(--accent-color); color: white; }
         .toolbar-btn.active { background: var(--accent-soft); color: var(--accent-color); }
+        .toolbar-btn-special { background: #312e42; color: #be123c; }
     </style>
 </head>
-<body class="text-slate-800 bg-slate-50">
+<body class="dark-mode">
 
-    <div class="max-w-7xl mx-auto px-6 py-10">
+    <div class="max-w-7xl mx-auto px-6 py-10 space-y-8">
         
-        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 border-b border-slate-200 dark:border-slate-700 pb-8">
-            <div>
-                <div class="flex items-center gap-3">
-                    <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Purge-Script<span class="text-[var(--accent-color)]">.</span></h1>
-                    <span id="save-status" class="text-[10px] uppercase font-bold text-green-500 opacity-0 transition-opacity">Synchronisé</span>
-                </div>
-                <div class="flex items-center gap-2 mt-1">
-                    <p class="text-slate-500 text-sm font-medium italic">Intervalle : 70 mots | <span id="user-display">Mode Local</span></p>
-                </div>
+        <!-- HEADER SIMPLIFIÉ -->
+        <header class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <h1 class="text-3xl font-extrabold text-main tracking-tight">Purge-Script<span class="text-[var(--accent-color)]">.</span></h1>
+                <span id="save-status" class="text-[10px] uppercase font-bold text-green-500 opacity-0 transition-opacity">Synchronisé</span>
             </div>
-
-            <div class="flex flex-wrap items-center gap-4">
-                <button id="auth-btn" onclick="handleAuth()" class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold shadow-sm hover:scale-105 transition">
-                    <span id="auth-btn-text">Se connecter (Cloud)</span>
-                </button>
-
-                <div class="flex gap-4 bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-200 shadow-sm text-xs font-bold uppercase">
-                    <div class="flex items-center gap-2"><span>Tics</span><label class="switch"><input type="checkbox" id="toggle-parasites" checked onchange="process()"><span class="slider"></span></label></div>
-                    <div class="flex items-center gap-2 border-l pl-4 border-slate-200"><span>Répé.</span><label class="switch"><input type="checkbox" id="toggle-repeats" checked onchange="process()"><span class="slider"></span></label></div>
-                </div>
-
-                <div class="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
-                    <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:scale-105 transition">
-                        <svg id="sun-icon" class="w-5 h-5 hidden text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg>
-                        <svg id="moon-icon" class="w-5 h-5 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
-                    </button>
-                    <div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-700"></div>
-                    <div class="flex flex-wrap gap-1.5 max-w-[200px]" id="theme-picker"></div>
-                </div>
+            <!-- Contrôles masqués pour correspondre au design -->
+            <div class="hidden">
+                 <button id="auth-btn" onclick="handleAuth()"><span id="auth-btn-text">Se connecter</span></button>
+                 <span id="user-display">Mode Local</span>
             </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div class="lg:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Tics</p>
-                    <p id="total-parasites" class="text-2xl font-extrabold text-indigo-500">0</p>
-                </div>
-                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Répétitions</p>
-                    <p id="total-repeats" class="text-2xl font-extrabold text-amber-500">0</p>
-                </div>
-                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Total Mots</p>
-                    <p id="total-words" class="text-2xl font-extrabold">0</p>
-                </div>
-                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-slate-800">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Focus Actif</p>
-                    <p id="focus-display" class="text-xl font-extrabold text-zinc-300">Aucun</p>
-                </div>
+        <!-- CARTES DE STATS -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div class="panel-bg p-6 rounded-3xl border border-color">
+                <p class="text-soft text-xs font-bold uppercase mb-2 tracking-wider">Tics</p>
+                <p id="total-parasites" class="text-4xl font-extrabold text-indigo-400">0</p>
             </div>
+            <div class="panel-bg p-6 rounded-3xl border border-color">
+                <p class="text-soft text-xs font-bold uppercase mb-2 tracking-wider">Répétitions</p>
+                <p id="total-repeats" class="text-4xl font-extrabold text-amber-400">0</p>
+            </div>
+            <div class="panel-bg p-6 rounded-3xl border border-color">
+                <p class="text-soft text-xs font-bold uppercase mb-2 tracking-wider">Total Mots</p>
+                <p id="total-words" class="text-4xl font-extrabold text-main">0</p>
+            </div>
+            <div class="panel-bg p-6 rounded-3xl border border-color">
+                <p class="text-soft text-xs font-bold uppercase mb-2 tracking-wider">Focus Actif</p>
+                <p id="focus-display" class="text-2xl font-extrabold text-soft truncate">Aucun</p>
+            </div>
+        </div>
 
+        <!-- TOOLBAR -->
+        <div class="flex flex-wrap gap-3 items-center">
+            <div class="toolbar-group">
+                <button onclick="format('bold')" class="toolbar-btn" title="Gras">B</button>
+                <button onclick="format('italic')" class="toolbar-btn" title="Italique">I</button>
+                <button onclick="format('underline')" class="toolbar-btn" title="Souligné">U</button>
+                <button onclick="format('strikeThrough')" class="toolbar-btn" title="Barré">S</button>
+            </div>
+            <div class="toolbar-group">
+                <button onclick="format('formatBlock', 'h1')" class="toolbar-btn">H1</button>
+                <button onclick="format('formatBlock', 'h2')" class="toolbar-btn">H2</button>
+                <button onclick="format('formatBlock', 'p')" class="toolbar-btn">P</button>
+            </div>
+            <div class="toolbar-group">
+                <button onclick="format('justifyLeft')" class="toolbar-btn">⫷</button>
+                <button onclick="format('justifyCenter')" class="toolbar-btn">〓</button>
+                <button onclick="format('justifyRight')" class="toolbar-btn">⫸</button>
+            </div>
+            <div class="toolbar-group">
+                <button onclick="format('insertUnorderedList')" class="toolbar-btn">• List</button>
+                <button onclick="format('insertOrderedList')" class="toolbar-btn">1. List</button>
+            </div>
+            <div class="toolbar-group">
+                <button onclick="addLink()" class="toolbar-btn">Link</button>
+                <input type="color" onchange="format('foreColor', this.value)" class="w-8 h-8 p-1 border-none cursor-pointer bg-transparent">
+            </div>
+            <button onclick="format('removeFormat')" class="toolbar-btn toolbar-btn-special">Effacer tout</button>
+        </div>
+        
+        <!-- ZONE PRINCIPALE : ÉDITEUR ET SIDEBAR -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div class="lg:col-span-8 space-y-4">
-                <!-- TOOLBAR ENRICHIE -->
-                <div class="flex flex-wrap gap-3 items-center">
-                    <div class="toolbar-group">
-                        <button onclick="format('bold')" class="toolbar-btn" title="Gras">B</button>
-                        <button onclick="format('italic')" class="toolbar-btn" title="Italique">I</button>
-                        <button onclick="format('underline')" class="toolbar-btn" title="Souligné">U</button>
-                        <button onclick="format('strikeThrough')" class="toolbar-btn" title="Barré">S</button>
-                    </div>
-                    <div class="toolbar-group">
-                        <button onclick="format('formatBlock', 'h1')" class="toolbar-btn">H1</button>
-                        <button onclick="format('formatBlock', 'h2')" class="toolbar-btn">H2</button>
-                        <button onclick="format('formatBlock', 'p')" class="toolbar-btn">P</button>
-                    </div>
-                    <div class="toolbar-group">
-                        <button onclick="format('justifyLeft')" class="toolbar-btn">⫷</button>
-                        <button onclick="format('justifyCenter')" class="toolbar-btn">〓</button>
-                        <button onclick="format('justifyRight')" class="toolbar-btn">⫸</button>
-                    </div>
-                    <div class="toolbar-group">
-                        <button onclick="format('insertUnorderedList')" class="toolbar-btn">• List</button>
-                        <button onclick="format('insertOrderedList')" class="toolbar-btn">1. List</button>
-                    </div>
-                    <div class="toolbar-group">
-                        <button onclick="addLink()" class="toolbar-btn">Link</button>
-                        <input type="color" onchange="format('foreColor', this.value)" class="w-8 h-8 border-none cursor-pointer bg-transparent">
-                    </div>
-                    <button onclick="format('removeFormat')" class="toolbar-btn bg-red-50 dark:bg-red-900/20 text-red-500">Effacer tout</button>
-                </div>
-
-                <div id="editor-wrapper" class="editor-container border border-slate-200 shadow-sm overflow-hidden bg-white show-parasites show-repeats">
+                <div id="editor-wrapper" class="editor-container panel-bg border border-color overflow-hidden show-parasites show-repeats">
                     <div id="highlight-layer" class="sync-text editor-font"></div>
                     <div id="textarea" class="sync-text editor-font" contenteditable="true" spellcheck="false"></div>
                 </div>
 
-                <div class="flex gap-4">
-                    <button onclick="copyText()" class="bg-[var(--accent-color)] text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition">Copier</button>
-                    <button onclick="downloadText()" class="bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition">Exporter .txt</button>
-                    <button onclick="clearText()" class="text-slate-400 hover:text-red-500 font-bold transition text-xs uppercase px-4">Effacer</button>
+                <div class="flex gap-4 items-center">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold uppercase text-soft">Tics</span>
+                        <label class="switch"><input type="checkbox" id="toggle-parasites" checked onchange="process()"><span class="slider"></span></label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold uppercase text-soft">Répé.</span>
+                        <label class="switch"><input type="checkbox" id="toggle-repeats" checked onchange="process()"><span class="slider"></span></label>
+                    </div>
                 </div>
             </div>
 
             <div class="lg:col-span-4 space-y-6">
-                <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8">
-                    <div><h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4">Tics</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
-                    <div><h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4">Répétitions</h2><ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
+                <div class="panel-bg p-7 rounded-3xl border border-color space-y-8">
+                    <div>
+                        <h2 class="text-sm font-bold tracking-wider text-soft mb-4">TICS</h2>
+                        <ul id="word-list" class="space-y-2 text-sm max-h-52 overflow-y-auto pr-2"></ul>
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-bold tracking-wider text-soft mb-4">RÉPÉTITIONS</h2>
+                        <ul id="repeat-list" class="space-y-2 text-sm max-h-52 overflow-y-auto pr-2"></ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -192,7 +186,6 @@
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
 
-        // FONCTIONS DE FORMATAGE
         function format(command, value = null) {
             document.execCommand(command, false, value);
             textarea.focus();
@@ -204,7 +197,6 @@
             if (url) format('createLink', url);
         }
 
-        // AUTH & SYNC (Comme précédemment)
         function handleAuth() {
             if (currentUser) auth.signOut();
             else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
@@ -212,13 +204,15 @@
 
         auth.onAuthStateChanged(user => {
             currentUser = user;
+            const authBtnText = document.getElementById('auth-btn-text');
+            const userDisplay = document.getElementById('user-display');
             if (user) {
-                document.getElementById('auth-btn-text').innerText = "Se déconnecter";
-                document.getElementById('user-display').innerText = "Connecté : " + user.displayName;
+                if (authBtnText) authBtnText.innerText = "Se déconnecter";
+                if (userDisplay) userDisplay.innerText = "Connecté : " + user.displayName;
                 db.collection('users').doc(user.uid).get().then(doc => { if (doc.exists) { textarea.innerHTML = doc.data().content; process(); } });
             } else {
-                document.getElementById('auth-btn-text').innerText = "Se connecter (Cloud)";
-                document.getElementById('user-display').innerText = "Mode Local";
+                if (authBtnText) authBtnText.innerText = "Se connecter (Cloud)";
+                if (userDisplay) userDisplay.innerText = "Mode Local";
             }
         });
 
@@ -233,45 +227,48 @@
             }
         }
 
-        // ANALYSE
         function process() {
             const text = textarea.innerText;
-            const showP = document.getElementById('toggle-parasites').checked;
-            const showR = document.getElementById('toggle-repeats').checked;
-
+            
             let parasiteIndices = new Set();
             let parasiteCounts = {};
             let totalParasites = 0;
 
-            parasiteDictionary.forEach(word => {
-                const regex = new RegExp(`\\b(${word})\\b`, 'gi');
-                let match;
-                while ((match = regex.exec(text)) !== null) {
-                    totalParasites++;
-                    parasiteCounts[word.toLowerCase()] = (parasiteCounts[word.toLowerCase()] || 0) + 1;
-                    for (let i = 0; i < match[0].length; i++) parasiteIndices.add(match.index + i);
-                }
-            });
+            if (document.getElementById('toggle-parasites').checked) {
+                parasiteDictionary.forEach(word => {
+                    const regex = new RegExp(`\\b(${word})\\b`, 'gi');
+                    let match;
+                    while ((match = regex.exec(text)) !== null) {
+                        totalParasites++;
+                        parasiteCounts[word.toLowerCase()] = (parasiteCounts[word.toLowerCase()] || 0) + 1;
+                        for (let i = 0; i < match[0].length; i++) parasiteIndices.add(match.index + i);
+                    }
+                });
+            }
 
             const wordRegex = /[a-zA-ZàâäéèêëîïôöûüùçÀÂÄÉÈÊËÎÏÔÖÛÜÙÇ]{3,}/g;
             let lastSeenAt = {}; 
             let badRepeatIndices = new Set();
             let repeatCounts = {};
             let wordCounter = 0;
+            let totalRepeats = 0;
 
-            let match;
-            while ((match = wordRegex.exec(text)) !== null) {
-                wordCounter++;
-                const word = match[0].toLowerCase();
-                if (!stopWords.includes(word) && !parasiteIndices.has(match.index)) {
-                    if (lastSeenAt[word] && (wordCounter - lastSeenAt[word].count <= 70)) {
-                        for (let i = 0; i < word.length; i++) {
-                            badRepeatIndices.add(match.index + i);
-                            badRepeatIndices.add(lastSeenAt[word].pos + i);
+            if (document.getElementById('toggle-repeats').checked) {
+                let match;
+                while ((match = wordRegex.exec(text)) !== null) {
+                    wordCounter++;
+                    const word = match[0].toLowerCase();
+                    if (!stopWords.includes(word) && !parasiteIndices.has(match.index)) {
+                        if (lastSeenAt[word] && (wordCounter - lastSeenAt[word].count <= 70)) {
+                            if (!repeatCounts[word]) totalRepeats++;
+                            repeatCounts[word] = (repeatCounts[word] || 1) + 1;
+                            for (let i = 0; i < word.length; i++) {
+                                badRepeatIndices.add(match.index + i);
+                                badRepeatIndices.add(lastSeenAt[word].pos + i);
+                            }
                         }
-                        repeatCounts[word] = (repeatCounts[word] || 0) + 1;
+                        lastSeenAt[word] = { count: wordCounter, pos: match.index };
                     }
-                    lastSeenAt[word] = { count: wordCounter, pos: match.index };
                 }
             }
 
@@ -287,9 +284,12 @@
             highlightLayer.innerHTML = injectMarksIntoHTML(textarea, parasiteIndices, badRepeatIndices, focusIndices);
             
             document.getElementById('total-parasites').innerText = totalParasites;
-            document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
+            document.getElementById('total-repeats').innerText = totalRepeats;
             document.getElementById('total-words').innerText = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
-            document.getElementById('focus-display').innerText = activeFocusWord || "Aucun";
+            const focusDisplay = document.getElementById('focus-display');
+            focusDisplay.innerText = activeFocusWord || "Aucun";
+            focusDisplay.classList.toggle('text-soft', !activeFocusWord);
+            focusDisplay.classList.toggle('text-main', !!activeFocusWord);
             
             updateSidebars(parasiteCounts, repeatCounts);
             autoSave();
@@ -298,7 +298,6 @@
         function injectMarksIntoHTML(sourceElement, pIdx, rIdx, fIdx) {
             const clone = sourceElement.cloneNode(true);
             let charIndex = 0;
-
             function traverse(node) {
                 if (node.nodeType === 3) { 
                     let newHtml = "";
@@ -309,26 +308,20 @@
                         if (fIdx.has(globalIndex)) cls = "focus-active";
                         else if (pIdx.has(globalIndex)) cls = "parasite";
                         else if (rIdx.has(globalIndex)) cls = "repeat";
-                        
                         let char = text[i];
                         if (char === '<') char = '&lt;';
                         if (char === '>') char = '&gt;';
                         if (char === '&') char = '&amp;';
-                        
                         newHtml += cls ? `<mark class="${cls}">${char}</mark>` : char;
                     }
-
                     const span = document.createElement('span');
                     span.innerHTML = newHtml;
-                    node.parentNode.replaceChild(span, node);
-                    
+                    if (node.parentNode) node.parentNode.replaceChild(span, node);
                     charIndex += text.length;
-
                 } else if (node.nodeType === 1 && node.childNodes.length > 0) {
                     Array.from(node.childNodes).forEach(traverse);
                 }
             }
-
             traverse(clone);
             return clone.innerHTML;
         }
@@ -336,37 +329,22 @@
         function updateSidebars(pCounts, rCounts) {
             const pList = document.getElementById('word-list');
             const rList = document.getElementById('repeat-list');
-            pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus('${w}')" class="sidebar-item ${activeFocusWord===w?'active-focus':''} flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span>${w}</span><span class="text-[var(--accent-color)]">${c}</span></li>`).join('') || 'RAS';
-            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus('${w}')" class="sidebar-item ${activeFocusWord===w?'active-focus':''} flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span>${w}</span><span class="text-amber-500">${c+1}x</span></li>`).join('') || 'RAS';
+            pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus('${w}')" class="sidebar-item ${activeFocusWord===w?'active-focus':''} flex justify-between items-center font-bold p-3 bg-slate-800/50 rounded-lg"><span>${w.toUpperCase()}</span><span class="text-indigo-400 font-black text-base">${c}</span></li>`).join('') || '<li class="text-soft text-sm">Aucun tic détecté.</li>';
+            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus('${w}')" class="sidebar-item ${activeFocusWord===w?'active-focus':''} flex justify-between items-center font-bold p-3 bg-slate-800/50 rounded-lg"><span>${w.toUpperCase()}</span><span class="text-amber-400 font-black text-base">${c}x</span></li>`).join('') || '<li class="text-soft text-sm">Aucune répétition détectée.</li>';
         }
 
-        function toggleFocus(word) { activeFocusWord = (activeFocusWord === word) ? null : word; process(); }
-        function downloadText() {
-            const blob = new Blob([textarea.innerText], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = `script.txt`; a.click();
-        }
-        function copyText() { navigator.clipboard.writeText(textarea.innerText); }
-        function clearText() { if(confirm("Effacer ?")) { textarea.innerHTML = ''; process(); } }
-        function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
-            localStorage.setItem('purge-dark', document.body.classList.contains('dark-mode'));
+        function toggleFocus(word) { 
+            activeFocusWord = (activeFocusWord === word) ? null : word; 
+            process(); 
         }
 
         window.onload = () => {
-            const themes = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#2563eb', '#6366f1', '#d946ef'];
-            themes.forEach(t => {
-                const b = document.createElement('button');
-                b.className = 'w-5 h-5 rounded-full border border-white/20 hover:scale-125 transition';
-                b.style.backgroundColor = t;
-                b.onclick = () => { document.documentElement.style.setProperty('--accent-color', t); process(); };
-                document.getElementById('theme-picker').appendChild(b);
-            });
-            if(localStorage.getItem('purge-dark') === 'true') toggleDarkMode();
-            textarea.innerHTML = localStorage.getItem('purge-content-html') || "";
+            textarea.innerHTML = localStorage.getItem('purge-content-html') || "En fait, je sais pas trop comment dire, mais genre c'est un peu toujours la même chose, tu vois, du coup je répète, je répète. Et en fait, c'est pas que j'ai rien à dire, c'est juste que, genre, les mots reviennent tout seuls, du coup voilà quoi, ça tourne un peu en boucle.<br><br>Genre tu commences une phrase, et en fait tu la finis pas vraiment, ou alors tu la refais, encore et encore, du coup ça donne un truc un peu bizarre, un peu répétitif, justement. Et puis voilà, tu te dis “bon, je vais arrêter”, mais en fait non, tu continues, tu continues. Du coup voilà, en fait, c'est ça le truc : ça revient, ça revient, ça revient, et genre tu t'en rends même plus compte. Et au final, en fait, t'as dit la même chose trois fois, voire quatre, voire cinq, mais du coup... ben voilà quoi.";
             textarea.addEventListener('input', process);
-            textarea.addEventListener('scroll', () => highlightLayer.scrollTop = textarea.scrollTop);
+            textarea.addEventListener('scroll', () => {
+                highlightLayer.scrollTop = textarea.scrollTop;
+                highlightLayer.scrollLeft = textarea.scrollLeft;
+            });
             process();
         };
     </script>
