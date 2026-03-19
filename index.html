@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
     
-    <!-- Firebase SDK Compat -->
+    <!-- Firebase SDK Compat (Plus simple pour un fichier unique) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
@@ -15,80 +15,34 @@
     <style>
         :root { --accent-color: #6366f1; --accent-soft: rgba(99, 102, 241, 0.15); --focus-color: #f02e65; }
         body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease; }
-        
-        /* Correction de l'alignement : Fixer l'interlignage et le rendu des polices */
-        .editor-font { 
-            font-family: 'IBM Plex Sans', sans-serif; 
-            font-size: 1.05rem; 
-            line-height: 1.6; 
-            text-rendering: optimizeLegibility;
-            -webkit-font-smoothing: antialiased;
-            letter-spacing: normal;
-        }
-
+        .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.6; }
         .editor-container { position: relative; min-height: 600px; border-radius: 1.5rem; background: white; }
-        
-        .sync-text { 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            padding: 30px; 
-            white-space: pre-wrap; 
-            word-wrap: break-word; 
-            overflow-y: auto; 
-            border: 1px solid transparent; /* Aligner avec la bordure invisible */
-            margin: 0; 
-            background: transparent; 
-            box-sizing: border-box;
-        }
-        
-        #textarea { z-index: 2; outline: none; color: #1e293b; background: transparent; }
-        #highlight-layer { z-index: 1; pointer-events: none; color: transparent !important; }
-        
-        /* Masquer la scrollbar du calque de fond pour éviter les décalages horizontaux */
-        #highlight-layer::-webkit-scrollbar { display: none; }
-        #highlight-layer { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* RESET DES MARGES : Indispensable pour que les blocs H1, P, etc. s'alignent */
-        #textarea h1, #highlight-layer h1 { font-size: 2em; font-weight: 800; margin: 0 0 1rem 0; line-height: 1.2; }
-        #textarea h2, #highlight-layer h2 { font-size: 1.5em; font-weight: 700; margin: 1rem 0 0.5rem 0; line-height: 1.3; }
-        #textarea p, #highlight-layer p { margin: 0 0 1rem 0; }
-        #textarea ul, #highlight-layer ul { list-style-type: disc; padding-left: 20px; margin-bottom: 1rem; }
-        #textarea ol, #highlight-layer ol { list-style-type: decimal; padding-left: 20px; margin-bottom: 1rem; }
-        #textarea a, #highlight-layer a { color: var(--accent-color); text-decoration: underline; }
-
-        mark { background: none; color: inherit; border-radius: 2px; }
-        .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); }
-        .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; }
+        .sync-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 30px; white-space: pre-wrap; word-wrap: break-word; overflow-y: auto; border: none; margin: 0; background: transparent; }
+        #textarea { color: transparent; caret-color: #1e293b; z-index: 2; resize: none; outline: none; }
+        #highlight-layer { z-index: 1; pointer-events: none; color: #1e293b; }
+        mark { background: none; color: inherit; }
+        .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); border-radius: 2px; }
+        .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; border-radius: 2px; }
         mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; font-weight: 600; }
-        
         .sidebar-item { cursor: pointer; transition: all 0.2s; }
         .sidebar-item:hover { background-color: rgba(255,255,255,0.1); }
         .sidebar-item.active-focus { border: 1px solid var(--focus-color); background-color: rgba(240, 46, 101, 0.2) !important; }
-        
         body.dark-mode { background-color: #0f172a; color: #f1f5f9; }
         .dark-mode .bg-white { background-color: #1e293b; border-color: #334155; }
         .dark-mode .text-slate-900 { color: #f8fafc; }
         .dark-mode .text-slate-500 { color: #94a3b8; }
         .dark-mode .border-slate-200 { border-color: #334155; }
-        .dark-mode #textarea { color: #e2e8f0; }
-        
+        .dark-mode #highlight-layer { color: #e2e8f0 !important; }
+        .dark-mode #textarea { caret-color: #ffffff; }
         .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
         .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--accent-color); }
         input:checked + .slider:before { transform: translateX(14px); }
-        
-        /* Toolbar style */
-        .toolbar-group { display: flex; gap: 2px; background: #f8fafc; padding: 4px; border-radius: 10px; border: 1px solid #e2e8f0; }
-        .dark-mode .toolbar-group { background: #1e293b; border-color: #334155; }
-        .toolbar-btn { padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; transition: all 0.2s; color: #475569; }
-        .dark-mode .toolbar-btn { color: #94a3b8; }
-        .toolbar-btn:hover { background: var(--accent-color); color: white; }
-        .toolbar-btn.active { background: var(--accent-soft); color: var(--accent-color); }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark-mode ::-webkit-scrollbar-thumb { background: #475569; }
     </style>
 </head>
 <body class="text-slate-800 bg-slate-50">
@@ -107,6 +61,7 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-4">
+                <!-- Bouton Connexion -->
                 <button id="auth-btn" onclick="handleAuth()" class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold shadow-sm hover:scale-105 transition">
                     <span id="auth-btn-text">Se connecter (Cloud)</span>
                 </button>
@@ -148,40 +103,10 @@
             </div>
 
             <div class="lg:col-span-8 space-y-4">
-                <!-- TOOLBAR ENRICHIE -->
-                <div class="flex flex-wrap gap-3 items-center">
-                    <div class="toolbar-group">
-                        <button onclick="format('bold')" class="toolbar-btn" title="Gras">B</button>
-                        <button onclick="format('italic')" class="toolbar-btn" title="Italique">I</button>
-                        <button onclick="format('underline')" class="toolbar-btn" title="Souligné">U</button>
-                        <button onclick="format('strikeThrough')" class="toolbar-btn" title="Barré">S</button>
-                    </div>
-                    <div class="toolbar-group">
-                        <button onclick="format('formatBlock', 'h1')" class="toolbar-btn">H1</button>
-                        <button onclick="format('formatBlock', 'h2')" class="toolbar-btn">H2</button>
-                        <button onclick="format('formatBlock', 'p')" class="toolbar-btn">P</button>
-                    </div>
-                    <div class="toolbar-group">
-                        <button onclick="format('justifyLeft')" class="toolbar-btn">⫷</button>
-                        <button onclick="format('justifyCenter')" class="toolbar-btn">〓</button>
-                        <button onclick="format('justifyRight')" class="toolbar-btn">⫸</button>
-                    </div>
-                    <div class="toolbar-group">
-                        <button onclick="format('insertUnorderedList')" class="toolbar-btn">• List</button>
-                        <button onclick="format('insertOrderedList')" class="toolbar-btn">1. List</button>
-                    </div>
-                    <div class="toolbar-group">
-                        <button onclick="addLink()" class="toolbar-btn">Link</button>
-                        <input type="color" onchange="format('foreColor', this.value)" class="w-8 h-8 border-none cursor-pointer bg-transparent">
-                    </div>
-                    <button onclick="format('removeFormat')" class="toolbar-btn bg-red-50 dark:bg-red-900/20 text-red-500">Effacer tout</button>
-                </div>
-
                 <div id="editor-wrapper" class="editor-container border border-slate-200 shadow-sm overflow-hidden bg-white show-parasites show-repeats">
                     <div id="highlight-layer" class="sync-text editor-font"></div>
-                    <div id="textarea" class="sync-text editor-font" contenteditable="true" spellcheck="false"></div>
+                    <textarea id="textarea" class="sync-text editor-font" placeholder="Commencez à écrire..." spellcheck="false"></textarea>
                 </div>
-
                 <div class="flex gap-4">
                     <button onclick="copyText()" class="bg-[var(--accent-color)] text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition">Copier</button>
                     <button onclick="downloadText()" class="bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition">Exporter .txt</button>
@@ -199,7 +124,7 @@
     </div>
 
     <script>
-        // CONFIGURATION FIREBASE
+        // CONFIGURATION FIREBASE UTILISATEUR
         const firebaseConfig = {
             apiKey: "AIzaSyCPI5JRtaODgMbhpvmb5jJ9pGaEOFms8sI",
             authDomain: "script-p-6c6df.firebaseapp.com",
@@ -220,53 +145,67 @@
         let currentUser = null;
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
+        const editorWrapper = document.getElementById('editor-wrapper');
 
-        // FONCTIONS DE FORMATAGE
-        function format(command, value = null) {
-            document.execCommand(command, false, value);
-            textarea.focus();
-            process();
-        }
-
-        function addLink() {
-            const url = prompt("Entrez l'URL :");
-            if (url) format('createLink', url);
-        }
-
-        // AUTH & SYNC (Comme précédemment)
+        // GESTION AUTHENTIFICATION
         function handleAuth() {
-            if (currentUser) auth.signOut();
-            else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+            if (currentUser) {
+                auth.signOut();
+            } else {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                auth.signInWithPopup(provider);
+            }
         }
 
         auth.onAuthStateChanged(user => {
             currentUser = user;
+            const btnText = document.getElementById('auth-btn-text');
+            const display = document.getElementById('user-display');
             if (user) {
-                document.getElementById('auth-btn-text').innerText = "Se déconnecter";
-                document.getElementById('user-display').innerText = "Connecté : " + user.displayName;
-                db.collection('users').doc(user.uid).get().then(doc => { if (doc.exists) { textarea.innerHTML = doc.data().content; process(); } });
+                btnText.innerText = "Se déconnecter";
+                display.innerText = "Connecté : " + user.displayName;
+                // Charger le texte depuis le cloud
+                db.collection('users').doc(user.uid).get().then(doc => {
+                    if (doc.exists) {
+                        textarea.value = doc.data().content;
+                        process();
+                    }
+                });
             } else {
-                document.getElementById('auth-btn-text').innerText = "Se connecter (Cloud)";
-                document.getElementById('user-display').innerText = "Mode Local";
+                btnText.innerText = "Se connecter (Cloud)";
+                display.innerText = "Mode Local";
             }
         });
 
+        // SAUVEGARDE (Local + Cloud)
+        let saveTimeout;
         function autoSave() {
-            const content = textarea.innerHTML;
-            localStorage.setItem('purge-content-html', content);
-            if (currentUser) {
-                db.collection('users').doc(currentUser.uid).set({ content: content, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() });
-                const status = document.getElementById('save-status');
-                status.style.opacity = '1';
-                setTimeout(() => status.style.opacity = '0', 2000);
-            }
+            const content = textarea.value;
+            localStorage.setItem('purge-content', content);
+            
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                if (currentUser) {
+                    db.collection('users').doc(currentUser.uid).set({
+                        content: content,
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    }).then(() => {
+                        const status = document.getElementById('save-status');
+                        status.style.opacity = '1';
+                        setTimeout(() => status.style.opacity = '0', 2000);
+                    });
+                }
+            }, 1000);
         }
 
-        // ANALYSE
+        // LE RESTE DE LA LOGIQUE (Identique à votre demande)
         function process() {
-            const text = textarea.innerText;
+            const text = textarea.value;
             const showP = document.getElementById('toggle-parasites').checked;
             const showR = document.getElementById('toggle-repeats').checked;
+
+            editorWrapper.classList.toggle('show-parasites', showP);
+            editorWrapper.classList.toggle('show-repeats', showR);
 
             let parasiteIndices = new Set();
             let parasiteCounts = {};
@@ -313,42 +252,45 @@
                 }
             }
 
-            highlightLayer.innerHTML = injectMarksIntoHTML(textarea.innerHTML, parasiteIndices, badRepeatIndices, focusIndices);
+            let finalHtml = "";
+            let i = 0;
+            while (i < text.length) {
+                if (focusIndices.has(i)) {
+                    finalHtml += `<mark class="focus-active">`;
+                    while (i < text.length && focusIndices.has(i)) {
+                        finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        i++;
+                    }
+                    finalHtml += `</mark>`;
+                } else if (parasiteIndices.has(i)) {
+                    finalHtml += `<mark class="parasite">`;
+                    while (i < text.length && parasiteIndices.has(i)) {
+                        finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        i++;
+                    }
+                    finalHtml += `</mark>`;
+                } else if (badRepeatIndices.has(i)) {
+                    finalHtml += `<mark class="repeat">`;
+                    while (i < text.length && badRepeatIndices.has(i)) {
+                        finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        i++;
+                    }
+                    finalHtml += `</mark>`;
+                } else {
+                    finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    i++;
+                }
+            }
+
+            highlightLayer.innerHTML = finalHtml + (text.endsWith('\n') ? '\n ' : '');
             document.getElementById('total-parasites').innerText = totalParasites;
             document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
             document.getElementById('total-words').innerText = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
             document.getElementById('focus-display').innerText = activeFocusWord || "Aucun";
             
             updateSidebars(parasiteCounts, repeatCounts);
+            syncScroll();
             autoSave();
-        }
-
-        function injectMarksIntoHTML(html, pIdx, rIdx, fIdx) {
-            let tempDiv = document.createElement('div');
-            tempDiv.innerHTML = html;
-            let charIndex = 0;
-
-            function traverse(node) {
-                if (node.nodeType === 3) {
-                    let newHtml = "";
-                    let val = node.nodeValue;
-                    for (let i = 0; i < val.length; i++) {
-                        let cls = "";
-                        if (fIdx.has(charIndex)) cls = "focus-active";
-                        else if (pIdx.has(charIndex)) cls = "parasite";
-                        else if (rIdx.has(charIndex)) cls = "repeat";
-                        newHtml += cls ? `<mark class="${cls}">${val[i]}</mark>` : val[i];
-                        charIndex++;
-                    }
-                    let span = document.createElement('span');
-                    span.innerHTML = newHtml;
-                    node.parentNode.replaceChild(span, node);
-                } else {
-                    for (let i = 0; i < node.childNodes.length; i++) traverse(node.childNodes[i]);
-                }
-            }
-            traverse(tempDiv);
-            return tempDiv.innerHTML;
         }
 
         function updateSidebars(pCounts, rCounts) {
@@ -360,37 +302,42 @@
 
         function toggleFocus(word) { activeFocusWord = (activeFocusWord === word) ? null : word; process(); }
         function downloadText() {
-            const blob = new Blob([textarea.innerText], { type: 'text/plain' });
+            const blob = new Blob([textarea.value], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url; a.download = `script.txt`; a.click();
+            a.href = url;
+            a.download = `script-${new Date().toLocaleDateString()}.txt`;
+            a.click();
         }
-        function copyText() { navigator.clipboard.writeText(textarea.innerText); }
-        function clearText() { if(confirm("Effacer ?")) { textarea.innerHTML = ''; process(); } }
+        function syncScroll() { highlightLayer.scrollTop = textarea.scrollTop; }
+        function copyText() { navigator.clipboard.writeText(textarea.value); }
+        function clearText() { if(confirm("Effacer tout le texte ?")) { textarea.value = ''; process(); } }
         function toggleDarkMode() {
             document.body.classList.toggle('dark-mode');
             localStorage.setItem('purge-dark', document.body.classList.contains('dark-mode'));
         }
 
         window.onload = () => {
-            const themes = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#2563eb', '#6366f1', '#d946ef'];
+            const themes = [
+                { hex: '#ef4444' }, { hex: '#f97316' }, { hex: '#eab308' }, { hex: '#22c55e' }, 
+                { hex: '#10b981' }, { hex: '#2563eb' }, { hex: '#06b6d4' }, { hex: '#0ea5e9' }, 
+                { hex: '#6366f1' }, { hex: '#d946ef' }, { hex: '#f43f5e' }
+            ];
             themes.forEach(t => {
                 const b = document.createElement('button');
                 b.className = 'w-5 h-5 rounded-full border border-white/20 hover:scale-125 transition';
-                b.style.backgroundColor = t;
-                b.onclick = () => { document.documentElement.style.setProperty('--accent-color', t); process(); };
+                b.style.backgroundColor = t.hex;
+                b.onclick = () => {
+                    document.documentElement.style.setProperty('--accent-color', t.hex);
+                    document.documentElement.style.setProperty('--accent-soft', t.hex + '26');
+                    process();
+                };
                 document.getElementById('theme-picker').appendChild(b);
             });
             if(localStorage.getItem('purge-dark') === 'true') toggleDarkMode();
-            textarea.innerHTML = localStorage.getItem('purge-content-html') || "";
+            textarea.value = localStorage.getItem('purge-content') || "";
             textarea.addEventListener('input', process);
-            
-            // Correction synchro scroll (Vertical + Horizontal)
-            textarea.addEventListener('scroll', () => {
-                highlightLayer.scrollTop = textarea.scrollTop;
-                highlightLayer.scrollLeft = textarea.scrollLeft;
-            });
-            
+            textarea.addEventListener('scroll', syncScroll);
             process();
         };
     </script>
