@@ -1,3 +1,4 @@
+--- START OF FILE index.html ---
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -18,18 +19,18 @@
         .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.6; }
         .editor-container { position: relative; min-height: 600px; border-radius: 1.5rem; background: white; }
         
-        /* Conteneurs synchronisés */
         .sync-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 30px; white-space: pre-wrap; word-wrap: break-word; overflow-y: auto; border: none; margin: 0; background: transparent; }
         
-        /* L'éditeur (div éditable) */
-        #textarea { z-index: 2; outline: none; color: inherit; }
-        /* Masquer la couleur du texte dans l'éditeur pour voir les couleurs du calque en-dessous, 
-           MAIS laisser voir le gras/italique */
-        #textarea { color: #1e293b; background: transparent; }
-        
-        /* Le calque de couleur (en-dessous) */
+        #textarea { z-index: 2; outline: none; color: #1e293b; background: transparent; }
         #highlight-layer { z-index: 1; pointer-events: none; color: transparent !important; }
         
+        /* Styles des éléments dans l'éditeur */
+        #textarea h1 { font-size: 2em; font-weight: 800; }
+        #textarea h2 { font-size: 1.5em; font-weight: 700; }
+        #textarea ul { list-style-type: disc; padding-left: 20px; }
+        #textarea ol { list-style-type: decimal; padding-left: 20px; }
+        #textarea a { color: var(--accent-color); text-decoration: underline; }
+
         mark { background: none; color: inherit; }
         .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); border-radius: 2px; }
         .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; border-radius: 2px; }
@@ -54,9 +55,12 @@
         input:checked + .slider:before { transform: translateX(14px); }
         
         /* Toolbar style */
-        .toolbar-btn { padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 13px; transition: all 0.2s; background: #f1f5f9; color: #475569; }
-        .dark-mode .toolbar-btn { background: #334155; color: #cbd5e1; }
+        .toolbar-group { display: flex; gap: 2px; background: #f8fafc; padding: 4px; border-radius: 10px; border: 1px solid #e2e8f0; }
+        .dark-mode .toolbar-group { background: #1e293b; border-color: #334155; }
+        .toolbar-btn { padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; transition: all 0.2s; color: #475569; }
+        .dark-mode .toolbar-btn { color: #94a3b8; }
         .toolbar-btn:hover { background: var(--accent-color); color: white; }
+        .toolbar-btn.active { background: var(--accent-soft); color: var(--accent-color); }
     </style>
 </head>
 <body class="text-slate-800 bg-slate-50">
@@ -116,18 +120,37 @@
             </div>
 
             <div class="lg:col-span-8 space-y-4">
-                <!-- TOOLBAR DE FORMATAGE -->
-                <div class="flex gap-2 bg-white dark:bg-slate-800 p-2 rounded-2xl border border-slate-200 shadow-sm">
-                    <button onclick="format('bold')" class="toolbar-btn" title="Gras">B</button>
-                    <button onclick="format('italic')" class="toolbar-btn" title="Italique">I</button>
-                    <button onclick="format('underline')" class="toolbar-btn" title="Souligné">U</button>
-                    <div class="w-[1px] bg-slate-200 dark:bg-slate-700 mx-1"></div>
-                    <button onclick="format('removeFormat')" class="toolbar-btn" title="Effacer formatage">×</button>
+                <!-- TOOLBAR ENRICHIE -->
+                <div class="flex flex-wrap gap-3 items-center">
+                    <div class="toolbar-group">
+                        <button onclick="format('bold')" class="toolbar-btn" title="Gras">B</button>
+                        <button onclick="format('italic')" class="toolbar-btn" title="Italique">I</button>
+                        <button onclick="format('underline')" class="toolbar-btn" title="Souligné">U</button>
+                        <button onclick="format('strikeThrough')" class="toolbar-btn" title="Barré">S</button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button onclick="format('formatBlock', 'h1')" class="toolbar-btn">H1</button>
+                        <button onclick="format('formatBlock', 'h2')" class="toolbar-btn">H2</button>
+                        <button onclick="format('formatBlock', 'p')" class="toolbar-btn">P</button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button onclick="format('justifyLeft')" class="toolbar-btn">⫷</button>
+                        <button onclick="format('justifyCenter')" class="toolbar-btn">〓</button>
+                        <button onclick="format('justifyRight')" class="toolbar-btn">⫸</button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button onclick="format('insertUnorderedList')" class="toolbar-btn">• List</button>
+                        <button onclick="format('insertOrderedList')" class="toolbar-btn">1. List</button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button onclick="addLink()" class="toolbar-btn">Link</button>
+                        <input type="color" onchange="format('foreColor', this.value)" class="w-8 h-8 border-none cursor-pointer bg-transparent">
+                    </div>
+                    <button onclick="format('removeFormat')" class="toolbar-btn bg-red-50 dark:bg-red-900/20 text-red-500">Effacer tout</button>
                 </div>
 
                 <div id="editor-wrapper" class="editor-container border border-slate-200 shadow-sm overflow-hidden bg-white show-parasites show-repeats">
                     <div id="highlight-layer" class="sync-text editor-font"></div>
-                    <!-- CHANGÉ : textarea -> div contenteditable -->
                     <div id="textarea" class="sync-text editor-font" contenteditable="true" spellcheck="false"></div>
                 </div>
 
@@ -169,70 +192,53 @@
         let currentUser = null;
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
-        const editorWrapper = document.getElementById('editor-wrapper');
 
-        // FONCTION DE FORMATAGE
-        function format(command) {
-            document.execCommand(command, false, null);
+        // FONCTIONS DE FORMATAGE
+        function format(command, value = null) {
+            document.execCommand(command, false, value);
             textarea.focus();
             process();
         }
 
-        // AUTHENTIFICATION
+        function addLink() {
+            const url = prompt("Entrez l'URL :");
+            if (url) format('createLink', url);
+        }
+
+        // AUTH & SYNC (Comme précédemment)
         function handleAuth() {
-            if (currentUser) { auth.signOut(); } 
-            else { const provider = new firebase.auth.GoogleAuthProvider(); auth.signInWithPopup(provider); }
+            if (currentUser) auth.signOut();
+            else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
         }
 
         auth.onAuthStateChanged(user => {
             currentUser = user;
-            const btnText = document.getElementById('auth-btn-text');
-            const display = document.getElementById('user-display');
             if (user) {
-                btnText.innerText = "Se déconnecter";
-                display.innerText = "Connecté : " + user.displayName;
-                db.collection('users').doc(user.uid).get().then(doc => {
-                    if (doc.exists) {
-                        textarea.innerHTML = doc.data().content;
-                        process();
-                    }
-                });
+                document.getElementById('auth-btn-text').innerText = "Se déconnecter";
+                document.getElementById('user-display').innerText = "Connecté : " + user.displayName;
+                db.collection('users').doc(user.uid).get().then(doc => { if (doc.exists) { textarea.innerHTML = doc.data().content; process(); } });
             } else {
-                btnText.innerText = "Se connecter (Cloud)";
-                display.innerText = "Mode Local";
+                document.getElementById('auth-btn-text').innerText = "Se connecter (Cloud)";
+                document.getElementById('user-display').innerText = "Mode Local";
             }
         });
 
-        // SAUVEGARDE
-        let saveTimeout;
         function autoSave() {
             const content = textarea.innerHTML;
             localStorage.setItem('purge-content-html', content);
-            
-            clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => {
-                if (currentUser) {
-                    db.collection('users').doc(currentUser.uid).set({
-                        content: content,
-                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                    }).then(() => {
-                        const status = document.getElementById('save-status');
-                        status.style.opacity = '1';
-                        setTimeout(() => status.style.opacity = '0', 2000);
-                    });
-                }
-            }, 1000);
+            if (currentUser) {
+                db.collection('users').doc(currentUser.uid).set({ content: content, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() });
+                const status = document.getElementById('save-status');
+                status.style.opacity = '1';
+                setTimeout(() => status.style.opacity = '0', 2000);
+            }
         }
 
-        // ANALYSE ET SURBRILLANCE
+        // ANALYSE
         function process() {
-            // On récupère le texte pur pour l'analyse logicielle
             const text = textarea.innerText;
             const showP = document.getElementById('toggle-parasites').checked;
             const showR = document.getElementById('toggle-repeats').checked;
-
-            editorWrapper.classList.toggle('show-parasites', showP);
-            editorWrapper.classList.toggle('show-repeats', showR);
 
             let parasiteIndices = new Set();
             let parasiteCounts = {};
@@ -279,33 +285,7 @@
                 }
             }
 
-            // RECONSTRUCTION DU HTML DE SURBRILLANCE
-            // On utilise l'innerText pour la structure, mais on doit conserver la mise en forme visuelle
-            // La solution ici est de reconstruire le HTML du calque pour qu'il ait la même largeur que le texte édité
-            let finalHtml = "";
-            let i = 0;
-            while (i < text.length) {
-                let char = text[i];
-                let markClass = "";
-                
-                if (focusIndices.has(i)) markClass = "focus-active";
-                else if (parasiteIndices.has(i)) markClass = "parasite";
-                else if (badRepeatIndices.has(i)) markClass = "repeat";
-
-                let escapedChar = char.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                
-                if (markClass) {
-                    finalHtml += `<mark class="${markClass}">${escapedChar}</mark>`;
-                } else {
-                    finalHtml += escapedChar;
-                }
-                i++;
-            }
-
-            // Synchroniser le calque avec le HTML de l'éditeur pour conserver le gras/italique dans l'alignement
-            // On injecte le même HTML structurel mais avec nos balises <mark>
             highlightLayer.innerHTML = injectMarksIntoHTML(textarea.innerHTML, parasiteIndices, badRepeatIndices, focusIndices);
-
             document.getElementById('total-parasites').innerText = totalParasites;
             document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
             document.getElementById('total-words').innerText = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
@@ -315,14 +295,13 @@
             autoSave();
         }
 
-        // Fonction complexe pour réinjecter les marques dans du HTML sans casser les balises
         function injectMarksIntoHTML(html, pIdx, rIdx, fIdx) {
             let tempDiv = document.createElement('div');
             tempDiv.innerHTML = html;
             let charIndex = 0;
 
             function traverse(node) {
-                if (node.nodeType === 3) { // Texte
+                if (node.nodeType === 3) {
                     let newHtml = "";
                     let val = node.nodeValue;
                     for (let i = 0; i < val.length; i++) {
@@ -330,18 +309,14 @@
                         if (fIdx.has(charIndex)) cls = "focus-active";
                         else if (pIdx.has(charIndex)) cls = "parasite";
                         else if (rIdx.has(charIndex)) cls = "repeat";
-                        
-                        let c = val[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                        newHtml += cls ? `<mark class="${cls}">${c}</mark>` : c;
+                        newHtml += cls ? `<mark class="${cls}">${val[i]}</mark>` : val[i];
                         charIndex++;
                     }
                     let span = document.createElement('span');
                     span.innerHTML = newHtml;
                     node.parentNode.replaceChild(span, node);
                 } else {
-                    for (let i = 0; i < node.childNodes.length; i++) {
-                        traverse(node.childNodes[i]);
-                    }
+                    for (let i = 0; i < node.childNodes.length; i++) traverse(node.childNodes[i]);
                 }
             }
             traverse(tempDiv);
@@ -360,39 +335,28 @@
             const blob = new Blob([textarea.innerText], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url;
-            a.download = `script-${new Date().toLocaleDateString()}.txt`;
-            a.click();
+            a.href = url; a.download = `script.txt`; a.click();
         }
-        function syncScroll() { highlightLayer.scrollTop = textarea.scrollTop; }
         function copyText() { navigator.clipboard.writeText(textarea.innerText); }
-        function clearText() { if(confirm("Effacer tout le texte ?")) { textarea.innerHTML = ''; process(); } }
+        function clearText() { if(confirm("Effacer ?")) { textarea.innerHTML = ''; process(); } }
         function toggleDarkMode() {
             document.body.classList.toggle('dark-mode');
             localStorage.setItem('purge-dark', document.body.classList.contains('dark-mode'));
         }
 
         window.onload = () => {
-            const themes = [
-                { hex: '#ef4444' }, { hex: '#f97316' }, { hex: '#eab308' }, { hex: '#22c55e' }, 
-                { hex: '#10b981' }, { hex: '#2563eb' }, { hex: '#06b6d4' }, { hex: '#0ea5e9' }, 
-                { hex: '#6366f1' }, { hex: '#d946ef' }, { hex: '#f43f5e' }
-            ];
+            const themes = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#2563eb', '#6366f1', '#d946ef'];
             themes.forEach(t => {
                 const b = document.createElement('button');
                 b.className = 'w-5 h-5 rounded-full border border-white/20 hover:scale-125 transition';
-                b.style.backgroundColor = t.hex;
-                b.onclick = () => {
-                    document.documentElement.style.setProperty('--accent-color', t.hex);
-                    document.documentElement.style.setProperty('--accent-soft', t.hex + '26');
-                    process();
-                };
+                b.style.backgroundColor = t;
+                b.onclick = () => { document.documentElement.style.setProperty('--accent-color', t); process(); };
                 document.getElementById('theme-picker').appendChild(b);
             });
             if(localStorage.getItem('purge-dark') === 'true') toggleDarkMode();
             textarea.innerHTML = localStorage.getItem('purge-content-html') || "";
             textarea.addEventListener('input', process);
-            textarea.addEventListener('scroll', syncScroll);
+            textarea.addEventListener('scroll', () => highlightLayer.scrollTop = textarea.scrollTop);
             process();
         };
     </script>
