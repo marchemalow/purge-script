@@ -284,9 +284,8 @@
                 }
             }
 
-            // CORRECTION: Utiliser le texte brut pour la couche de surlignage afin d'éviter le décalage
-            highlightLayer.innerHTML = injectMarksIntoHTML(text, parasiteIndices, badRepeatIndices, focusIndices);
-
+            highlightLayer.innerHTML = injectMarksIntoHTML(textarea, parasiteIndices, badRepeatIndices, focusIndices);
+            
             document.getElementById('total-parasites').innerText = totalParasites;
             document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
             document.getElementById('total-words').innerText = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
@@ -296,28 +295,42 @@
             autoSave();
         }
 
-        // CORRECTION: Fonction remplacée pour une meilleure synchronisation
-        function injectMarksIntoHTML(text, pIdx, rIdx, fIdx) {
-            let highlightedHtml = '';
-            for (let i = 0; i < text.length; i++) {
-                let char = text[i];
-                
-                if (char === '<') char = '&lt;';
-                if (char === '>') char = '&gt;';
-                if (char === '&') char = '&amp;';
+        function injectMarksIntoHTML(sourceElement, pIdx, rIdx, fIdx) {
+            const clone = sourceElement.cloneNode(true);
+            let charIndex = 0;
 
-                let cls = '';
-                if (fIdx.has(i)) cls = 'focus-active';
-                else if (pIdx.has(i)) cls = 'parasite';
-                else if (rIdx.has(i)) cls = 'repeat';
+            function traverse(node) {
+                if (node.nodeType === 3) { 
+                    let newHtml = "";
+                    const text = node.nodeValue;
+                    for (let i = 0; i < text.length; i++) {
+                        const globalIndex = charIndex + i;
+                        let cls = "";
+                        if (fIdx.has(globalIndex)) cls = "focus-active";
+                        else if (pIdx.has(globalIndex)) cls = "parasite";
+                        else if (rIdx.has(globalIndex)) cls = "repeat";
+                        
+                        let char = text[i];
+                        if (char === '<') char = '&lt;';
+                        if (char === '>') char = '&gt;';
+                        if (char === '&') char = '&amp;';
+                        
+                        newHtml += cls ? `<mark class="${cls}">${char}</mark>` : char;
+                    }
 
-                if (cls) {
-                    highlightedHtml += `<mark class="${cls}">${char}</mark>`;
-                } else {
-                    highlightedHtml += char;
+                    const span = document.createElement('span');
+                    span.innerHTML = newHtml;
+                    node.parentNode.replaceChild(span, node);
+                    
+                    charIndex += text.length;
+
+                } else if (node.nodeType === 1 && node.childNodes.length > 0) {
+                    Array.from(node.childNodes).forEach(traverse);
                 }
             }
-            return highlightedHtml + ' ';
+
+            traverse(clone);
+            return clone.innerHTML;
         }
 
         function updateSidebars(pCounts, rCounts) {
