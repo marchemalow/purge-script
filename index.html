@@ -3,103 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Purge-Script Pro | Cloud Edition</title>
+    <title>Purge-Script Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
     
-    <!-- Firebase SDK Compat -->
+    <!-- Firebase SDK Compat (optional) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
     <style>
-        :root { --accent-color: #6366f1; --accent-soft: rgba(99, 102, 241, 0.15); --focus-color: #f02e65; }
-        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease; }
-        .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.6; }
+        :root { 
+            --accent-color: #6366f1; /* Indigo default */
+            --accent-soft: rgba(99, 102, 241, 0.15); 
+        }
+        body { 
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.7; }
         .editor-container { position: relative; min-height: 600px; border-radius: 1.5rem; }
         
-        .sync-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 30px; white-space: pre-wrap; word-wrap: break-word; overflow-y: auto; border: none; margin: 0; background: transparent; }
+        .sync-text { 
+            position: absolute; top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            padding: 30px; 
+            white-space: pre-wrap; 
+            word-wrap: break-word; 
+            overflow-y: auto; 
+            border: none; margin: 0; 
+            background: transparent; 
+        }
         
         #textarea { z-index: 2; outline: none; background: transparent; }
         #highlight-layer { z-index: 1; pointer-events: none; color: transparent !important; }
         
-        /* Styles des éléments dans l'éditeur */
-        #textarea h1 { font-size: 2em; font-weight: 800; }
-        #textarea h2 { font-size: 1.5em; font-weight: 700; }
-        #textarea ul { list-style-type: disc; padding-left: 20px; }
-        #textarea ol { list-style-type: decimal; padding-left: 20px; }
-        #textarea a { color: var(--accent-color); text-decoration: underline; }
-
-        mark { background: none; color: inherit; }
-        .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); border-radius: 2px; padding-bottom: 1px; }
-        .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; border-radius: 2px; padding-bottom: 1px; }
-        mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; font-weight: 600; padding-bottom: 1px; }
+        mark {
+            background: none;
+            color: inherit;
+            border-radius: 4px;
+        }
+        .show-parasites mark.parasite, .show-parasites mark.focus-active {
+            background-color: var(--accent-soft);
+            background-image: linear-gradient(var(--accent-color), var(--accent-color));
+            background-repeat: no-repeat;
+            background-position: 0 100%;
+            background-size: 100% 2px;
+        }
+        .show-repeats mark.repeat {
+            background-color: rgba(245, 158, 11, 0.15);
+            background-image: linear-gradient(#f59e0b, #f59e0b);
+            background-repeat: no-repeat;
+            background-position: 0 100%;
+            background-size: 100% 2px;
+        }
+        mark.focus-active { font-weight: 600; }
         
         .sidebar-item { cursor: pointer; transition: all 0.2s; }
-        .sidebar-item:hover { background-color: rgba(255,255,255,0.1); }
-        .sidebar-item.active-focus { background-color: var(--focus-color) !important; color: white; }
+        .sidebar-item.active-focus { background-color: var(--accent-color) !important; color: white; }
         .sidebar-item.active-focus span { color: white !important; }
-        
-        /* DARK MODE STYLES */
-        body.dark-mode { background-color: #111827; color: #f1f5f9; }
+
+        /* --- STYLES LIGHT MODE (Base) --- */
+        body { background-color: #f9fafb; color: #1f2937; }
+        .panel-bg { background-color: #ffffff; border-color: #e5e7eb; }
+        .text-main { color: #111827; }
+        .text-soft { color: #6b7280; }
+        .border-color { border-color: #e5e7eb; }
+        #textarea { color: #1f2937; }
+        .toolbar-group { background: #f3f4f6; border: 1px solid #e5e7eb; }
+        .toolbar-btn { color: #4b5563; }
+        .toolbar-btn:hover { background: #e5e7eb; }
+        .sidebar-item:hover { background-color: #f3f4f6; }
+        .sidebar-item-bg { background-color: #f9fafb; }
+        .toolbar-btn-special { background: #fee2e2; color: #ef4444; }
+
+        /* --- STYLES DARK MODE (Overrides) --- */
+        .dark-mode body { background-color: #111827; color: #f1f5f9; }
         .dark-mode .panel-bg { background-color: #1f2937; border-color: #374151; }
         .dark-mode .text-main { color: #f8fafc; }
         .dark-mode .text-soft { color: #9ca3af; }
         .dark-mode .border-color { border-color: #374151; }
         .dark-mode #textarea { color: #e2e8f0; }
+        .dark-mode .toolbar-group { background: #374151; border: 1px solid #4b5563; }
+        .dark-mode .toolbar-btn { color: #d1d5db; }
+        .dark-mode .toolbar-btn:hover { background: #4b5563; }
+        .dark-mode .sidebar-item:hover { background-color: rgba(255,255,255,0.05); }
+        .dark-mode .sidebar-item-bg { background-color: #374151; }
+        .dark-mode .toolbar-btn-special { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
         
-        .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #4b5563; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--accent-color); }
-        input:checked + .slider:before { transform: translateX(14px); }
-        
-        .toolbar-group { display: flex; gap: 2px; background: #374151; padding: 4px; border-radius: 10px; border: 1px solid #4b5563; }
-        .toolbar-btn { padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 14px; transition: all 0.2s; color: #d1d5db; }
-        .toolbar-btn:hover { background: var(--accent-color); color: white; }
-        .toolbar-btn.active { background: var(--accent-soft); color: var(--accent-color); }
-        .toolbar-btn-special { background: #312e42; color: #be123c; }
+        .theme-btn.active-theme { border: 2px solid white; box-shadow: 0 0 0 2px var(--accent-color); }
     </style>
 </head>
-<body class="dark-mode">
+<body>
 
     <div class="max-w-7xl mx-auto px-6 py-10 space-y-8">
         
-        <!-- HEADER SIMPLIFIÉ -->
         <header class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <h1 class="text-3xl font-extrabold text-main tracking-tight">Purge-Script<span class="text-[var(--accent-color)]">.</span></h1>
-                <span id="save-status" class="text-[10px] uppercase font-bold text-green-500 opacity-0 transition-opacity">Synchronisé</span>
-            </div>
-            <!-- Contrôles masqués pour correspondre au design -->
-            <div class="hidden">
-                 <button id="auth-btn" onclick="handleAuth()"><span id="auth-btn-text">Se connecter</span></button>
-                 <span id="user-display">Mode Local</span>
+            <h1 class="text-3xl font-extrabold text-main tracking-tight">Purge-Script<span style="color: var(--accent-color);">.</span></h1>
+
+            <!-- NOUVEAU : Panneau de contrôle des thèmes -->
+            <div class="flex items-center gap-2 panel-bg p-2 rounded-full border border-color">
+                <div class="flex items-center gap-1.5" id="theme-picker"></div>
+                <div class="h-6 w-px bg-gray-200 dark:bg-gray-600 mx-1"></div>
+                <button onclick="toggleDarkMode()" class="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    <svg id="sun-icon" class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg>
+                    <svg id="moon-icon" class="w-5 h-5 text-indigo-300 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                </button>
             </div>
         </header>
 
-        <!-- CARTES DE STATS -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div class="panel-bg p-6 rounded-3xl border border-color">
-                <p class="text-soft text-xs font-bold uppercase mb-2 tracking-wider">Tics</p>
-                <p id="total-parasites" class="text-4xl font-extrabold text-indigo-400">0</p>
+                <p class="text-soft text-xs font-bold uppercase mb-2 tracking-wider">TICS</p>
+                <p id="total-parasites" class="text-4xl font-extrabold" style="color: var(--accent-color);">0</p>
             </div>
             <div class="panel-bg p-6 rounded-3xl border border-color">
-                <p class="text-soft text-xs font-bold uppercase mb-2 tracking-wider">Répétitions</p>
-                <p id="total-repeats" class="text-4xl font-extrabold text-amber-400">0</p>
+                <p class="text-soft text-xs font-bold uppercase mb-2 tracking-wider">RÉPÉTITIONS</p>
+                <p id="total-repeats" class="text-4xl font-extrabold text-amber-500 dark:text-amber-400">0</p>
             </div>
             <div class="panel-bg p-6 rounded-3xl border border-color">
-                <p class="text-soft text-xs font-bold uppercase mb-2 tracking-wider">Total Mots</p>
+                <p class="text-soft text-xs font-bold uppercase mb-2 tracking-wider">TOTAL MOTS</p>
                 <p id="total-words" class="text-4xl font-extrabold text-main">0</p>
             </div>
             <div class="panel-bg p-6 rounded-3xl border border-color">
-                <p class="text-soft text-xs font-bold uppercase mb-2 tracking-wider">Focus Actif</p>
+                <p class="text-soft text-xs font-bold uppercase mb-2 tracking-wider">FOCUS ACTIF</p>
                 <p id="focus-display" class="text-2xl font-extrabold text-soft truncate">Aucun</p>
             </div>
         </div>
 
-        <!-- TOOLBAR -->
         <div class="flex flex-wrap gap-3 items-center">
             <div class="toolbar-group">
                 <button onclick="format('bold')" class="toolbar-btn" title="Gras">B</button>
@@ -128,61 +159,35 @@
             <button onclick="format('removeFormat')" class="toolbar-btn toolbar-btn-special">Effacer tout</button>
         </div>
         
-        <!-- ZONE PRINCIPALE : ÉDITEUR ET SIDEBAR -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div class="lg:col-span-8 space-y-4">
+            <div class="lg:col-span-8">
                 <div id="editor-wrapper" class="editor-container panel-bg border border-color overflow-hidden show-parasites show-repeats">
                     <div id="highlight-layer" class="sync-text editor-font"></div>
                     <div id="textarea" class="sync-text editor-font" contenteditable="true" spellcheck="false"></div>
                 </div>
-
-                <div class="flex gap-4 items-center">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold uppercase text-soft">Tics</span>
-                        <label class="switch"><input type="checkbox" id="toggle-parasites" checked onchange="process()"><span class="slider"></span></label>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold uppercase text-soft">Répé.</span>
-                        <label class="switch"><input type="checkbox" id="toggle-repeats" checked onchange="process()"><span class="slider"></span></label>
-                    </div>
-                </div>
             </div>
 
-            <div class="lg:col-span-4 space-y-6">
-                <div class="panel-bg p-7 rounded-3xl border border-color space-y-8">
-                    <div>
-                        <h2 class="text-sm font-bold tracking-wider text-soft mb-4">TICS</h2>
-                        <ul id="word-list" class="space-y-2 text-sm max-h-52 overflow-y-auto pr-2"></ul>
-                    </div>
-                    <div>
-                        <h2 class="text-sm font-bold tracking-wider text-soft mb-4">RÉPÉTITIONS</h2>
-                        <ul id="repeat-list" class="space-y-2 text-sm max-h-52 overflow-y-auto pr-2"></ul>
-                    </div>
+            <div class="lg:col-span-4 space-y-8">
+                <div class="panel-bg p-7 rounded-3xl border border-color">
+                    <h2 class="text-sm font-bold tracking-wider text-soft mb-4">TICS</h2>
+                    <ul id="word-list" class="space-y-2 text-sm max-h-52 overflow-y-auto pr-2"></ul>
+                </div>
+                <div class="panel-bg p-7 rounded-3xl border border-color">
+                    <h2 class="text-sm font-bold tracking-wider text-soft mb-4">RÉPÉTITIONS</h2>
+                    <ul id="repeat-list" class="space-y-2 text-sm max-h-52 overflow-y-auto pr-2"></ul>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // CONFIGURATION FIREBASE
-        const firebaseConfig = {
-            apiKey: "AIzaSyCPI5JRtaODgMbhpvmb5jJ9pGaEOFms8sI",
-            authDomain: "script-p-6c6df.firebaseapp.com",
-            projectId: "script-p-6c6df",
-            storageBucket: "script-p-6c6df.firebasestorage.app",
-            messagingSenderId: "792026086516",
-            appId: "1:792026086516:web:cf2882d0bd6e770db7a521"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        const firebaseConfig = { apiKey: "VOTRE_...", authDomain: "...", projectId: "..."};
+        //firebase.initializeApp(firebaseConfig);
 
         const parasiteDictionary = ["du coup", "en fait", "voilà", "un petit peu", "euh", "globalement", "concrètement", "effectivement", "donc", "c'est-à-dire", "au final", "disons que", "typiquement", "clairement", "tout simplement", "en gros", "pour le coup", "un peu", "voilà quoi", "tu vois", "franchement", "honnêtement", "en réalité", "pour ainsi dire", "alors", "en quelque sorte", "justement", "au niveau de", "quelque part", "on va dire", "fondamentalement", "véritablement", "pour ma part", "en soi", "entre guillemets", "si vous voulez", "de base", "sur la fin"];
         const stopWords = ["je", "me", "moi", "tu", "te", "toi", "il", "elle", "on", "nous", "vous", "ils", "elles", "le", "la", "les", "un", "une", "des", "du", "de", "ce", "cet", "cette", "ces", "se", "soi", "lui", "leur", "y", "en", "mon", "ton", "son", "ma", "ta", "sa", "mes", "tes", "ses", "notre", "votre", "nos", "vos", "leurs", "qui", "que", "quoi", "dont", "où", "quel", "quels", "quelle", "quelles", "et", "ou", "mais", "est", "sont", "pour", "dans", "par", "avec", "pas", "ne", "si", "ici", "là", "ont", "aux", "très"];
 
         let activeFocusWord = null;
-        let currentUser = null;
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
 
@@ -197,78 +202,35 @@
             if (url) format('createLink', url);
         }
 
-        function handleAuth() {
-            if (currentUser) auth.signOut();
-            else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
-        }
-
-        auth.onAuthStateChanged(user => {
-            currentUser = user;
-            const authBtnText = document.getElementById('auth-btn-text');
-            const userDisplay = document.getElementById('user-display');
-            if (user) {
-                if (authBtnText) authBtnText.innerText = "Se déconnecter";
-                if (userDisplay) userDisplay.innerText = "Connecté : " + user.displayName;
-                db.collection('users').doc(user.uid).get().then(doc => { if (doc.exists) { textarea.innerHTML = doc.data().content; process(); } });
-            } else {
-                if (authBtnText) authBtnText.innerText = "Se connecter (Cloud)";
-                if (userDisplay) userDisplay.innerText = "Mode Local";
-            }
-        });
-
-        function autoSave() {
-            const content = textarea.innerHTML;
-            localStorage.setItem('purge-content-html', content);
-            if (currentUser) {
-                db.collection('users').doc(currentUser.uid).set({ content: content, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() });
-                const status = document.getElementById('save-status');
-                status.style.opacity = '1';
-                setTimeout(() => status.style.opacity = '0', 2000);
-            }
-        }
-
         function process() {
             const text = textarea.innerText;
-            
-            let parasiteIndices = new Set();
-            let parasiteCounts = {};
-            let totalParasites = 0;
-
-            if (document.getElementById('toggle-parasites').checked) {
-                parasiteDictionary.forEach(word => {
-                    const regex = new RegExp(`\\b(${word})\\b`, 'gi');
-                    let match;
-                    while ((match = regex.exec(text)) !== null) {
-                        totalParasites++;
-                        parasiteCounts[word.toLowerCase()] = (parasiteCounts[word.toLowerCase()] || 0) + 1;
-                        for (let i = 0; i < match[0].length; i++) parasiteIndices.add(match.index + i);
-                    }
-                });
-            }
+            let parasiteIndices = new Set(), parasiteCounts = {}, totalParasites = 0;
+            parasiteDictionary.forEach(word => {
+                const regex = new RegExp(`\\b(${word})\\b`, 'gi');
+                let match;
+                while ((match = regex.exec(text)) !== null) {
+                    totalParasites++;
+                    parasiteCounts[word.toLowerCase()] = (parasiteCounts[word.toLowerCase()] || 0) + 1;
+                    for (let i = 0; i < match[0].length; i++) parasiteIndices.add(match.index + i);
+                }
+            });
 
             const wordRegex = /[a-zA-ZàâäéèêëîïôöûüùçÀÂÄÉÈÊËÎÏÔÖÛÜÙÇ]{3,}/g;
-            let lastSeenAt = {}; 
-            let badRepeatIndices = new Set();
-            let repeatCounts = {};
-            let wordCounter = 0;
-            let totalRepeats = 0;
-
-            if (document.getElementById('toggle-repeats').checked) {
-                let match;
-                while ((match = wordRegex.exec(text)) !== null) {
-                    wordCounter++;
-                    const word = match[0].toLowerCase();
-                    if (!stopWords.includes(word) && !parasiteIndices.has(match.index)) {
-                        if (lastSeenAt[word] && (wordCounter - lastSeenAt[word].count <= 70)) {
-                            if (!repeatCounts[word]) totalRepeats++;
-                            repeatCounts[word] = (repeatCounts[word] || 1) + 1;
-                            for (let i = 0; i < word.length; i++) {
-                                badRepeatIndices.add(match.index + i);
-                                badRepeatIndices.add(lastSeenAt[word].pos + i);
-                            }
+            let lastSeenAt = {}, badRepeatIndices = new Set(), repeatCounts = {}, wordCounter = 0, totalRepeats = 0;
+            let match;
+            while ((match = wordRegex.exec(text)) !== null) {
+                wordCounter++;
+                const word = match[0].toLowerCase();
+                if (!stopWords.includes(word) && !parasiteIndices.has(match.index)) {
+                    if (lastSeenAt[word] && (wordCounter - lastSeenAt[word].count <= 70)) {
+                        if (!repeatCounts[word]) totalRepeats++;
+                        repeatCounts[word] = (repeatCounts[word] || 1) + 1;
+                        for (let i = 0; i < word.length; i++) {
+                            badRepeatIndices.add(match.index + i);
+                            badRepeatIndices.add(lastSeenAt[word].pos + i);
                         }
-                        lastSeenAt[word] = { count: wordCounter, pos: match.index };
                     }
+                    lastSeenAt[word] = { count: wordCounter, pos: match.index };
                 }
             }
 
@@ -280,9 +242,7 @@
                     for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i);
                 }
             }
-
             highlightLayer.innerHTML = injectMarksIntoHTML(textarea, parasiteIndices, badRepeatIndices, focusIndices);
-            
             document.getElementById('total-parasites').innerText = totalParasites;
             document.getElementById('total-repeats').innerText = totalRepeats;
             document.getElementById('total-words').innerText = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
@@ -290,9 +250,7 @@
             focusDisplay.innerText = activeFocusWord || "Aucun";
             focusDisplay.classList.toggle('text-soft', !activeFocusWord);
             focusDisplay.classList.toggle('text-main', !!activeFocusWord);
-            
             updateSidebars(parasiteCounts, repeatCounts);
-            autoSave();
         }
 
         function injectMarksIntoHTML(sourceElement, pIdx, rIdx, fIdx) {
@@ -329,8 +287,8 @@
         function updateSidebars(pCounts, rCounts) {
             const pList = document.getElementById('word-list');
             const rList = document.getElementById('repeat-list');
-            pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus('${w}')" class="sidebar-item ${activeFocusWord===w?'active-focus':''} flex justify-between items-center font-bold p-3 bg-slate-800/50 rounded-lg"><span>${w.toUpperCase()}</span><span class="text-indigo-400 font-black text-base">${c}</span></li>`).join('') || '<li class="text-soft text-sm">Aucun tic détecté.</li>';
-            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus('${w}')" class="sidebar-item ${activeFocusWord===w?'active-focus':''} flex justify-between items-center font-bold p-3 bg-slate-800/50 rounded-lg"><span>${w.toUpperCase()}</span><span class="text-amber-400 font-black text-base">${c}x</span></li>`).join('') || '<li class="text-soft text-sm">Aucune répétition détectée.</li>';
+            pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus('${w}')" class="sidebar-item sidebar-item-bg ${activeFocusWord===w?'active-focus':''} flex justify-between items-center font-bold p-3 rounded-lg"><span>${w.toUpperCase()}</span><span class="font-black text-base" style="color: var(--accent-color);">${c}</span></li>`).join('') || '<li class="text-soft text-sm">Aucun tic détecté.</li>';
+            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus('${w}')" class="sidebar-item sidebar-item-bg ${activeFocusWord===w?'active-focus':''} flex justify-between items-center font-bold p-3 rounded-lg"><span>${w.toUpperCase()}</span><span class="text-amber-500 dark:text-amber-400 font-black text-base">${c}x</span></li>`).join('') || '<li class="text-soft text-sm">Aucune répétition détectée.</li>';
         }
 
         function toggleFocus(word) { 
@@ -338,8 +296,58 @@
             process(); 
         }
 
+        function toggleDarkMode() {
+            const body = document.body;
+            body.classList.toggle('dark-mode');
+            localStorage.setItem('purge-dark-mode', body.classList.contains('dark-mode'));
+            document.getElementById('sun-icon').classList.toggle('hidden');
+            document.getElementById('moon-icon').classList.toggle('hidden');
+        }
+
+        function applyTheme(color) {
+            document.documentElement.style.setProperty('--accent-color', color);
+            const rgb = parseInt(color.substring(1), 16);
+            const r = (rgb >> 16) & 0xff;
+            const g = (rgb >> 8) & 0xff;
+            const b = (rgb >> 0) & 0xff;
+            document.documentElement.style.setProperty('--accent-soft', `rgba(${r}, ${g}, ${b}, 0.15)`);
+            localStorage.setItem('purge-theme-color', color);
+            
+            // Update active button style
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.toggle('active-theme', btn.dataset.color === color);
+            });
+            process(); // Re-process to apply new colors to highlights
+        }
+
         window.onload = () => {
-            textarea.innerHTML = localStorage.getItem('purge-content-html') || "En fait, je sais pas trop comment dire, mais genre c'est un peu toujours la même chose, tu vois, du coup je répète, je répète. Et en fait, c'est pas que j'ai rien à dire, c'est juste que, genre, les mots reviennent tout seuls, du coup voilà quoi, ça tourne un peu en boucle.<br><br>Genre tu commences une phrase, et en fait tu la finis pas vraiment, ou alors tu la refais, encore et encore, du coup ça donne un truc un peu bizarre, un peu répétitif, justement. Et puis voilà, tu te dis “bon, je vais arrêter”, mais en fait non, tu continues, tu continues. Du coup voilà, en fait, c'est ça le truc : ça revient, ça revient, ça revient, et genre tu t'en rends même plus compte. Et au final, en fait, t'as dit la même chose trois fois, voire quatre, voire cinq, mais du coup... ben voilà quoi.";
+            // Theme Picker setup
+            const themes = ['#6366f1', '#ef4444', '#f97316', '#eab308', '#22c55e', '#d946ef'];
+            const themePicker = document.getElementById('theme-picker');
+            themes.forEach(t => {
+                const b = document.createElement('button');
+                b.className = 'theme-btn w-5 h-5 rounded-full hover:scale-125 transition-transform';
+                b.style.backgroundColor = t;
+                b.dataset.color = t;
+                b.onclick = () => applyTheme(t);
+                themePicker.appendChild(b);
+            });
+
+            // Restore user preferences
+            const savedTheme = localStorage.getItem('purge-theme-color') || themes[0];
+            applyTheme(savedTheme);
+
+            const prefersDark = localStorage.getItem('purge-dark-mode') === 'true';
+            if (prefersDark) {
+                document.body.classList.add('dark-mode');
+                document.getElementById('sun-icon').classList.add('hidden');
+                document.getElementById('moon-icon').classList.remove('hidden');
+            } else {
+                document.getElementById('sun-icon').classList.remove('hidden');
+                document.getElementById('moon-icon').classList.add('hidden');
+            }
+
+            textarea.innerHTML = `En fait, je sais pas trop comment dire, mais genre c'est un peu toujours la même chose, tu vois, du coup je répète, je répète. Et en fait, c'est pas que j'ai rien à dire, c'est juste que, genre, les mots reviennent tout seuls, du coup voilà quoi, ça tourne un peu en boucle.<br><br>Genre tu commences une phrase, et en fait tu la finis pas vraiment, ou alors tu la refais, encore et encore, du coup ça donne un truc un peu bizarre, un peu répétitif, justement. Et puis voilà, tu te dis “bon, je vais arrêter”, mais en fait non, tu continues, tu continues. Du coup voilà, en fait, c'est ça le truc : ça revient, ça revient, ça revient, et genre tu t'en rends même plus compte. Et au final, en fait, t'as dit la même chose trois fois, voire quatre, voire cinq, mais du coup... ben voilà quoi.`;
             textarea.addEventListener('input', process);
             textarea.addEventListener('scroll', () => {
                 highlightLayer.scrollTop = textarea.scrollTop;
