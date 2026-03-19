@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
     
-    <!-- Firebase SDK Compat (Plus simple pour un fichier unique) -->
+    <!-- Firebase SDK Compat -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
@@ -43,9 +43,31 @@
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .dark-mode ::-webkit-scrollbar-thumb { background: #475569; }
+
+        /* Modal sharing */
+        #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 2rem; border-radius: 1.5rem; width: 100%; max-width: 400px; }
+        .dark-mode .modal-content { background: #1e293b; color: white; }
     </style>
 </head>
 <body class="text-slate-800 bg-slate-50">
+
+    <!-- Modal Partage -->
+    <div id="share-modal">
+        <div class="modal-content shadow-2xl border border-slate-200 dark:border-slate-700">
+            <h3 class="text-lg font-bold mb-4">Partager le script</h3>
+            <p class="text-xs text-slate-500 mb-4">Entrez l'email d'un utilisateur pour lui donner accès.</p>
+            <input type="email" id="share-email" placeholder="email@exemple.com" class="w-full p-3 rounded-xl border mb-3 dark:bg-slate-800 dark:border-slate-600 outline-none">
+            <select id="share-role" class="w-full p-3 rounded-xl border mb-6 dark:bg-slate-800 dark:border-slate-600">
+                <option value="editor">Éditeur (Peut modifier)</option>
+                <option value="viewer">Lecteur (Lecture seule)</option>
+            </select>
+            <div class="flex gap-3">
+                <button onclick="confirmShare()" class="flex-1 bg-indigo-500 text-white py-3 rounded-xl font-bold text-sm">Inviter</button>
+                <button onclick="toggleShareModal()" class="flex-1 bg-slate-200 dark:bg-slate-700 py-3 rounded-xl font-bold text-sm">Fermer</button>
+            </div>
+        </div>
+    </div>
 
     <div class="max-w-7xl mx-auto px-6 py-10">
         
@@ -61,7 +83,11 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-4">
-                <!-- Bouton Connexion -->
+                <!-- Boutons de gestion -->
+                <button id="share-btn" onclick="toggleShareModal()" class="hidden items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-600 rounded-xl text-xs font-bold hover:scale-105 transition">
+                    Partager
+                </button>
+
                 <button id="auth-btn" onclick="handleAuth()" class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold shadow-sm hover:scale-105 transition">
                     <span id="auth-btn-text">Se connecter (Cloud)</span>
                 </button>
@@ -118,13 +144,18 @@
                 <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8">
                     <div><h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4">Tics</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
                     <div><h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4">Répétitions</h2><ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
+                    
+                    <!-- Scripts partagés avec moi -->
+                    <div id="shared-scripts-container" class="hidden border-t border-slate-700 pt-6">
+                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4">Scripts partagés avec moi</h2>
+                        <ul id="shared-list" class="space-y-2 text-[11px]"></ul>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // CONFIGURATION FIREBASE UTILISATEUR
         const firebaseConfig = {
             apiKey: "AIzaSyCPI5JRtaODgMbhpvmb5jJ9pGaEOFms8sI",
             authDomain: "script-p-6c6df.firebaseapp.com",
@@ -143,50 +174,129 @@
 
         let activeFocusWord = null;
         let currentUser = null;
+        let currentScriptId = null;
+        let userRole = 'owner'; // 'owner', 'editor', 'viewer'
+
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
         const editorWrapper = document.getElementById('editor-wrapper');
 
-        // GESTION AUTHENTIFICATION
+        // GESTION AUTH ET CHARGEMENT
         function handleAuth() {
-            if (currentUser) {
-                auth.signOut();
-            } else {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                auth.signInWithPopup(provider);
-            }
+            if (currentUser) { auth.signOut(); } 
+            else { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
         }
 
-        auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged(async user => {
             currentUser = user;
             const btnText = document.getElementById('auth-btn-text');
             const display = document.getElementById('user-display');
+            const shareBtn = document.getElementById('share-btn');
+            const sharedSection = document.getElementById('shared-scripts-container');
+
             if (user) {
                 btnText.innerText = "Se déconnecter";
                 display.innerText = "Connecté : " + user.displayName;
-                // Charger le texte depuis le cloud
-                db.collection('users').doc(user.uid).get().then(doc => {
-                    if (doc.exists) {
-                        textarea.value = doc.data().content;
-                        process();
-                    }
-                });
+                shareBtn.classList.remove('hidden');
+                sharedSection.classList.remove('hidden');
+                
+                currentScriptId = user.uid; // Par défaut, son propre script
+                loadScript(currentScriptId);
+                fetchSharedScripts();
             } else {
                 btnText.innerText = "Se connecter (Cloud)";
                 display.innerText = "Mode Local";
+                shareBtn.classList.add('hidden');
+                sharedSection.classList.add('hidden');
+                textarea.readOnly = false;
+                textarea.value = localStorage.getItem('purge-content') || "";
+                process();
             }
         });
 
-        // SAUVEGARDE (Local + Cloud)
+        // CHARGEMENT D'UN SCRIPT SPECIFIQUE
+        async function loadScript(id) {
+            currentScriptId = id;
+            const doc = await db.collection('scripts').doc(id).get();
+            
+            if (doc.exists) {
+                const data = doc.data();
+                textarea.value = data.content;
+                
+                // Vérifier rôle
+                if (data.owner === currentUser.uid) {
+                    userRole = 'owner';
+                } else {
+                    userRole = data.collaborators[currentUser.email] || 'viewer';
+                }
+            } else if (id === currentUser.uid) {
+                // Créer le script personnel s'il n'existe pas
+                await db.collection('scripts').doc(id).set({
+                    content: textarea.value,
+                    owner: currentUser.uid,
+                    ownerEmail: currentUser.email,
+                    collaborators: {}
+                });
+                userRole = 'owner';
+            }
+
+            textarea.readOnly = (userRole === 'viewer');
+            process();
+        }
+
+        // CHERCHER LES SCRIPTS PARTAGÉS
+        async function fetchSharedScripts() {
+            const list = document.getElementById('shared-list');
+            list.innerHTML = "";
+            const snapshot = await db.collection('scripts')
+                .where(`collaborators.${currentUser.email.replace(/\./g, '_')}`, 'in', ['editor', 'viewer'])
+                .get();
+            
+            // Note: Firestore n'aime pas les points dans les clés, on utilise un hack ou une structure différente.
+            // Pour faire simple ici, on cherche tous les scripts où l'utilisateur est présent dans un objet "access"
+            const allShared = await db.collection('scripts').get();
+            allShared.forEach(doc => {
+                const data = doc.data();
+                if (data.collaborators && data.collaborators[currentUser.email]) {
+                    const li = document.createElement('li');
+                    li.className = "p-2 bg-slate-800 rounded-lg cursor-pointer hover:bg-indigo-900 transition flex justify-between";
+                    li.innerHTML = `<span>Script de ${data.ownerEmail.split('@')[0]}</span> <span class="opacity-50 text-[9px] uppercase">${data.collaborators[currentUser.email]}</span>`;
+                    li.onclick = () => loadScript(doc.id);
+                    list.appendChild(li);
+                }
+            });
+        }
+
+        // GESTION MODAL PARTAGE
+        function toggleShareModal() {
+            const m = document.getElementById('share-modal');
+            m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        async function confirmShare() {
+            const email = document.getElementById('share-email').value;
+            const role = document.getElementById('share-role').value;
+            if (!email) return;
+
+            const scriptRef = db.collection('scripts').doc(currentScriptId);
+            await scriptRef.update({
+                [`collaborators.${email}`]: role
+            });
+
+            alert("Utilisateur invité !");
+            toggleShareModal();
+        }
+
+        // SAUVEGARDE
         let saveTimeout;
         function autoSave() {
             const content = textarea.value;
             localStorage.setItem('purge-content', content);
             
-            clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => {
-                if (currentUser) {
-                    db.collection('users').doc(currentUser.uid).set({
+            if (currentUser && userRole !== 'viewer') {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    db.collection('scripts').doc(currentScriptId).update({
                         content: content,
                         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                     }).then(() => {
@@ -194,23 +304,20 @@
                         status.style.opacity = '1';
                         setTimeout(() => status.style.opacity = '0', 2000);
                     });
-                }
-            }, 1000);
+                }, 1000);
+            }
         }
 
-        // LE RESTE DE LA LOGIQUE (Identique à votre demande)
+        // --- LOGIQUE ORIGINALE NON TOUCHÉE ---
         function process() {
             const text = textarea.value;
             const showP = document.getElementById('toggle-parasites').checked;
             const showR = document.getElementById('toggle-repeats').checked;
-
             editorWrapper.classList.toggle('show-parasites', showP);
             editorWrapper.classList.toggle('show-repeats', showR);
-
             let parasiteIndices = new Set();
             let parasiteCounts = {};
             let totalParasites = 0;
-
             parasiteDictionary.forEach(word => {
                 const regex = new RegExp(`\\b(${word})\\b`, 'gi');
                 let match;
@@ -220,13 +327,11 @@
                     for (let i = 0; i < match[0].length; i++) parasiteIndices.add(match.index + i);
                 }
             });
-
             const wordRegex = /[a-zA-ZàâäéèêëîïôöûüùçÀÂÄÉÈÊËÎÏÔÖÛÜÙÇ]{3,}/g;
             let lastSeenAt = {}; 
             let badRepeatIndices = new Set();
             let repeatCounts = {};
             let wordCounter = 0;
-
             let match;
             while ((match = wordRegex.exec(text)) !== null) {
                 wordCounter++;
@@ -242,7 +347,6 @@
                     lastSeenAt[word] = { count: wordCounter, pos: match.index };
                 }
             }
-
             let focusIndices = new Set();
             if (activeFocusWord) {
                 const fRegex = new RegExp(`\\b(${activeFocusWord})\\b`, 'gi');
@@ -251,7 +355,6 @@
                     for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i);
                 }
             }
-
             let finalHtml = "";
             let i = 0;
             while (i < text.length) {
@@ -281,13 +384,11 @@
                     i++;
                 }
             }
-
             highlightLayer.innerHTML = finalHtml + (text.endsWith('\n') ? '\n ' : '');
             document.getElementById('total-parasites').innerText = totalParasites;
             document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
             document.getElementById('total-words').innerText = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
             document.getElementById('focus-display').innerText = activeFocusWord || "Aucun";
-            
             updateSidebars(parasiteCounts, repeatCounts);
             syncScroll();
             autoSave();
@@ -318,11 +419,7 @@
         }
 
         window.onload = () => {
-            const themes = [
-                { hex: '#ef4444' }, { hex: '#f97316' }, { hex: '#eab308' }, { hex: '#22c55e' }, 
-                { hex: '#10b981' }, { hex: '#2563eb' }, { hex: '#06b6d4' }, { hex: '#0ea5e9' }, 
-                { hex: '#6366f1' }, { hex: '#d946ef' }, { hex: '#f43f5e' }
-            ];
+            const themes = [{ hex: '#ef4444' }, { hex: '#f97316' }, { hex: '#eab308' }, { hex: '#22c55e' }, { hex: '#10b981' }, { hex: '#2563eb' }, { hex: '#06b6d4' }, { hex: '#0ea5e9' }, { hex: '#6366f1' }, { hex: '#d946ef' }, { hex: '#f43f5e' }];
             themes.forEach(t => {
                 const b = document.createElement('button');
                 b.className = 'w-5 h-5 rounded-full border border-white/20 hover:scale-125 transition';
@@ -335,7 +432,6 @@
                 document.getElementById('theme-picker').appendChild(b);
             });
             if(localStorage.getItem('purge-dark') === 'true') toggleDarkMode();
-            textarea.value = localStorage.getItem('purge-content') || "";
             textarea.addEventListener('input', process);
             textarea.addEventListener('scroll', syncScroll);
             process();
