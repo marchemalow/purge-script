@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Purge-Script Pro | Cloud Edition</title>
+    
+    <!-- Bibliothèques externes -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
-    
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
@@ -19,204 +19,274 @@
             --focus-color: #f02e65; 
             --montage-color: #7dd3fc; 
         }
-        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease; }
-        .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.6; }
-        .editor-container { position: relative; min-height: 600px; border-radius: 1.5rem; background: white; }
-        
-        .sync-text { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            padding: 30px; white-space: pre-wrap; word-wrap: break-word; 
-            overflow-y: auto; border: none; margin: 0; background: transparent; 
-        }
-        
-        #textarea { color: transparent; caret-color: #1e293b; z-index: 2; resize: none; outline: none; }
-        #highlight-layer { z-index: 1; pointer-events: none; color: #1e293b; }
-        
-        mark { background: none; color: inherit; }
-        
-        /* Surbrillances standards */
-        .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); border-radius: 2px; }
-        .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; border-radius: 2px; }
-        mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; font-weight: 600; }
-        
-        /* Style Montage adouci */
-        .show-montage mark.montage { 
-            background-color: var(--montage-color) !important; 
-            color: #0369a1 !important; 
-            font-weight: 700; 
-            border-radius: 4px; 
-            border: 1px solid rgba(0,0,0,0.05); 
-            font-size: 0.95em; 
-            padding: 0 3px; 
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            transition: background-color 0.3s ease; 
         }
 
-        .sidebar-item { cursor: pointer; transition: all 0.2s; }
-        .sidebar-item:hover { background-color: rgba(255,255,255,0.1); }
-        .sidebar-item.active-focus { border: 1px solid var(--focus-color); background-color: rgba(240, 46, 101, 0.2) !important; }
-        
+        .editor-font { 
+            font-family: 'IBM Plex Sans', sans-serif; 
+            font-size: 1.1rem; 
+            line-height: 1.7; 
+        }
+
+        /* Structure Layout avec Toolbar à Gauche */
+        .main-wrapper {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+        }
+
+        .toolbar-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: white;
+            padding: 12px;
+            border-radius: 18px;
+            border: 1px solid #e2e8f0;
+            position: sticky;
+            top: 40px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Editeur et Calque */
+        .editor-container { 
+            position: relative; 
+            flex-grow: 1; 
+            background: white; 
+            border-radius: 1.5rem; 
+            border: 1px solid #e2e8f0; 
+            min-height: 700px;
+            overflow: hidden;
+        }
+
+        .sync-area { 
+            width: 100%; 
+            min-height: 700px; 
+            padding: 40px; 
+            outline: none; 
+            white-space: pre-wrap; 
+            word-wrap: break-word;
+        }
+
+        #editor { 
+            position: relative; 
+            z-index: 2; 
+            background: transparent; 
+            color: inherit; 
+        }
+
+        #highlight-layer { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            z-index: 1; 
+            pointer-events: none; 
+            color: transparent !important; 
+        }
+
+        /* Styles de formatage dans l'éditeur */
+        #editor h1 { font-size: 2.8rem; font-weight: 800; margin-bottom: 1.5rem; line-height: 1.2; }
+        #editor h2 { font-size: 1.8rem; font-weight: 700; margin-bottom: 1rem; line-height: 1.3; }
+        #highlight-layer h1, #highlight-layer h2 { color: transparent !important; }
+
+        /* Détections */
+        mark { background: none; color: inherit; }
+        .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); }
+        .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; }
+        .show-montage mark.montage { background-color: var(--montage-color) !important; color: #0369a1 !important; border-radius: 4px; padding: 0 4px; font-weight: 600; }
+        mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; }
+
         /* Dark Mode */
         body.dark-mode { background-color: #0f172a; color: #f1f5f9; }
-        .dark-mode .bg-white { background-color: #1e293b; border-color: #334155; }
-        .dark-mode .text-slate-900 { color: #f8fafc; }
-        .dark-mode .text-slate-500 { color: #94a3b8; }
-        .dark-mode .border-slate-200 { border-color: #334155; }
-        .dark-mode #highlight-layer { color: #e2e8f0 !important; }
-        .dark-mode #textarea { caret-color: #ffffff; }
-        .dark-mode .show-montage mark.montage { color: #e0f2fe !important; background-color: #0369a1 !important; }
-        
-        /* Switches & Slider dynamiques */
-        .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--accent-color); }
-        input:checked + .slider:before { transform: translateX(14px); }
-        
-        #wpm-slider { accent-color: var(--accent-color); }
-        
-        /* Modal */
-        #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 50; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-        .modal-content { background: white; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 400px; }
-        #share-modal.flex { display: flex; }
-        .dark-mode .modal-content { background: #1e293b; color: white; border-color: #334155; }
-        
-        .ignore-btn { font-size: 10px; opacity: 0.5; cursor: pointer; }
-        .ignore-btn:hover { opacity: 1; color: #ef4444; }
+        .dark-mode .bg-white, .dark-mode .toolbar-vertical, .dark-mode .editor-container { 
+            background-color: #1e293b; 
+            border-color: #334155; 
+        }
+        .dark-mode #editor { color: #f1f5f9; }
 
+        /* Boutons de la Toolbar */
+        .btn-tool { 
+            width: 44px; 
+            height: 44px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 12px; 
+            transition: 0.2s; 
+            color: #64748b; 
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .btn-tool:hover { background: var(--accent-soft); color: var(--accent-color); }
+
+        /* Modal de partage */
+        #share-modal { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0,0,0,0.6); 
+            z-index: 100; 
+            align-items: center; 
+            justify-content: center; 
+            backdrop-filter: blur(4px); 
+        }
+        .modal-card { background: white; padding: 32px; border-radius: 24px; width: 90%; max-width: 500px; }
+        .dark-mode .modal-card { background: #1e293b; color: white; border: 1px solid #334155; }
+
+        /* Slider et Scrollbar */
+        #wpm-slider { accent-color: var(--accent-color); }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .dark-mode ::-webkit-scrollbar-thumb { background: #475569; }
+
+        .sidebar-item { cursor: pointer; transition: 0.2s; border-radius: 8px; }
+        .sidebar-item:hover { background: rgba(255,255,255,0.05); }
     </style>
 </head>
 <body class="text-slate-800 bg-slate-50">
 
-    <!-- Modal Partage -->
+    <!-- MODAL PARTAGE -->
     <div id="share-modal">
-        <div class="modal-content shadow-2xl border border-slate-200">
-            <h3 class="text-xl font-extrabold mb-2">Partager ce script</h3>
-            <p class="text-xs text-slate-500 mb-6">Travaillez à plusieurs sur le même texte.</p>
+        <div class="modal-card shadow-2xl">
+            <h3 class="text-2xl font-extrabold mb-2">Partage sécurisé</h3>
+            <p class="text-sm text-slate-500 mb-6">Générez un lien à usage limité pour vos collaborateurs.</p>
             
-            <label class="text-[10px] font-bold uppercase text-slate-400 mb-1 block">Email du collaborateur</label>
-            <input type="email" id="share-email" placeholder="exemple@gmail.com" class="w-full p-4 rounded-xl border mb-4 dark:bg-slate-800 dark:border-slate-700 outline-none focus:border-indigo-500 transition">
-            
-            <label class="text-[10px] font-bold uppercase text-slate-400 mb-1 block">Permission</label>
-            <select id="share-role" class="w-full p-4 rounded-xl border mb-8 dark:bg-slate-800 dark:border-slate-700 outline-none">
-                <option value="editors">Éditeur (Peut modifier)</option>
-                <option value="viewers">Lecteur (Lecture seule)</option>
-            </select>
-            
-            <div class="flex gap-3">
-                <button id="confirm-invite-btn" onclick="confirmShare()" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-4 rounded-2xl font-bold text-sm transition" style="background-color: var(--accent-color);">Inviter</button>
-                <button onclick="toggleShareModal()" class="flex-1 bg-slate-100 dark:bg-slate-700 py-4 rounded-2xl font-bold text-sm">Annuler</button>
+            <div class="space-y-4">
+                <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <label class="text-[10px] font-bold uppercase text-slate-400 block mb-2">Configuration du lien</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="link-limit" value="1" min="1" class="w-20 p-2 rounded-lg border dark:bg-slate-800 outline-none focus:border-indigo-500">
+                        <select id="link-role" class="flex-1 p-2 rounded-lg border dark:bg-slate-800 outline-none">
+                            <option value="editors">Éditeur (Peut modifier)</option>
+                            <option value="viewers">Lecteur (Lecture seule)</option>
+                        </select>
+                    </div>
+                    <button onclick="createShareLink()" class="w-full mt-4 py-3 rounded-xl text-white font-bold transition hover:opacity-90" style="background: var(--accent-color)">Générer le lien</button>
+                </div>
+
+                <div id="links-container" class="space-y-2 max-h-48 overflow-y-auto">
+                    <!-- Liens générés ici -->
+                </div>
             </div>
+            
+            <button onclick="closeShareModal()" class="w-full mt-6 text-slate-400 font-bold text-xs uppercase tracking-widest">Fermer</button>
         </div>
     </div>
 
     <div class="max-w-7xl mx-auto px-6 py-10">
-        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 border-b border-slate-200 dark:border-slate-700 pb-8">
+        <!-- HEADER -->
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 border-b pb-8 dark:border-slate-700">
             <div>
                 <div class="flex items-center gap-3">
-                    <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Purge-Script<span class="text-[var(--accent-color)]">.</span></h1>
+                    <h1 class="text-3xl font-black tracking-tighter">Purge-Script<span style="color: var(--accent-color)">.</span></h1>
                     <span id="save-status" class="text-[10px] uppercase font-bold transition-opacity" style="color: var(--accent-color); opacity: 0;">Synchronisé</span>
                 </div>
-                <div class="flex items-center gap-2 mt-1">
-                    <p class="text-slate-500 text-sm font-medium italic">Intervalle : 70 mots | <span id="user-display">Mode Local</span></p>
-                </div>
+                <p id="user-display" class="text-slate-500 text-sm italic mt-1">Mode Local</p>
             </div>
 
             <div class="flex flex-wrap items-center gap-4">
-                <button id="share-btn" onclick="toggleShareModal()" class="hidden items-center gap-2 px-5 py-2.5 text-white rounded-xl text-xs font-bold hover:scale-105 transition shadow-lg" style="background-color: var(--accent-color);">
-                    Partager
-                </button>
-
-                <button id="auth-btn" onclick="handleAuth()" class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold shadow-sm hover:scale-105 transition">
-                    <span id="auth-btn-text">Se connecter (Cloud)</span>
-                </button>
-
-                <div class="flex gap-4 bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-200 shadow-sm text-[10px] font-bold uppercase">
+                <button id="share-btn" onclick="openShareModal()" class="hidden px-6 py-2.5 rounded-xl text-white font-bold text-sm shadow-lg transition hover:scale-105" style="background: var(--accent-color)">Partager</button>
+                <button id="auth-btn" onclick="handleAuth()" class="px-5 py-2.5 bg-white dark:bg-slate-800 border rounded-xl text-sm font-bold shadow-sm hover:bg-slate-50 transition">Se connecter (Cloud)</button>
+                
+                <!-- Toggles -->
+                <div class="flex gap-4 bg-white dark:bg-slate-800 p-3 rounded-2xl border shadow-sm text-[10px] font-bold uppercase tracking-wider">
                     <div class="flex items-center gap-2"><span>Tics</span><label class="switch"><input type="checkbox" id="toggle-parasites" checked onchange="process()"><span class="slider"></span></label></div>
-                    <div class="flex items-center gap-2 border-l pl-4 border-slate-200"><span>Répé.</span><label class="switch"><input type="checkbox" id="toggle-repeats" checked onchange="process()"><span class="slider"></span></label></div>
-                    <div class="flex items-center gap-2 border-l pl-4 border-slate-200"><span>Montage</span><label class="switch"><input type="checkbox" id="toggle-montage" checked onchange="process()"><span class="slider"></span></label></div>
+                    <div class="flex items-center gap-2 border-l pl-4 dark:border-slate-700"><span>Répé.</span><label class="switch"><input type="checkbox" id="toggle-repeats" checked onchange="process()"><span class="slider"></span></label></div>
+                    <div class="flex items-center gap-2 border-l pl-4 dark:border-slate-700"><span>Montage</span><label class="switch"><input type="checkbox" id="toggle-montage" checked onchange="process()"><span class="slider"></span></label></div>
                 </div>
 
-                <div class="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
-                    <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:scale-105 transition">
-                        <svg id="sun-icon" class="w-5 h-5 hidden text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg>
-                        <svg id="moon-icon" class="w-5 h-5 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
-                    </button>
-                    <div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-700"></div>
-                    <div class="flex flex-wrap gap-1.5 max-w-[200px]" id="theme-picker"></div>
+                <!-- Thèmes et Dark Mode -->
+                <div class="flex items-center gap-3 bg-white dark:bg-slate-800 p-2 rounded-2xl border shadow-sm">
+                    <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700">🌙</button>
+                    <div id="theme-picker" class="flex gap-1.5 px-2 border-l dark:border-slate-700"></div>
                 </div>
             </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <!-- Statistiques -->
-            <div class="lg:col-span-12 grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Tics</p>
-                    <p id="total-parasites" class="text-2xl font-extrabold" style="color: var(--accent-color);">0</p>
-                </div>
-                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Répétitions</p>
-                    <p id="total-repeats" class="text-2xl font-extrabold text-amber-500">0</p>
-                </div>
-                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Total Mots</p>
-                    <p id="total-words" class="text-2xl font-extrabold">0</p>
-                </div>
-                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Durée Estimée</p>
-                    <p id="duration-display" class="text-2xl font-extrabold" style="color: var(--accent-color);">0s</p>
-                </div>
-                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-slate-800">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Focus Actif</p>
-                    <p id="focus-display" class="text-xl font-extrabold text-zinc-300">Aucun</p>
-                </div>
+        <!-- STATS -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border shadow-sm">
+                <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Tics</p>
+                <p id="total-parasites" class="text-2xl font-black" style="color: var(--accent-color)">0</p>
             </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border shadow-sm">
+                <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Répétitions</p>
+                <p id="total-repeats" class="text-2xl font-black text-amber-500">0</p>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border shadow-sm">
+                <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Mots</p>
+                <p id="total-words" class="text-2xl font-black text-slate-400">0</p>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border shadow-sm">
+                <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Durée estimée</p>
+                <p id="duration-display" class="text-2xl font-black" style="color: var(--accent-color)">0s</p>
+            </div>
+            <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border shadow-sm border-l-4 border-l-slate-800">
+                <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Focus</p>
+                <p id="focus-display" class="text-xl font-black text-slate-300">Aucun</p>
+            </div>
+        </div>
 
-            <div class="lg:col-span-8 space-y-4">
-                <!-- Réglage Débit -->
-                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 flex items-center gap-4 text-xs font-bold uppercase">
-                    <span class="text-slate-500">Débit diction (mots/min) :</span>
-                    <input type="range" id="wpm-slider" min="100" max="250" value="150" class="flex-1" oninput="updateWpmDisplay(this.value); process();">
-                    <span id="wpm-value" class="w-12" style="color: var(--accent-color);">150</span>
+        <!-- MAIN LAYOUT -->
+        <div class="main-wrapper">
+            <!-- TOOLBAR VERTICALE -->
+            <aside class="toolbar-vertical">
+                <button class="btn-tool" onclick="format('bold')" title="Gras">B</button>
+                <button class="btn-tool" onclick="format('italic')" title="Italique">I</button>
+                <button class="btn-tool" onclick="format('underline')" title="Souligné">U</button>
+                <div class="h-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
+                <button class="btn-tool" onclick="format('formatBlock', 'h1')" title="Titre 1">H1</button>
+                <button class="btn-tool" onclick="format('formatBlock', 'h2')" title="Titre 2">H2</button>
+                <button class="btn-tool" onclick="format('formatBlock', 'p')" title="Paragraphe">P</button>
+                <div class="h-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
+                <button class="btn-tool text-red-500" onclick="format('removeFormat')" title="Effacer formatage">Ø</button>
+            </aside>
+
+            <!-- ZONE EDITEUR -->
+            <div class="flex flex-col flex-1 gap-6">
+                <!-- Reglage Debit -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border shadow-sm flex items-center gap-6">
+                    <span class="text-[10px] font-bold uppercase text-slate-400">Vitesse de diction :</span>
+                    <input type="range" id="wpm-slider" min="100" max="260" value="150" class="flex-1" oninput="process()">
+                    <span id="wpm-value" class="font-black text-sm w-12" style="color: var(--accent-color)">150</span>
+                    <span class="text-[10px] font-bold text-slate-400">MOTS/MIN</span>
                 </div>
 
-                <div id="editor-wrapper" class="editor-container border border-slate-200 shadow-sm overflow-hidden bg-white show-parasites show-repeats show-montage">
-                    <div id="highlight-layer" class="sync-text editor-font"></div>
-                    <textarea id="textarea" class="sync-text editor-font" placeholder="Commencez à écrire... Utilisez [crochets] pour les notes de montage." spellcheck="false"></textarea>
+                <div class="editor-container show-parasites show-repeats show-montage">
+                    <div id="highlight-layer" class="sync-area editor-font"></div>
+                    <div id="editor" class="sync-area editor-font" contenteditable="true" spellcheck="false"></div>
                 </div>
-                
+
                 <div class="flex gap-4">
-                    <button onclick="copyText()" class="text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition" style="background-color: var(--accent-color);">Copier</button>
-                    <button onclick="downloadText()" class="bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition">Exporter .txt</button>
-                    <button onclick="clearText()" class="text-slate-400 hover:text-red-500 font-bold transition text-xs uppercase px-4">Effacer</button>
+                    <button onclick="copyContent()" class="px-10 py-4 rounded-2xl text-white font-bold text-xs uppercase tracking-widest shadow-xl transition hover:scale-105" style="background: var(--accent-color)">Copier le texte</button>
+                    <button onclick="clearAll()" class="text-slate-400 font-bold text-xs uppercase hover:text-red-500 transition">Effacer tout</button>
                 </div>
             </div>
 
-            <div class="lg:col-span-4 space-y-6">
-                <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8">
+            <!-- BARRE LATERALE ANALYSE -->
+            <aside class="w-80 space-y-6">
+                <div class="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-2xl space-y-10">
                     <div>
-                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4">Tics</h2>
-                        <ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul>
+                        <h2 class="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-5">Tics de langage</h2>
+                        <ul id="tic-list" class="space-y-2"></ul>
                     </div>
                     <div>
-                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4">Répétitions</h2>
-                        <ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul>
+                        <h2 class="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-5">Répétitions</h2>
+                        <ul id="rep-list" class="space-y-2"></ul>
                     </div>
-                    <!-- Mots Ignorés -->
-                    <div id="ignored-section" class="hidden">
-                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-red-400 mb-4">Mots ignorés (Mémoire)</h2>
-                        <ul id="ignored-list" class="flex flex-wrap gap-2 text-[10px]"></ul>
+                    <div id="ignored-box" class="hidden border-t border-slate-800 pt-6">
+                        <h2 class="text-[9px] font-bold uppercase tracking-[0.2em] text-red-500 mb-5">Mots ignorés</h2>
+                        <div id="ignored-list" class="flex flex-wrap gap-2"></div>
                     </div>
-                    <!-- Partages -->
-                    <div id="shared-scripts-container" class="hidden border-t border-slate-700 pt-6">
-                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4">Partagés avec moi</h2>
-                        <ul id="shared-list" class="space-y-2 text-[11px]"></ul>
+                    <div id="shared-box" class="hidden border-t border-slate-800 pt-6">
+                        <h2 class="text-[9px] font-bold uppercase tracking-[0.2em] text-indigo-400 mb-5">Scripts Partagés</h2>
+                        <ul id="shared-list" class="space-y-2"></ul>
                     </div>
                 </div>
-            </div>
+            </aside>
         </div>
     </div>
 
@@ -237,290 +307,325 @@
         const parasiteDictionary = ["du coup", "en fait", "voilà", "un petit peu", "euh", "globalement", "concrètement", "effectivement", "donc", "c'est-à-dire", "au final", "disons que", "typiquement", "clairement", "tout simplement", "en gros", "pour le coup", "un peu", "voilà quoi", "tu vois", "franchement", "honnêtement", "en réalité", "pour ainsi dire", "alors", "en quelque sorte", "justement", "au niveau de", "quelque part", "on va dire", "fondamentalement", "véritablement", "pour ma part", "en soi", "entre guillemets", "si vous voulez", "de base", "sur la fin"];
         const stopWords = ["je", "me", "moi", "tu", "te", "toi", "il", "elle", "on", "nous", "vous", "ils", "elles", "le", "la", "les", "un", "une", "des", "du", "de", "ce", "cet", "cette", "ces", "se", "soi", "lui", "leur", "y", "en", "mon", "ton", "son", "ma", "ta", "sa", "mes", "tes", "ses", "notre", "votre", "nos", "vos", "leurs", "qui", "que", "quoi", "dont", "où", "quel", "quels", "quelle", "quelles", "et", "ou", "mais", "est", "sont", "pour", "dans", "par", "avec", "pas", "ne", "si", "ici", "là", "ont", "aux", "très"];
 
-        let activeFocusWord = null;
-        let currentUser = null;
-        let currentScriptId = null;
-        let userRole = 'owner'; 
-        let ignoredRepeats = new Set(); 
+        let user = null;
+        let activeScriptId = null;
+        let role = 'owner';
+        let ignoredWords = new Set();
+        let focusWord = null;
 
-        const textarea = document.getElementById('textarea');
+        const editor = document.getElementById('editor');
         const highlightLayer = document.getElementById('highlight-layer');
-        const editorWrapper = document.getElementById('editor-wrapper');
 
-        function updateWpmDisplay(val) { document.getElementById('wpm-value').innerText = val; }
-
-        // GESTION AUTH
-        function handleAuth() {
-            if (currentUser) { auth.signOut(); } 
-            else { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+        function format(cmd, val = null) {
+            document.execCommand(cmd, false, val);
+            process();
         }
 
-        auth.onAuthStateChanged(async user => {
-            currentUser = user;
-            const shareBtn = document.getElementById('share-btn');
-            const sharedSection = document.getElementById('shared-scripts-container');
-            
-            if (user) {
-                document.getElementById('auth-btn-text').innerText = "Se déconnecter";
-                document.getElementById('user-display').innerText = "Connecté : " + user.displayName;
-                shareBtn.style.display = 'flex';
-                sharedSection.classList.remove('hidden');
-                loadScript(user.uid);
+        // --- AUTH ET CLOUD ---
+        auth.onAuthStateChanged(async (u) => {
+            user = u;
+            const params = new URLSearchParams(window.location.search);
+            const sId = params.get('s');
+            const lId = params.get('l');
+
+            if (u) {
+                document.getElementById('auth-btn').innerText = "Déconnexion";
+                document.getElementById('share-btn').style.display = 'block';
+                document.getElementById('user-display').innerText = "Connecté : " + u.displayName;
+                
+                if (sId && lId) await handleAccessLink(sId, lId);
+                loadScript(sId || u.uid);
                 fetchSharedScripts();
             } else {
-                document.getElementById('auth-btn-text').innerText = "Se connecter (Cloud)";
+                document.getElementById('auth-btn').innerText = "Se connecter (Cloud)";
+                document.getElementById('share-btn').style.display = 'none';
                 document.getElementById('user-display').innerText = "Mode Local";
-                shareBtn.style.display = 'none';
-                sharedSection.classList.add('hidden');
-                textarea.readOnly = false;
-                textarea.value = localStorage.getItem('purge-content') || "";
+                editor.innerHTML = localStorage.getItem('purge-pro-content') || "";
                 process();
             }
         });
 
+        async function handleAccessLink(sId, lId) {
+            const doc = await db.collection('scripts').doc(sId).get();
+            const links = doc.data().links || {};
+            if (links[lId] && links[lId].uses > 0) {
+                await db.collection('scripts').doc(sId).update({
+                    [`links.${lId}.uses`]: firebase.firestore.FieldValue.increment(-1),
+                    [`collabs.${user.email.replace(/\./g, '_')}`]: links[lId].role
+                });
+            }
+        }
+
         async function loadScript(id) {
-            currentScriptId = id;
+            activeScriptId = id;
             const doc = await db.collection('scripts').doc(id).get();
             if (doc.exists) {
                 const data = doc.data();
-                textarea.value = data.content;
-                ignoredRepeats = new Set(data.ignoredWords || []);
-                
-                if (data.owner === currentUser.uid) {
-                    userRole = 'owner';
-                } else if (data.editors && data.editors.includes(currentUser.email)) {
-                    userRole = 'editor';
-                } else {
-                    userRole = 'viewer';
-                }
-            } else if (id === currentUser.uid) {
-                await db.collection('scripts').doc(id).set({
-                    content: textarea.value || "",
-                    owner: currentUser.uid,
-                    ownerEmail: currentUser.email,
-                    editors: [],
-                    viewers: [],
-                    ignoredWords: []
+                editor.innerHTML = data.content || "";
+                ignoredWords = new Set(data.ignored || []);
+                role = data.owner === user.uid ? 'owner' : (data.collabs[user.email.replace(/\./g, '_')] || 'viewers');
+            } else if (id === user.uid) {
+                await db.collection('scripts').doc(id).set({ 
+                    content: "", owner: user.uid, ownerEmail: user.email, 
+                    collabs: {}, links: {}, ignored: [] 
                 });
-                userRole = 'owner';
             }
-            textarea.readOnly = (userRole === 'viewer');
+            editor.contentEditable = (role !== 'viewers');
             process();
         }
 
         async function fetchSharedScripts() {
             const list = document.getElementById('shared-list');
             list.innerHTML = "";
-            const snapEd = await db.collection('scripts').where('editors', 'array-contains', currentUser.email).get();
-            snapEd.forEach(doc => createSharedItem(doc, 'éditeur', list));
-            const snapVi = await db.collection('scripts').where('viewers', 'array-contains', currentUser.email).get();
-            snapVi.forEach(doc => createSharedItem(doc, 'lecteur', list));
+            const snap = await db.collection('scripts').get();
+            snap.forEach(doc => {
+                const data = doc.data();
+                if (data.collabs && data.collabs[user.email.replace(/\./g, '_')]) {
+                    document.getElementById('shared-box').classList.remove('hidden');
+                    const li = document.createElement('li');
+                    li.className = "sidebar-item p-3 bg-slate-800 font-bold text-[10px] uppercase cursor-pointer hover:bg-indigo-900";
+                    li.innerHTML = `Script de ${data.ownerEmail.split('@')[0]}`;
+                    li.onclick = () => loadScript(doc.id);
+                    list.appendChild(li);
+                }
+            });
         }
 
-        function createSharedItem(doc, roleName, list) {
-            const data = doc.data();
-            const li = document.createElement('li');
-            li.className = "p-3 bg-slate-800/50 border border-slate-700 rounded-xl cursor-pointer hover:bg-indigo-900/40 transition flex justify-between items-center";
-            li.innerHTML = `<span>Script de <b>${data.ownerEmail.split('@')[0]}</b></span> <span class="text-[8px] bg-slate-700 px-2 py-1 rounded-md uppercase">${roleName}</span>`;
-            li.onclick = () => loadScript(doc.id);
-            list.appendChild(li);
-        }
+        // --- PARTAGE ---
+        function openShareModal() { document.getElementById('share-modal').style.display = 'flex'; updateLinksList(); }
+        function closeShareModal() { document.getElementById('share-modal').style.display = 'none'; }
 
-        function toggleShareModal() { document.getElementById('share-modal').classList.toggle('flex'); }
-
-        async function confirmShare() {
-            const email = document.getElementById('share-email').value.trim();
-            const role = document.getElementById('share-role').value; 
-            if (!email || !email.includes('@')) return alert("Email invalide");
-            try {
-                await db.collection('scripts').doc(currentScriptId).update({ [role]: firebase.firestore.FieldValue.arrayUnion(email) });
-                alert("Invité avec succès !");
-                toggleShareModal();
-            } catch (e) { alert("Erreur permissions Firestore."); }
-        }
-
-        function ignoreWord(word) { ignoredRepeats.add(word.toLowerCase()); process(); }
-        function unignoreWord(word) { ignoredRepeats.delete(word); process(); }
-
-        function process() {
-            const text = textarea.value;
-            const showP = document.getElementById('toggle-parasites').checked;
-            const showR = document.getElementById('toggle-repeats').checked;
-            const showM = document.getElementById('toggle-montage').checked;
+        async function createShareLink() {
+            const id = Math.random().toString(36).substring(7);
+            const limit = parseInt(document.getElementById('link-limit').value);
+            const roleChoice = document.getElementById('link-role').value;
             
-            editorWrapper.classList.toggle('show-parasites', showP);
-            editorWrapper.classList.toggle('show-repeats', showR);
-            editorWrapper.classList.toggle('show-montage', showM);
+            await db.collection('scripts').doc(activeScriptId).update({
+                [`links.${id}`]: { uses: limit, role: roleChoice }
+            });
+            const url = `${window.location.origin}${window.location.pathname}?s=${activeScriptId}&l=${id}`;
+            prompt("Copiez ce lien de partage :", url);
+            updateLinksList();
+        }
 
+        async function updateLinksList() {
+            const doc = await db.collection('scripts').doc(activeScriptId).get();
+            const links = doc.data().links || {};
+            const container = document.getElementById('links-container');
+            container.innerHTML = "";
+            Object.entries(links).forEach(([id, data]) => {
+                if (data.uses <= 0) return;
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-center p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-[10px] font-bold";
+                div.innerHTML = `<span>${data.role} (${data.uses} restants)</span><button onclick="revoke('${id}')" class="text-red-500 uppercase">Révoquer</button>`;
+                container.appendChild(div);
+            });
+        }
+
+        async function revoke(id) {
+            await db.collection('scripts').doc(activeScriptId).update({ [`links.${id}.uses`]: 0 });
+            updateLinksList();
+        }
+
+        // --- ANALYSE PRINCIPALE ---
+        function process() {
+            const rawText = editor.innerText;
+            const wpm = parseInt(document.getElementById('wpm-slider').value);
+            document.getElementById('wpm-value').innerText = wpm;
+
+            // 1. Stats de base
+            const wordsArray = (rawText.match(/[a-zA-ZàâäéèêëîïôöûüùçÀÂÄÉÈÊËÎÏÔÖÛÜÙÇ]+/g) || []);
+            document.getElementById('total-words').innerText = wordsArray.length;
+            
+            // 2. Durée
+            const seconds = Math.round((wordsArray.length / wpm) * 60);
+            document.getElementById('duration-display').innerText = `${Math.floor(seconds/60)}m ${seconds%60}s`;
+
+            // 3. Détection Montage [ ]
             let montageIndices = new Set();
             const montageRegex = /\[.*?\]/g;
             let mMatch;
-            while ((mMatch = montageRegex.exec(text)) !== null) {
+            while ((mMatch = montageRegex.exec(rawText)) !== null) {
                 for (let i = 0; i < mMatch[0].length; i++) montageIndices.add(mMatch.index + i);
             }
 
-            let parasiteIndices = new Set();
-            let parasiteCounts = {};
-            let totalParasites = 0;
-            parasiteDictionary.forEach(word => {
-                const regex = new RegExp(`\\b(${word})\\b`, 'gi');
+            // 4. Détection Tics
+            let ticIndices = new Set();
+            let ticCounts = {};
+            parasiteDictionary.forEach(tic => {
+                const regex = new RegExp(`\\b(${tic})\\b`, 'gi');
                 let match;
-                while ((match = regex.exec(text)) !== null) {
+                while ((match = regex.exec(rawText)) !== null) {
                     if (montageIndices.has(match.index)) continue;
-                    totalParasites++;
-                    parasiteCounts[word.toLowerCase()] = (parasiteCounts[word.toLowerCase()] || 0) + 1;
-                    for (let i = 0; i < match[0].length; i++) parasiteIndices.add(match.index + i);
+                    ticCounts[tic] = (ticCounts[tic] || 0) + 1;
+                    for (let i = 0; i < match[0].length; i++) ticIndices.add(match.index + i);
                 }
             });
 
+            // 5. Détection Répétitions
             const wordRegex = /[a-zA-ZàâäéèêëîïôöûüùçÀÂÄÉÈÊËÎÏÔÖÛÜÙÇ]{3,}/g;
-            let lastSeenAt = {}; let badRepeatIndices = new Set();
-            let repeatCounts = {}; let wordCounter = 0; let match;
-            while ((match = wordRegex.exec(text)) !== null) {
+            let lastSeen = {};
+            let repIndices = new Set();
+            let repCounts = {};
+            let match;
+            let wordCounter = 0;
+            while ((match = wordRegex.exec(rawText)) !== null) {
                 wordCounter++;
-                const word = match[0].toLowerCase();
-                if (!stopWords.includes(word) && !parasiteIndices.has(match.index) && !montageIndices.has(match.index) && !ignoredRepeats.has(word)) {
-                    if (lastSeenAt[word] && (wordCounter - lastSeenAt[word].count <= 70)) {
-                        for (let i = 0; i < word.length; i++) {
-                            badRepeatIndices.add(match.index + i); badRepeatIndices.add(lastSeenAt[word].pos + i);
+                const w = match[0].toLowerCase();
+                if (!stopWords.includes(w) && !ticIndices.has(match.index) && !montageIndices.has(match.index) && !ignoredWords.has(w)) {
+                    if (lastSeen[w] && (wordCounter - lastSeen[w].c <= 70)) {
+                        for (let i = 0; i < w.length; i++) {
+                            repIndices.add(match.index + i);
+                            repIndices.add(lastSeen[w].p + i);
                         }
-                        repeatCounts[word] = (repeatCounts[word] || 0) + 1;
+                        repCounts[w] = (repCounts[w] || 0) + 1;
                     }
-                    lastSeenAt[word] = { count: wordCounter, pos: match.index };
+                    lastSeen[w] = { c: wordCounter, p: match.index };
                 }
             }
 
-            // Durée
-            const wpm = parseInt(document.getElementById('wpm-slider').value) || 150;
-            const wordCount = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
-            const totalSeconds = Math.round((wordCount / wpm) * 60);
-            const displayMin = Math.floor(totalSeconds / 60);
-            const displaySec = totalSeconds % 60;
-            document.getElementById('duration-display').innerText = `${displayMin}m ${displaySec}s`;
-
+            // 6. Focus
             let focusIndices = new Set();
-            if (activeFocusWord) {
-                const fRegex = new RegExp(`\\b(${activeFocusWord})\\b`, 'gi');
+            if (focusWord) {
+                const fRegex = new RegExp(`\\b(${focusWord})\\b`, 'gi');
                 let fMatch;
-                while ((fMatch = fRegex.exec(text)) !== null) {
+                while ((fMatch = fRegex.exec(rawText)) !== null) {
                     for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i);
                 }
             }
 
-            let finalHtml = "";
-            let i = 0;
-            while (i < text.length) {
-                if (montageIndices.has(i)) {
-                    finalHtml += `<mark class="montage">`;
-                    while (i < text.length && montageIndices.has(i)) {
-                        finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++;
-                    }
-                    finalHtml += `</mark>`;
-                } else if (focusIndices.has(i)) {
-                    finalHtml += `<mark class="focus-active">`;
-                    while (i < text.length && focusIndices.has(i)) {
-                        finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++;
-                    }
-                    finalHtml += `</mark>`;
-                } else if (parasiteIndices.has(i)) {
-                    finalHtml += `<mark class="parasite">`;
-                    while (i < text.length && parasiteIndices.has(i)) {
-                        finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++;
-                    }
-                    finalHtml += `</mark>`;
-                } else if (badRepeatIndices.has(i)) {
-                    finalHtml += `<mark class="repeat">`;
-                    while (i < text.length && badRepeatIndices.has(i)) {
-                        finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++;
-                    }
-                    finalHtml += `</mark>`;
-                } else {
-                    finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++;
-                }
-            }
+            // 7. Synchronisation visuelle (Miroir HTML)
+            highlightLayer.innerHTML = injectMarks(editor.innerHTML, ticIndices, repIndices, montageIndices, focusIndices);
 
-            highlightLayer.innerHTML = finalHtml + (text.endsWith('\n') ? '\n ' : '');
-            document.getElementById('total-parasites').innerText = totalParasites;
-            document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
-            document.getElementById('total-words').innerText = wordCount;
-            document.getElementById('focus-display').innerText = activeFocusWord || "Aucun";
-            
-            updateSidebars(parasiteCounts, repeatCounts);
+            document.getElementById('total-parasites').innerText = Object.values(ticCounts).reduce((a, b) => a + b, 0);
+            document.getElementById('total-repeats').innerText = Object.keys(repCounts).length;
+            document.getElementById('focus-display').innerText = focusWord || "Aucun";
+
+            updateSidebars(ticCounts, repCounts);
             autoSave();
         }
 
-        function updateSidebars(pCounts, rCounts) {
-            const pList = document.getElementById('word-list');
-            const rList = document.getElementById('repeat-list');
-            const iSection = document.getElementById('ignored-section');
-            const iList = document.getElementById('ignored-list');
+        // Fonction pour injecter les balises <mark> sans décaler le texte formaté
+        function injectMarks(html, tIdx, rIdx, mIdx, fIdx) {
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            let offset = 0;
 
-            pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`
-                <li onclick="toggleFocus('${w}')" class="sidebar-item ${activeFocusWord===w?'active-focus':''} flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1">
-                    <span>${w}</span><span style="color: var(--accent-color);">${c}</span>
-                </li>`).join('') || 'RAS';
-            
-            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`
-                <li class="sidebar-item flex justify-between items-center uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1">
-                    <span onclick="toggleFocus('${w}')">${w}</span>
-                    <div class="flex items-center gap-2">
-                        <span class="text-amber-500">${c+1}x</span>
-                        <button onclick="ignoreWord('${w}')" class="ignore-btn">✕</button>
-                    </div>
-                </li>`).join('') || 'RAS';
+            function walk(node) {
+                if (node.nodeType === 3) { // TEXTE
+                    let val = node.nodeValue;
+                    let out = "";
+                    for (let i = 0; i < val.length; i++) {
+                        let cls = "";
+                        if (fIdx.has(offset)) cls = "focus-active";
+                        else if (mIdx.has(offset)) cls = "montage";
+                        else if (tIdx.has(offset)) cls = "parasite";
+                        else if (rIdx.has(offset)) cls = "repeat";
 
-            if (ignoredRepeats.size > 0) {
-                iSection.classList.remove('hidden');
-                iList.innerHTML = Array.from(ignoredRepeats).map(w => `<li onclick="unignoreWord('${w}')" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer hover:bg-red-500/40">#${w}</li>`).join('');
-            } else { iSection.classList.add('hidden'); }
+                        let char = val[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        out += cls ? `<mark class="${cls}">${char}</mark>` : char;
+                        offset++;
+                    }
+                    const span = document.createElement('span');
+                    span.innerHTML = out;
+                    node.parentNode.replaceChild(span, node);
+                } else { // ELEMENT
+                    if (node.tagName === 'BR') offset++;
+                    else {
+                        Array.from(node.childNodes).forEach(walk);
+                        if (['DIV', 'P', 'H1', 'H2'].includes(node.tagName)) offset++;
+                    }
+                }
+            }
+            walk(temp);
+            return temp.innerHTML;
         }
+
+        function updateSidebars(tC, rC) {
+            const ticList = document.getElementById('tic-list');
+            const repList = document.getElementById('rep-list');
+            
+            ticList.innerHTML = Object.entries(tC).sort((a,b)=>b[1]-a[1]).map(([w,c]) => `
+                <li onclick="setFocus('${w}')" class="sidebar-item flex justify-between p-2 bg-slate-800/50">
+                    <span>${w}</span><span style="color:var(--accent-color)">${c}</span>
+                </li>`).join('');
+
+            repList.innerHTML = Object.entries(rC).sort((a,b)=>b[1]-a[1]).map(([w,c]) => `
+                <li class="sidebar-item flex justify-between p-2 bg-slate-800/50">
+                    <span onclick="setFocus('${w}')">${w}</span>
+                    <div class="flex gap-2 items-center">
+                        <span class="text-amber-500">${c+1}x</span>
+                        <button onclick="ignore('${w}')" class="text-red-400 text-[8px]">✕</button>
+                    </div>
+                </li>`).join('');
+
+            const ignoreBox = document.getElementById('ignored-box');
+            if (ignoredWords.size > 0) {
+                ignoreBox.classList.remove('hidden');
+                document.getElementById('ignored-list').innerHTML = Array.from(ignoredWords).map(w => `
+                    <span onclick="unignore('${w}')" class="bg-red-900/40 text-red-400 px-2 py-1 rounded cursor-pointer text-[9px]">#${w}</span>
+                `).join('');
+            } else ignoreBox.classList.add('hidden');
+        }
+
+        function ignore(w) { ignoredWords.add(w); process(); }
+        function unignore(w) { ignoredWords.delete(w); process(); }
+        function setFocus(w) { focusWord = (focusWord === w) ? null : w; process(); }
 
         let saveTimeout;
         function autoSave() {
-            const content = textarea.value;
-            localStorage.setItem('purge-content', content);
-            if (currentUser && userRole !== 'viewer') {
+            localStorage.setItem('purge-pro-content', editor.innerHTML);
+            if (user && role === 'owner') {
                 clearTimeout(saveTimeout);
                 saveTimeout = setTimeout(() => {
-                    db.collection('scripts').doc(currentScriptId).update({
-                        content: content,
-                        ignoredWords: Array.from(ignoredRepeats),
+                    db.collection('scripts').doc(activeScriptId).update({
+                        content: editor.innerHTML,
+                        ignored: Array.from(ignoredWords),
                         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                     }).then(() => {
                         const s = document.getElementById('save-status');
-                        s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 2000);
+                        s.style.opacity = 1; setTimeout(() => s.style.opacity = 0, 2000);
                     });
                 }, 1000);
             }
         }
 
-        function toggleFocus(word) { activeFocusWord = (activeFocusWord === word) ? null : word; process(); }
-        function downloadText() { const blob = new Blob([textarea.value], { type: 'text/plain' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `script.txt`; a.click(); }
-        function syncScroll() { highlightLayer.scrollTop = textarea.scrollTop; }
-        function copyText() { navigator.clipboard.writeText(textarea.value); }
-        function clearText() { if(confirm("Effacer ?")) { textarea.value = ''; process(); } }
-        function toggleDarkMode() { document.body.classList.toggle('dark-mode'); localStorage.setItem('purge-dark', document.body.classList.contains('dark-mode')); }
+        function toggleDarkMode() { 
+            document.body.classList.toggle('dark-mode'); 
+            localStorage.setItem('purge-dark', document.body.classList.contains('dark-mode')); 
+        }
+
+        function copyContent() {
+            const range = document.createRange();
+            range.selectNode(editor);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand("copy");
+            alert("Copié avec formatage !");
+        }
+
+        function clearAll() { if(confirm("Tout effacer ?")) { editor.innerHTML = ""; process(); } }
 
         window.onload = () => {
             const themes = [
-                { hex: '#ef4444' }, { hex: '#f97316' }, { hex: '#eab308' }, { hex: '#22c55e' }, 
-                { hex: '#10b981' }, { hex: '#2563eb' }, { hex: '#06b6d4' }, { hex: '#0ea5e9' }, 
-                { hex: '#6366f1' }, { hex: '#d946ef' }, { hex: '#f43f5e' }
+                '#ef4444', '#f97316', '#eab308', '#22c55e', '#10b981', 
+                '#2563eb', '#06b6d4', '#0ea5e9', '#6366f1', '#d946ef', '#f43f5e'
             ];
-            themes.forEach(t => {
+            themes.forEach(hex => {
                 const b = document.createElement('button');
-                b.className = 'w-5 h-5 rounded-full border border-white/20 hover:scale-125 transition';
-                b.style.backgroundColor = t.hex;
+                b.className = 'w-4 h-4 rounded-full border border-white/20 transition hover:scale-150';
+                b.style.backgroundColor = hex;
                 b.onclick = () => {
-                    document.documentElement.style.setProperty('--accent-color', t.hex);
-                    document.documentElement.style.setProperty('--accent-soft', t.hex + '26');
+                    document.documentElement.style.setProperty('--accent-color', hex);
+                    document.documentElement.style.setProperty('--accent-soft', hex + '26');
                     process();
                 };
                 document.getElementById('theme-picker').appendChild(b);
             });
+
             if(localStorage.getItem('purge-dark') === 'true') toggleDarkMode();
-            textarea.addEventListener('input', process);
-            textarea.addEventListener('scroll', syncScroll);
+            editor.addEventListener('input', process);
+            editor.addEventListener('scroll', () => highlightLayer.scrollTop = editor.scrollTop);
             process();
         };
     </script>
