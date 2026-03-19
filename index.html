@@ -1,4 +1,3 @@
---- START OF FILE index.html ---
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -285,7 +284,9 @@
                 }
             }
 
-            highlightLayer.innerHTML = injectMarksIntoHTML(textarea.innerHTML, parasiteIndices, badRepeatIndices, focusIndices);
+            // CORRECTION: Utiliser le texte brut pour la couche de surlignage afin d'éviter le décalage
+            highlightLayer.innerHTML = injectMarksIntoHTML(text, parasiteIndices, badRepeatIndices, focusIndices);
+
             document.getElementById('total-parasites').innerText = totalParasites;
             document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
             document.getElementById('total-words').innerText = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
@@ -295,32 +296,28 @@
             autoSave();
         }
 
-        function injectMarksIntoHTML(html, pIdx, rIdx, fIdx) {
-            let tempDiv = document.createElement('div');
-            tempDiv.innerHTML = html;
-            let charIndex = 0;
+        // CORRECTION: Fonction remplacée pour une meilleure synchronisation
+        function injectMarksIntoHTML(text, pIdx, rIdx, fIdx) {
+            let highlightedHtml = '';
+            for (let i = 0; i < text.length; i++) {
+                let char = text[i];
+                
+                if (char === '<') char = '&lt;';
+                if (char === '>') char = '&gt;';
+                if (char === '&') char = '&amp;';
 
-            function traverse(node) {
-                if (node.nodeType === 3) {
-                    let newHtml = "";
-                    let val = node.nodeValue;
-                    for (let i = 0; i < val.length; i++) {
-                        let cls = "";
-                        if (fIdx.has(charIndex)) cls = "focus-active";
-                        else if (pIdx.has(charIndex)) cls = "parasite";
-                        else if (rIdx.has(charIndex)) cls = "repeat";
-                        newHtml += cls ? `<mark class="${cls}">${val[i]}</mark>` : val[i];
-                        charIndex++;
-                    }
-                    let span = document.createElement('span');
-                    span.innerHTML = newHtml;
-                    node.parentNode.replaceChild(span, node);
+                let cls = '';
+                if (fIdx.has(i)) cls = 'focus-active';
+                else if (pIdx.has(i)) cls = 'parasite';
+                else if (rIdx.has(i)) cls = 'repeat';
+
+                if (cls) {
+                    highlightedHtml += `<mark class="${cls}">${char}</mark>`;
                 } else {
-                    for (let i = 0; i < node.childNodes.length; i++) traverse(node.childNodes[i]);
+                    highlightedHtml += char;
                 }
             }
-            traverse(tempDiv);
-            return tempDiv.innerHTML;
+            return highlightedHtml + ' ';
         }
 
         function updateSidebars(pCounts, rCounts) {
