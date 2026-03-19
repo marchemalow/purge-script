@@ -44,33 +44,36 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .dark-mode ::-webkit-scrollbar-thumb { background: #475569; }
 
-        /* Modal sharing */
-        #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; align-items: center; justify-content: center; }
-        .modal-content { background: white; padding: 2rem; border-radius: 1.5rem; width: 100%; max-width: 400px; }
-        .dark-mode .modal-content { background: #1e293b; color: white; }
+        #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 50; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-content { background: white; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 400px; transform: scale(0.95); transition: transform 0.2s ease; }
+        #share-modal.flex { display: flex; }
+        .dark-mode .modal-content { background: #1e293b; color: white; border-color: #334155; }
     </style>
 </head>
 <body class="text-slate-800 bg-slate-50">
 
-    <!-- Modal Partage -->
     <div id="share-modal">
-        <div class="modal-content shadow-2xl border border-slate-200 dark:border-slate-700">
-            <h3 class="text-lg font-bold mb-4">Partager le script</h3>
-            <p class="text-xs text-slate-500 mb-4">Entrez l'email d'un utilisateur pour lui donner accès.</p>
-            <input type="email" id="share-email" placeholder="email@exemple.com" class="w-full p-3 rounded-xl border mb-3 dark:bg-slate-800 dark:border-slate-600 outline-none">
-            <select id="share-role" class="w-full p-3 rounded-xl border mb-6 dark:bg-slate-800 dark:border-slate-600">
+        <div class="modal-content shadow-2xl border border-slate-200">
+            <h3 class="text-xl font-extrabold mb-2">Partager ce script</h3>
+            <p class="text-xs text-slate-500 mb-6">Collaborez en temps réel avec d'autres auteurs.</p>
+            
+            <label class="text-[10px] font-bold uppercase text-slate-400 mb-1 block">Email du collaborateur</label>
+            <input type="email" id="share-email" placeholder="exemple@gmail.com" class="w-full p-4 rounded-xl border mb-4 dark:bg-slate-800 dark:border-slate-700 outline-none focus:border-indigo-500 transition">
+            
+            <label class="text-[10px] font-bold uppercase text-slate-400 mb-1 block">Permission</label>
+            <select id="share-role" class="w-full p-4 rounded-xl border mb-8 dark:bg-slate-800 dark:border-slate-700 outline-none">
                 <option value="editor">Éditeur (Peut modifier)</option>
                 <option value="viewer">Lecteur (Lecture seule)</option>
             </select>
+            
             <div class="flex gap-3">
-                <button onclick="confirmShare()" class="flex-1 bg-indigo-500 text-white py-3 rounded-xl font-bold text-sm">Inviter</button>
-                <button onclick="toggleShareModal()" class="flex-1 bg-slate-200 dark:bg-slate-700 py-3 rounded-xl font-bold text-sm">Fermer</button>
+                <button id="confirm-invite-btn" onclick="confirmShare()" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-4 rounded-2xl font-bold text-sm transition shadow-lg shadow-indigo-500/20">Inviter</button>
+                <button onclick="toggleShareModal()" class="flex-1 bg-slate-100 dark:bg-slate-700 py-4 rounded-2xl font-bold text-sm">Annuler</button>
             </div>
         </div>
     </div>
 
     <div class="max-w-7xl mx-auto px-6 py-10">
-        
         <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 border-b border-slate-200 dark:border-slate-700 pb-8">
             <div>
                 <div class="flex items-center gap-3">
@@ -83,8 +86,7 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-4">
-                <!-- Boutons de gestion -->
-                <button id="share-btn" onclick="toggleShareModal()" class="hidden items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-600 rounded-xl text-xs font-bold hover:scale-105 transition">
+                <button id="share-btn" onclick="toggleShareModal()" class="hidden items-center gap-2 px-5 py-2.5 bg-indigo-500 text-white rounded-xl text-xs font-bold hover:scale-105 transition shadow-lg shadow-indigo-500/20">
                     Partager
                 </button>
 
@@ -145,7 +147,6 @@
                     <div><h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4">Tics</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
                     <div><h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4">Répétitions</h2><ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
                     
-                    <!-- Scripts partagés avec moi -->
                     <div id="shared-scripts-container" class="hidden border-t border-slate-700 pt-6">
                         <h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4">Scripts partagés avec moi</h2>
                         <ul id="shared-list" class="space-y-2 text-[11px]"></ul>
@@ -175,13 +176,12 @@
         let activeFocusWord = null;
         let currentUser = null;
         let currentScriptId = null;
-        let userRole = 'owner'; // 'owner', 'editor', 'viewer'
+        let userRole = 'owner'; 
 
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
         const editorWrapper = document.getElementById('editor-wrapper');
 
-        // GESTION AUTH ET CHARGEMENT
         function handleAuth() {
             if (currentUser) { auth.signOut(); } 
             else { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
@@ -189,48 +189,32 @@
 
         auth.onAuthStateChanged(async user => {
             currentUser = user;
-            const btnText = document.getElementById('auth-btn-text');
-            const display = document.getElementById('user-display');
-            const shareBtn = document.getElementById('share-btn');
-            const sharedSection = document.getElementById('shared-scripts-container');
-
             if (user) {
-                btnText.innerText = "Se déconnecter";
-                display.innerText = "Connecté : " + user.displayName;
-                shareBtn.classList.remove('hidden');
-                sharedSection.classList.remove('hidden');
-                
-                currentScriptId = user.uid; // Par défaut, son propre script
-                loadScript(currentScriptId);
+                document.getElementById('auth-btn-text').innerText = "Se déconnecter";
+                document.getElementById('user-display').innerText = "Connecté : " + user.displayName;
+                document.getElementById('share-btn').style.display = 'flex';
+                document.getElementById('shared-scripts-container').classList.remove('hidden');
+                loadScript(user.uid);
                 fetchSharedScripts();
             } else {
-                btnText.innerText = "Se connecter (Cloud)";
-                display.innerText = "Mode Local";
-                shareBtn.classList.add('hidden');
-                sharedSection.classList.add('hidden');
+                document.getElementById('auth-btn-text').innerText = "Se connecter (Cloud)";
+                document.getElementById('user-display').innerText = "Mode Local";
+                document.getElementById('share-btn').style.display = 'none';
+                document.getElementById('shared-scripts-container').classList.add('hidden');
                 textarea.readOnly = false;
                 textarea.value = localStorage.getItem('purge-content') || "";
                 process();
             }
         });
 
-        // CHARGEMENT D'UN SCRIPT SPECIFIQUE
         async function loadScript(id) {
             currentScriptId = id;
             const doc = await db.collection('scripts').doc(id).get();
-            
             if (doc.exists) {
                 const data = doc.data();
                 textarea.value = data.content;
-                
-                // Vérifier rôle
-                if (data.owner === currentUser.uid) {
-                    userRole = 'owner';
-                } else {
-                    userRole = data.collaborators[currentUser.email] || 'viewer';
-                }
+                userRole = (data.owner === currentUser.uid) ? 'owner' : (data.collaborators[currentUser.email] || 'viewer');
             } else if (id === currentUser.uid) {
-                // Créer le script personnel s'il n'existe pas
                 await db.collection('scripts').doc(id).set({
                     content: textarea.value,
                     owner: currentUser.uid,
@@ -239,60 +223,69 @@
                 });
                 userRole = 'owner';
             }
-
             textarea.readOnly = (userRole === 'viewer');
             process();
         }
 
-        // CHERCHER LES SCRIPTS PARTAGÉS
         async function fetchSharedScripts() {
             const list = document.getElementById('shared-list');
             list.innerHTML = "";
-            const snapshot = await db.collection('scripts')
-                .where(`collaborators.${currentUser.email.replace(/\./g, '_')}`, 'in', ['editor', 'viewer'])
-                .get();
-            
-            // Note: Firestore n'aime pas les points dans les clés, on utilise un hack ou une structure différente.
-            // Pour faire simple ici, on cherche tous les scripts où l'utilisateur est présent dans un objet "access"
-            const allShared = await db.collection('scripts').get();
-            allShared.forEach(doc => {
+            const snapshot = await db.collection('scripts').get();
+            snapshot.forEach(doc => {
                 const data = doc.data();
                 if (data.collaborators && data.collaborators[currentUser.email]) {
                     const li = document.createElement('li');
-                    li.className = "p-2 bg-slate-800 rounded-lg cursor-pointer hover:bg-indigo-900 transition flex justify-between";
-                    li.innerHTML = `<span>Script de ${data.ownerEmail.split('@')[0]}</span> <span class="opacity-50 text-[9px] uppercase">${data.collaborators[currentUser.email]}</span>`;
+                    li.className = "p-3 bg-slate-800/50 border border-slate-700 rounded-xl cursor-pointer hover:bg-indigo-900/40 transition flex justify-between items-center";
+                    li.innerHTML = `<span>Script de <b>${data.ownerEmail.split('@')[0]}</b></span> <span class="text-[8px] bg-slate-700 px-2 py-1 rounded-md uppercase">${data.collaborators[currentUser.email]}</span>`;
                     li.onclick = () => loadScript(doc.id);
                     list.appendChild(li);
                 }
             });
         }
 
-        // GESTION MODAL PARTAGE
         function toggleShareModal() {
             const m = document.getElementById('share-modal');
-            m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
+            m.classList.toggle('flex');
         }
 
         async function confirmShare() {
-            const email = document.getElementById('share-email').value;
+            const email = document.getElementById('share-email').value.trim();
             const role = document.getElementById('share-role').value;
-            if (!email) return;
+            const btn = document.getElementById('confirm-invite-btn');
 
-            const scriptRef = db.collection('scripts').doc(currentScriptId);
-            await scriptRef.update({
-                [`collaborators.${email}`]: role
-            });
+            if (!email || !email.includes('@')) {
+                alert("Veuillez entrer un email valide.");
+                return;
+            }
 
-            alert("Utilisateur invité !");
-            toggleShareModal();
+            btn.innerText = "Envoi...";
+            btn.disabled = true;
+
+            try {
+                const scriptRef = db.collection('scripts').doc(currentScriptId);
+                // Utilisation de merge pour éviter le problème des points dans les noms de clés d'objets
+                await scriptRef.set({
+                    collaborators: {
+                        [email]: role
+                    }
+                }, { merge: true });
+
+                alert("Utilisateur invité avec succès !");
+                document.getElementById('share-email').value = "";
+                toggleShareModal();
+            } catch (e) {
+                console.error(e);
+                alert("Erreur lors de l'invitation.");
+            } finally {
+                btn.innerText = "Inviter";
+                btn.disabled = false;
+            }
         }
 
-        // SAUVEGARDE
         let saveTimeout;
         function autoSave() {
             const content = textarea.value;
             localStorage.setItem('purge-content', content);
-            
             if (currentUser && userRole !== 'viewer') {
                 clearTimeout(saveTimeout);
                 saveTimeout = setTimeout(() => {
@@ -308,7 +301,7 @@
             }
         }
 
-        // --- LOGIQUE ORIGINALE NON TOUCHÉE ---
+        // LOGIQUE ORIGINALE
         function process() {
             const text = textarea.value;
             const showP = document.getElementById('toggle-parasites').checked;
