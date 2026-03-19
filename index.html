@@ -149,7 +149,8 @@
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div class="lg:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- Statistiques -->
+            <div class="lg:col-span-12 grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
                     <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Tics</p>
                     <p id="total-parasites" class="text-2xl font-extrabold text-indigo-500">0</p>
@@ -162,6 +163,10 @@
                     <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Total Mots</p>
                     <p id="total-words" class="text-2xl font-extrabold">0</p>
                 </div>
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Durée Estimée</p>
+                    <p id="duration-display" class="text-2xl font-extrabold text-emerald-500">0s</p>
+                </div>
                 <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-slate-800">
                     <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Focus Actif</p>
                     <p id="focus-display" class="text-xl font-extrabold text-zinc-300">Aucun</p>
@@ -169,10 +174,18 @@
             </div>
 
             <div class="lg:col-span-8 space-y-4">
+                <!-- Réglage Débit -->
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 flex items-center gap-4 text-xs font-bold uppercase">
+                    <span class="text-slate-500">Débit diction (mots/min) :</span>
+                    <input type="range" id="wpm-slider" min="100" max="250" value="150" class="flex-1 accent-indigo-500" oninput="updateWpmDisplay(this.value); process();">
+                    <span id="wpm-value" class="w-12 text-indigo-500">150</span>
+                </div>
+
                 <div id="editor-wrapper" class="editor-container border border-slate-200 shadow-sm overflow-hidden bg-white show-parasites show-repeats show-montage">
                     <div id="highlight-layer" class="sync-text editor-font"></div>
                     <textarea id="textarea" class="sync-text editor-font" placeholder="Commencez à écrire... Utilisez [crochets] pour les notes de montage." spellcheck="false"></textarea>
                 </div>
+                
                 <div class="flex gap-4">
                     <button onclick="copyText()" class="bg-[var(--accent-color)] text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition">Copier</button>
                     <button onclick="downloadText()" class="bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition">Exporter .txt</button>
@@ -192,7 +205,7 @@
                     </div>
                     <!-- Mots Ignorés -->
                     <div id="ignored-section" class="hidden">
-                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-red-400 mb-4">Mots ignorés</h2>
+                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-red-400 mb-4">Mots ignorés (Mémoire)</h2>
                         <ul id="ignored-list" class="flex flex-wrap gap-2 text-[10px]"></ul>
                     </div>
                     <!-- Partages -->
@@ -232,6 +245,8 @@
         const highlightLayer = document.getElementById('highlight-layer');
         const editorWrapper = document.getElementById('editor-wrapper');
 
+        function updateWpmDisplay(val) { document.getElementById('wpm-value').innerText = val; }
+
         // GESTION AUTH
         function handleAuth() {
             if (currentUser) { auth.signOut(); } 
@@ -268,6 +283,9 @@
             if (doc.exists) {
                 const data = doc.data();
                 textarea.value = data.content;
+                // Restaurer les mots ignorés depuis le cloud
+                ignoredRepeats = new Set(data.ignoredWords || []);
+                
                 if (data.owner === currentUser.uid) {
                     userRole = 'owner';
                 } else if (data.editors && data.editors.includes(currentUser.email)) {
@@ -281,7 +299,8 @@
                     owner: currentUser.uid,
                     ownerEmail: currentUser.email,
                     editors: [],
-                    viewers: []
+                    viewers: [],
+                    ignoredWords: []
                 });
                 userRole = 'owner';
             }
@@ -327,8 +346,14 @@
         }
 
         // IGNORER MOTS
-        function ignoreWord(word) { ignoredRepeats.add(word.toLowerCase()); process(); }
-        function unignoreWord(word) { ignoredRepeats.delete(word); process(); }
+        function ignoreWord(word) { 
+            ignoredRepeats.add(word.toLowerCase()); 
+            process(); 
+        }
+        function unignoreWord(word) { 
+            ignoredRepeats.delete(word); 
+            process(); 
+        }
 
         // ANALYSE PRINCIPALE
         function process() {
@@ -386,7 +411,15 @@
                 }
             }
 
-            // 4. Focus
+            // 4. Durée Estimée
+            const wpm = parseInt(document.getElementById('wpm-slider').value) || 150;
+            const wordCount = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
+            const totalSeconds = Math.round((wordCount / wpm) * 60);
+            const displayMin = Math.floor(totalSeconds / 60);
+            const displaySec = totalSeconds % 60;
+            document.getElementById('duration-display').innerText = `${displayMin}m ${displaySec}s`;
+
+            // 5. Focus
             let focusIndices = new Set();
             if (activeFocusWord) {
                 const fRegex = new RegExp(`\\b(${activeFocusWord})\\b`, 'gi');
@@ -432,7 +465,7 @@
             highlightLayer.innerHTML = finalHtml + (text.endsWith('\n') ? '\n ' : '');
             document.getElementById('total-parasites').innerText = totalParasites;
             document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
-            document.getElementById('total-words').innerText = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
+            document.getElementById('total-words').innerText = wordCount;
             document.getElementById('focus-display').innerText = activeFocusWord || "Aucun";
             
             updateSidebars(parasiteCounts, repeatCounts);
@@ -466,7 +499,7 @@
             } else { iSection.classList.add('hidden'); }
         }
 
-        // SAUVEGARDE AUTO
+        // SAUVEGARDE AUTO (Inclut maintenant les mots ignorés)
         let saveTimeout;
         function autoSave() {
             const content = textarea.value;
@@ -476,6 +509,7 @@
                 saveTimeout = setTimeout(() => {
                     db.collection('scripts').doc(currentScriptId).update({
                         content: content,
+                        ignoredWords: Array.from(ignoredRepeats), // Persister la mémoire des mots ignorés
                         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                     }).then(() => {
                         const s = document.getElementById('save-status');
@@ -485,7 +519,6 @@
             }
         }
 
-        // OUTILS
         function toggleFocus(word) { activeFocusWord = (activeFocusWord === word) ? null : word; process(); }
         function downloadText() { const blob = new Blob([textarea.value], { type: 'text/plain' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `script.txt`; a.click(); }
         function syncScroll() { highlightLayer.scrollTop = textarea.scrollTop; }
@@ -493,13 +526,8 @@
         function clearText() { if(confirm("Effacer ?")) { textarea.value = ''; process(); } }
         function toggleDarkMode() { document.body.classList.toggle('dark-mode'); localStorage.setItem('purge-dark', document.body.classList.contains('dark-mode')); }
 
-        // INITIALISATION
         window.onload = () => {
-            const themes = [
-                { hex: '#ef4444' }, { hex: '#f97316' }, { hex: '#eab308' }, { hex: '#22c55e' }, 
-                { hex: '#10b981' }, { hex: '#2563eb' }, { hex: '#06b6d4' }, { hex: '#0ea5e9' }, 
-                { hex: '#6366f1' }, { hex: '#d946ef' }, { hex: '#f43f5e' }
-            ];
+            const themes = [{ hex: '#ef4444' }, { hex: '#f97316' }, { hex: '#eab308' }, { hex: '#22c55e' }, { hex: '#10b981' }, { hex: '#2563eb' }, { hex: '#06b6d4' }, { hex: '#0ea5e9' }, { hex: '#6366f1' }, { hex: '#d946ef' }, { hex: '#f43f5e' }];
             themes.forEach(t => {
                 const b = document.createElement('button');
                 b.className = 'w-5 h-5 rounded-full border border-white/20 hover:scale-125 transition';
