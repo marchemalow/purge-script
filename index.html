@@ -9,56 +9,96 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
     
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
     <style>
-        :root { --accent-color: #6366f1; --accent-soft: rgba(99, 102, 241, 0.15); --focus-color: #f02e65; --montage-color: #7dd3fc; }
+        :root { 
+            --accent-color: #6366f1; 
+            --accent-soft: rgba(99, 102, 241, 0.15); 
+            --focus-color: #f02e65; 
+            --montage-color: #7dd3fc; 
+        }
         body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease; }
         .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.6; }
         .editor-container { position: relative; min-height: 600px; border-radius: 1.5rem; background: white; }
-        .sync-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 30px; white-space: pre-wrap; word-wrap: break-word; overflow-y: auto; border: none; margin: 0; background: transparent; }
+        
+        .sync-text { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            padding: 30px; white-space: pre-wrap; word-wrap: break-word; 
+            overflow-y: auto; border: none; margin: 0; background: transparent; 
+        }
+        
         #textarea { color: transparent; caret-color: #1e293b; z-index: 2; resize: none; outline: none; }
         #highlight-layer { z-index: 1; pointer-events: none; color: #1e293b; }
+        
         mark { background: none; color: inherit; }
+        
         .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); border-radius: 2px; }
         .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; border-radius: 2px; }
         mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; font-weight: 600; }
-        .show-montage mark.montage { background-color: var(--montage-color) !important; color: #0369a1 !important; font-weight: 700; }
+        
+        .show-montage mark.montage { 
+            background-color: var(--montage-color) !important; 
+            color: #0369a1 !important; 
+            font-weight: 700;
+        }
+
+        .sidebar-item { cursor: pointer; transition: all 0.2s; }
+        .sidebar-item:hover { background-color: rgba(255,255,255,0.1); }
+        .sidebar-item.active-focus { border: 1px solid var(--focus-color); background-color: rgba(240, 46, 101, 0.2) !important; }
+        
         body.dark-mode { background-color: #0f172a; color: #f1f5f9; }
         .dark-mode .bg-white { background-color: #1e293b; border-color: #334155; }
+        .dark-mode .text-slate-900 { color: #f8fafc; }
+        .dark-mode .text-slate-500 { color: #94a3b8; }
+        .dark-mode .border-slate-200 { border-color: #334155; }
         .dark-mode #highlight-layer { color: #e2e8f0 !important; }
         .dark-mode #textarea { caret-color: #ffffff; }
+        .dark-mode .show-montage mark.montage { color: #e0f2fe !important; background-color: #0369a1 !important; }
+        
         .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
         .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--accent-color); }
         input:checked + .slider:before { transform: translateX(14px); }
+        
+        #wpm-slider { accent-color: var(--accent-color); }
+        
         #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 50; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .modal-content { background: white; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 400px; }
         #share-modal.flex { display: flex; }
-        .project-tab { border: 1px solid transparent; }
-        .project-tab.active { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
+        .dark-mode .modal-content { background: #1e293b; color: white; border-color: #334155; }
+        
         .ignore-btn { font-size: 10px; opacity: 0.5; cursor: pointer; }
         .ignore-btn:hover { opacity: 1; color: #ef4444; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark-mode ::-webkit-scrollbar-thumb { background: #475569; }
+
+        .project-tab.active { background-color: var(--accent-color); color: white; }
     </style>
 </head>
 <body class="text-slate-800 bg-slate-50">
 
     <div id="share-modal">
-        <div class="modal-content shadow-2xl border border-slate-200 dark:bg-slate-800">
-            <h3 class="text-xl font-extrabold mb-2 dark:text-white">Partager ce projet</h3>
-            <p class="text-xs text-slate-500 mb-6">Accès spécifiques à cet onglet.</p>
-            <input type="email" id="share-email" placeholder="Email du collaborateur" class="w-full p-4 rounded-xl border mb-4 dark:bg-slate-700 dark:text-white outline-none">
-            <select id="share-role" class="w-full p-4 rounded-xl border mb-8 dark:bg-slate-700 dark:text-white">
+        <div class="modal-content shadow-2xl border border-slate-200">
+            <h3 class="text-xl font-extrabold mb-2">Partager ce script</h3>
+            <p class="text-xs text-slate-500 mb-6">Travaillez à plusieurs sur le même texte.</p>
+            <label class="text-[10px] font-bold uppercase text-slate-400 mb-1 block">Email du collaborateur</label>
+            <input type="email" id="share-email" placeholder="exemple@gmail.com" class="w-full p-4 rounded-xl border mb-4 dark:bg-slate-800 dark:border-slate-700 outline-none focus:border-indigo-500 transition">
+            <label class="text-[10px] font-bold uppercase text-slate-400 mb-1 block">Permission</label>
+            <select id="share-role" class="w-full p-4 rounded-xl border mb-8 dark:bg-slate-800 dark:border-slate-700 outline-none">
                 <option value="editors">Éditeur (Peut modifier)</option>
                 <option value="viewers">Lecteur (Lecture seule)</option>
             </select>
             <div class="flex gap-3">
-                <button onclick="confirmShare()" class="flex-1 text-white py-4 rounded-2xl font-bold text-sm" style="background-color: var(--accent-color);">Inviter</button>
-                <button onclick="toggleShareModal()" class="flex-1 bg-slate-100 dark:bg-slate-700 py-4 rounded-2xl font-bold text-sm dark:text-white">Annuler</button>
+                <button id="confirm-invite-btn" onclick="confirmShare()" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-4 rounded-2xl font-bold text-sm transition" style="background-color: var(--accent-color);">Inviter</button>
+                <button onclick="toggleShareModal()" class="flex-1 bg-slate-100 dark:bg-slate-700 py-4 rounded-2xl font-bold text-sm">Annuler</button>
             </div>
         </div>
     </div>
@@ -66,251 +106,453 @@
     <div class="max-w-7xl mx-auto px-6 py-10">
         <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 border-b border-slate-200 dark:border-slate-700 pb-8">
             <div>
-                <h1 class="text-3xl font-extrabold dark:text-white">Purge-Script<span class="text-[var(--accent-color)]">.</span></h1>
-                <p id="user-display" class="text-slate-500 text-sm italic mt-1">Mode Local</p>
-            </div>
-            <div class="flex flex-wrap items-center gap-4">
-                <button id="share-btn" onclick="toggleShareModal()" class="hidden px-5 py-2.5 text-white rounded-xl text-xs font-bold transition shadow-lg" style="background-color: var(--accent-color);">Partager</button>
-                <button id="auth-btn" onclick="handleAuth()" class="px-4 py-2 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-xl text-xs font-bold dark:text-white">Se connecter</button>
-                <div class="flex gap-4 bg-white dark:bg-slate-800 p-3 rounded-2xl border dark:border-slate-700 shadow-sm text-[10px] font-bold uppercase dark:text-white">
-                    <div class="flex items-center gap-2"><span>Tics</span><label class="switch"><input type="checkbox" id="toggle-parasites" checked onchange="process()"><span class="slider"></span></label></div>
-                    <div class="flex items-center gap-2 border-l pl-4 dark:border-slate-700"><span>Répé.</span><label class="switch"><input type="checkbox" id="toggle-repeats" checked onchange="process()"><span class="slider"></span></label></div>
-                    <div class="flex items-center gap-2 border-l pl-4 dark:border-slate-700"><span>Montage</span><label class="switch"><input type="checkbox" id="toggle-montage" checked onchange="process()"><span class="slider"></span></label></div>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Purge-Script<span class="text-[var(--accent-color)]">.</span></h1>
+                    <span id="save-status" class="text-[10px] uppercase font-bold transition-opacity" style="color: var(--accent-color); opacity: 0;">Synchronisé</span>
                 </div>
-                <div class="bg-white dark:bg-slate-800 p-3 rounded-2xl border dark:border-slate-700 flex items-center gap-4">
-                    <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-700"><svg class="w-5 h-5 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg></button>
-                    <div id="theme-picker" class="flex flex-wrap gap-1 max-w-[160px]"></div>
+                <p class="text-slate-500 text-sm font-medium italic mt-1"><span id="user-display">Mode Local</span></p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-4">
+                <button id="share-btn" onclick="toggleShareModal()" class="hidden items-center gap-2 px-5 py-2.5 text-white rounded-xl text-xs font-bold hover:scale-105 transition shadow-lg" style="background-color: var(--accent-color);">Partager</button>
+                <button id="auth-btn" onclick="handleAuth()" class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold shadow-sm hover:scale-105 transition">
+                    <span id="auth-btn-text">Se connecter (Cloud)</span>
+                </button>
+                <div class="flex gap-4 bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-200 shadow-sm text-[10px] font-bold uppercase">
+                    <div class="flex items-center gap-2"><span>Tics</span><label class="switch"><input type="checkbox" id="toggle-parasites" checked onchange="process()"><span class="slider"></span></label></div>
+                    <div class="flex items-center gap-2 border-l pl-4 border-slate-200"><span>Répé.</span><label class="switch"><input type="checkbox" id="toggle-repeats" checked onchange="process()"><span class="slider"></span></label></div>
+                    <div class="flex items-center gap-2 border-l pl-4 border-slate-200"><span>Montage</span><label class="switch"><input type="checkbox" id="toggle-montage" checked onchange="process()"><span class="slider"></span></label></div>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
+                    <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:scale-105 transition">
+                        <svg id="moon-icon" class="w-5 h-5 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                    </button>
+                    <div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-700"></div>
+                    <div class="flex flex-wrap gap-1.5 max-w-[160px]" id="theme-picker"></div>
                 </div>
             </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-12 grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Tics</p>
+                    <p id="total-parasites" class="text-2xl font-extrabold" style="color: var(--accent-color);">0</p>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Répétitions</p>
+                    <p id="total-repeats" class="text-2xl font-extrabold text-amber-500">0</p>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Total Mots</p>
+                    <p id="total-words" class="text-2xl font-extrabold">0</p>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Durée Estimée</p>
+                    <p id="duration-display" class="text-2xl font-extrabold" style="color: var(--accent-color);">0s</p>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-slate-800">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Focus Actif</p>
+                    <p id="focus-display" class="text-xl font-extrabold text-zinc-300">Aucun</p>
+                </div>
+            </div>
+
             <div class="lg:col-span-8 space-y-4">
-                <!-- ONGLES DE PROJETS -->
-                <div class="flex items-center justify-between bg-white dark:bg-slate-800 p-2 rounded-2xl border dark:border-slate-700 shadow-sm">
+                <div id="projects-nav" class="hidden flex items-center justify-between bg-white dark:bg-slate-800 p-2 rounded-2xl border border-slate-200 shadow-sm">
                     <div class="flex gap-2">
-                        <button onclick="switchProject(1)" id="p-tab-1" class="project-tab active px-4 py-2 rounded-xl text-[10px] font-bold uppercase dark:text-white">Projet 1</button>
-                        <button onclick="switchProject(2)" id="p-tab-2" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase dark:text-white">Projet 2</button>
-                        <button onclick="switchProject(3)" id="p-tab-3" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase dark:text-white">Projet 3</button>
-                        <button onclick="switchProject(4)" id="p-tab-4" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase dark:text-white">Projet 4</button>
+                        <button onclick="switchProject(1)" id="p-tab-1" class="project-tab active px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 1</button>
+                        <button onclick="switchProject(2)" id="p-tab-2" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 2</button>
+                        <button onclick="switchProject(3)" id="p-tab-3" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 3</button>
+                        <button onclick="switchProject(4)" id="p-tab-4" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 4</button>
                     </div>
-                    <button onclick="renameCurrentProject()" class="p-2 text-slate-400 hover:text-indigo-500 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                    <button onclick="renameCurrentProject()" class="p-2 text-slate-400 hover:text-indigo-500 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    </button>
                 </div>
 
-                <div id="editor-wrapper" class="editor-container border dark:border-slate-700 shadow-sm overflow-hidden bg-white dark:bg-slate-900 show-parasites show-repeats show-montage">
-                    <div id="highlight-layer" class="sync-text editor-font dark:text-slate-200"></div>
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 flex items-center gap-4 text-xs font-bold uppercase">
+                    <span class="text-slate-500">Débit :</span>
+                    <input type="range" id="wpm-slider" min="100" max="250" value="150" class="flex-1" oninput="updateWpmDisplay(this.value); process();">
+                    <span id="wpm-value" class="w-12" style="color: var(--accent-color);">150</span>
+                </div>
+
+                <div id="editor-wrapper" class="editor-container border border-slate-200 shadow-sm overflow-hidden bg-white show-parasites show-repeats show-montage">
+                    <div id="highlight-layer" class="sync-text editor-font"></div>
                     <textarea id="textarea" class="sync-text editor-font" placeholder="Écrivez ici..." spellcheck="false"></textarea>
                 </div>
                 
                 <div class="flex gap-4">
-                    <button onclick="copyText()" class="text-white px-8 py-3.5 rounded-2xl font-bold uppercase text-xs" style="background-color: var(--accent-color);">Copier</button>
-                    <button onclick="downloadText()" class="bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-bold uppercase text-xs">Exporter .txt</button>
-                    <button onclick="clearText()" class="text-slate-400 font-bold text-xs uppercase px-4">Effacer</button>
-                    <span id="save-status" class="ml-auto text-[10px] font-bold uppercase self-center opacity-0 transition-opacity" style="color: var(--accent-color);">Sauvegardé</span>
+                    <button onclick="copyText()" class="text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition" style="background-color: var(--accent-color);">Copier</button>
+                    <button onclick="downloadText()" class="bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition">Exporter</button>
+                    <button onclick="clearText()" class="text-slate-400 hover:text-red-500 font-bold transition text-xs uppercase px-4">Effacer</button>
                 </div>
             </div>
 
             <div class="lg:col-span-4 space-y-6">
-                <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-6">
-                    <div class="grid grid-cols-2 gap-4 border-b border-slate-800 pb-6 text-center">
-                        <div><p class="text-[9px] text-slate-500 uppercase font-bold">Tics</p><p id="total-parasites" class="text-xl font-bold">0</p></div>
-                        <div><p class="text-[9px] text-slate-500 uppercase font-bold">Répétitions</p><p id="total-repeats" class="text-xl font-bold text-amber-500">0</p></div>
-                        <div><p class="text-[9px] text-slate-500 uppercase font-bold">Mots</p><p id="total-words" class="text-xl font-bold">0</p></div>
-                        <div><p class="text-[9px] text-slate-500 uppercase font-bold">Durée</p><p id="duration-display" class="text-xl font-bold text-indigo-400">0s</p></div>
+                <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8">
+                    <div>
+                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4">Tics</h2>
+                        <ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul>
                     </div>
-                    <div><h2 class="text-[9px] font-bold uppercase text-slate-500 mb-4">Mots fréquents</h2><ul id="word-list" class="space-y-1 max-h-32 overflow-y-auto text-xs pr-2"></ul></div>
-                    <div><h2 class="text-[9px] font-bold uppercase text-slate-500 mb-4">Répétitions proches</h2><ul id="repeat-list" class="space-y-1 max-h-32 overflow-y-auto text-xs pr-2"></ul></div>
-                    <div id="collaborators-section" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-indigo-400 mb-4">Collaborateurs</h2><ul id="collaborators-list" class="space-y-2 text-[10px]"></ul></div>
-                    <div id="shared-scripts-container" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-slate-500 mb-4">Partagés avec moi</h2><ul id="shared-list" class="space-y-2 text-[10px]"></ul></div>
+                    <div>
+                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4">Répétitions</h2>
+                        <ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul>
+                    </div>
+                    <div id="ignored-section" class="hidden">
+                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-red-400 mb-4">Mots ignorés</h2>
+                        <ul id="ignored-list" class="flex flex-wrap gap-2 text-[10px]"></ul>
+                    </div>
+                    <div id="collaborators-section" class="hidden border-t border-slate-700 pt-6">
+                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-indigo-400 mb-4">Collaborateurs</h2>
+                        <ul id="collaborators-list" class="space-y-2 text-[11px]"></ul>
+                    </div>
+                    <div id="shared-scripts-container" class="hidden border-t border-slate-700 pt-6">
+                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4">Partagés avec moi</h2>
+                        <ul id="shared-list" class="space-y-2 text-[11px]"></ul>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        const firebaseConfig = { apiKey: "AIzaSyCPI5JRtaODgMbhpvmb5jJ9pGaEOFms8sI", authDomain: "script-p-6c6df.firebaseapp.com", projectId: "script-p-6c6df", storageBucket: "script-p-6c6df.firebasestorage.app", messagingSenderId: "792026086516", appId: "1:792026086516:web:cf2882d0bd6e770db7a521" };
+        const firebaseConfig = { 
+            apiKey: "AIzaSyCPI5JRtaODgMbhpvmb5jJ9pGaEOFms8sI", 
+            authDomain: "script-p-6c6df.firebaseapp.com", 
+            projectId: "script-p-6c6df", 
+            storageBucket: "script-p-6c6df.firebasestorage.app", 
+            messagingSenderId: "792026086516", 
+            appId: "1:792026086516:web:cf2882d0bd6e770db7a521" 
+        };
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth(), db = firebase.firestore();
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
         const parasiteDictionary = ["du coup", "en fait", "voilà", "un petit peu", "euh", "globalement", "concrètement", "effectivement", "donc", "c'est-à-dire", "au final", "disons que", "typiquement", "clairement", "tout simplement", "en gros", "pour le coup", "un peu", "voilà quoi", "tu vois", "franchement", "honnêtement", "en réalité", "pour ainsi dire", "alors", "en quelque sorte", "justement", "au niveau de", "quelque part", "on va dire", "fondamentalement", "véritablement", "pour ma part", "en soi", "entre guillemets", "si vous voulez", "de base", "sur la fin"];
         const stopWords = ["je", "me", "moi", "tu", "te", "toi", "il", "elle", "on", "nous", "vous", "ils", "elles", "le", "la", "les", "un", "une", "des", "du", "de", "ce", "cet", "cette", "ces", "se", "soi", "lui", "leur", "y", "en", "mon", "ton", "son", "ma", "ta", "sa", "mes", "tes", "ses", "notre", "votre", "nos", "vos", "leurs", "qui", "que", "quoi", "dont", "où", "quel", "quels", "quelle", "quelles", "et", "ou", "mais", "est", "sont", "pour", "dans", "par", "avec", "pas", "ne", "si", "ici", "là", "ont", "aux", "très"];
 
-        let currentUser = null, currentProjectIndex = 1, currentScriptId = null, scriptListener = null;
-        let activeFocusWord = null, userRole = 'owner', ignoredRepeats = new Set(), saveTimeout = null;
-        const textarea = document.getElementById('textarea'), highlightLayer = document.getElementById('highlight-layer');
+        let activeFocusWord = null;
+        let currentUser = null;
+        let currentScriptId = null;
+        let currentProjectIndex = 1;
+        let userRole = 'owner'; 
+        let ignoredRepeats = new Set(); 
+        let scriptListener = null;
 
-        function handleAuth() { if (currentUser) auth.signOut(); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+        const textarea = document.getElementById('textarea');
+        const highlightLayer = document.getElementById('highlight-layer');
+        const editorWrapper = document.getElementById('editor-wrapper');
 
-        auth.onAuthStateChanged(user => {
+        function updateWpmDisplay(val) { document.getElementById('wpm-value').innerText = val; }
+
+        function handleAuth() {
+            if (currentUser) { auth.signOut(); } 
+            else { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+        }
+
+        auth.onAuthStateChanged(async user => {
             currentUser = user;
-            document.getElementById('user-display').innerText = user ? "Connecté : " + user.displayName : "Mode Local";
-            document.getElementById('auth-btn-text').innerText = user ? "Se déconnecter" : "Se connecter";
-            document.getElementById('share-btn').style.display = user ? 'flex' : 'none';
-            document.getElementById('shared-scripts-container').classList.toggle('hidden', !user);
-            if (user) fetchSharedScripts();
-            switchProject(1);
+            if (user) {
+                document.getElementById('auth-btn-text').innerText = "Se déconnecter";
+                document.getElementById('user-display').innerText = "Connecté : " + user.displayName;
+                document.getElementById('share-btn').style.display = 'flex';
+                document.getElementById('shared-scripts-container').classList.remove('hidden');
+                document.getElementById('projects-nav').classList.remove('hidden');
+                switchProject(1);
+                fetchSharedScripts();
+            } else {
+                document.getElementById('auth-btn-text').innerText = "Se connecter (Cloud)";
+                document.getElementById('user-display').innerText = "Mode Local";
+                document.getElementById('share-btn').style.display = 'none';
+                document.getElementById('projects-nav').classList.add('hidden');
+                document.getElementById('collaborators-section').classList.add('hidden');
+                textarea.readOnly = false;
+                textarea.value = localStorage.getItem('purge-content') || "";
+                process();
+            }
         });
 
         function switchProject(index) {
-            clearTimeout(saveTimeout);
-            if (scriptListener) scriptListener();
+            if (!currentUser) return;
             currentProjectIndex = index;
             document.querySelectorAll('.project-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(`p-tab-${index}`).classList.add('active');
-            
-            textarea.value = ""; // Force clear avant chargement
-            
-            if (currentUser) {
-                currentScriptId = `${currentUser.uid}_p${index}`;
-                loadCloudProject(currentScriptId);
-            } else {
-                currentScriptId = null;
-                textarea.value = localStorage.getItem(`purge-content-${index}`) || "";
-                document.getElementById(`p-tab-${index}`).innerText = localStorage.getItem(`p-title-${index}`) || `Projet ${index}`;
-                document.getElementById('collaborators-section').classList.add('hidden');
-                process();
+            loadScript(`${currentUser.uid}_${index}`);
+        }
+
+        async function renameCurrentProject() {
+            if (userRole !== 'owner') return;
+            const newName = prompt("Nom du projet :");
+            if (newName) {
+                await db.collection('scripts').doc(currentScriptId).update({ title: newName });
+                document.getElementById(`p-tab-${currentProjectIndex}`).innerText = newName;
             }
         }
 
-        function loadCloudProject(id) {
+        async function loadScript(id) {
+            if (scriptListener) scriptListener();
+            currentScriptId = id;
             scriptListener = db.collection('scripts').doc(id).onSnapshot(doc => {
                 if (doc.exists) {
                     const data = doc.data();
-                    if (textarea.value !== data.content && userRole !== 'owner') textarea.value = data.content;
-                    document.getElementById(`p-tab-${currentProjectIndex}`).innerText = data.title || `Projet ${currentProjectIndex}`;
+                    if (textarea.value !== data.content && userRole !== 'owner') {
+                        textarea.value = data.content;
+                    }
+                    if (data.title) {
+                        const slotMatch = id.match(/_([1-4])$/);
+                        if (slotMatch && data.owner === currentUser.uid) {
+                            document.getElementById(`p-tab-${slotMatch[1]}`).innerText = data.title;
+                        }
+                    }
                     ignoredRepeats = new Set(data.ignoredWords || []);
-                    userRole = (data.owner === currentUser.uid) ? 'owner' : (data.editors?.includes(currentUser.email) ? 'editor' : 'viewer');
-                    updateCollabsUI(data);
-                } else {
-                    db.collection('scripts').doc(id).set({ content: "", title: `Projet ${currentProjectIndex}`, owner: currentUser.uid, ownerEmail: currentUser.email, editors: [], ignoredWords: [] });
+                    if (data.owner === currentUser.uid) {
+                        userRole = 'owner';
+                        updateCollaboratorsUI(data);
+                    } else {
+                        userRole = data.editors?.includes(currentUser.email) ? 'editor' : 'viewer';
+                        document.getElementById('collaborators-section').classList.add('hidden');
+                    }
+                    textarea.readOnly = (userRole === 'viewer');
+                    process();
+                } else if (id.startsWith(currentUser.uid)) {
+                    db.collection('scripts').doc(id).set({
+                        content: "", title: `Projet ${id.split('_')[1]}`, owner: currentUser.uid, ownerEmail: currentUser.email,
+                        editors: [], viewers: [], ignoredWords: []
+                    });
                 }
-                textarea.readOnly = (userRole === 'viewer');
-                process();
             });
         }
 
+        function updateCollaboratorsUI(data) {
+            const list = document.getElementById('collaborators-list');
+            list.innerHTML = "";
+            const editors = data.editors || [];
+            const viewers = data.viewers || [];
+            if (editors.length === 0 && viewers.length === 0) {
+                document.getElementById('collaborators-section').classList.add('hidden');
+                return;
+            }
+            document.getElementById('collaborators-section').classList.remove('hidden');
+            editors.forEach(e => addCollabItem(e, 'editors', 'Éditeur', list));
+            viewers.forEach(e => addCollabItem(e, 'viewers', 'Lecteur', list));
+        }
+
+        function addCollabItem(email, roleKey, roleLabel, container) {
+            const li = document.createElement('li');
+            li.className = "flex justify-between items-center bg-slate-800/40 p-2 rounded-lg border border-slate-700";
+            li.innerHTML = `<div class="flex flex-col"><span class="font-bold truncate max-w-[120px]">${email.split('@')[0]}</span><span class="text-[8px] text-slate-500 uppercase">${roleLabel}</span></div>
+                <button onclick="removeCollaborator('${email}', '${roleKey}')" class="text-slate-500 hover:text-red-500 transition px-2 text-lg">✕</button>`;
+            container.appendChild(li);
+        }
+
+        async function removeCollaborator(email, roleKey) {
+            if (confirm(`Retirer l'accès à ${email} ?`)) {
+                await db.collection('scripts').doc(currentScriptId).update({ [roleKey]: firebase.firestore.FieldValue.arrayRemove(email) });
+            }
+        }
+
+        async function fetchSharedScripts() {
+            const list = document.getElementById('shared-list');
+            list.innerHTML = "";
+            const snapEd = await db.collection('scripts').where('editors', 'array-contains', currentUser.email).get();
+            snapEd.forEach(doc => createSharedItem(doc, 'éditeur', list));
+            const snapVi = await db.collection('scripts').where('viewers', 'array-contains', currentUser.email).get();
+            snapVi.forEach(doc => createSharedItem(doc, 'lecteur', list));
+        }
+
+        function createSharedItem(doc, roleName, list) {
+            const data = doc.data();
+            const li = document.createElement('li');
+            li.className = "p-3 bg-slate-800/50 border border-slate-700 rounded-xl cursor-pointer hover:bg-indigo-900/40 transition flex justify-between items-center";
+            li.innerHTML = `<span>${data.title || 'Sans titre'} (par ${data.ownerEmail.split('@')[0]})</span> <span class="text-[8px] bg-slate-700 px-2 py-1 rounded-md uppercase">${roleName}</span>`;
+            li.onclick = () => {
+                document.querySelectorAll('.project-tab').forEach(t => t.classList.remove('active'));
+                loadScript(doc.id);
+            };
+            list.appendChild(li);
+        }
+
+        function toggleShareModal() { document.getElementById('share-modal').classList.toggle('flex'); }
+        async function confirmShare() {
+            const email = document.getElementById('share-email').value.trim();
+            const role = document.getElementById('share-role').value; 
+            if (!email.includes('@')) return alert("Email invalide");
+            await db.collection('scripts').doc(currentScriptId).update({ [role]: firebase.firestore.FieldValue.arrayUnion(email) });
+            toggleShareModal();
+        }
+
+        function ignoreWord(word) { ignoredRepeats.add(word.toLowerCase()); process(); }
+        function unignoreWord(word) { ignoredRepeats.delete(word); process(); }
+
         function process() {
             const text = textarea.value;
-            let montageIndices = new Set(), mRegex = /\[.*?\]/g, mMatch;
-            while ((mMatch = mRegex.exec(text)) !== null) { for (let i = 0; i < mMatch[0].length; i++) montageIndices.add(mMatch.index + i); }
+            const showP = document.getElementById('toggle-parasites').checked;
+            const showR = document.getElementById('toggle-repeats').checked;
+            const showM = document.getElementById('toggle-montage').checked;
+            editorWrapper.classList.toggle('show-parasites', showP);
+            editorWrapper.classList.toggle('show-repeats', showR);
+            editorWrapper.classList.toggle('show-montage', showM);
 
-            let parasiteIndices = new Set(), parasiteCounts = {}, tParasites = 0;
-            parasiteDictionary.forEach(w => {
-                const r = new RegExp(`\\b(${w})\\b`, 'gi'); let match;
-                while ((match = r.exec(text)) !== null) {
+            let montageIndices = new Set();
+            const montageRegex = /\[.*?\]/g;
+            let mMatch;
+            while ((mMatch = montageRegex.exec(text)) !== null) { for (let i = 0; i < mMatch[0].length; i++) montageIndices.add(mMatch.index + i); }
+
+            let parasiteIndices = new Set();
+            let parasiteCounts = {};
+            let totalParasites = 0;
+            parasiteDictionary.forEach(word => {
+                const regex = new RegExp(`\\b(${word})\\b`, 'gi');
+                let match;
+                while ((match = regex.exec(text)) !== null) {
                     if (montageIndices.has(match.index)) continue;
-                    tParasites++; parasiteCounts[w.toLowerCase()] = (parasiteCounts[w.toLowerCase()] || 0) + 1;
+                    totalParasites++;
+                    parasiteCounts[word.toLowerCase()] = (parasiteCounts[word.toLowerCase()] || 0) + 1;
                     for (let i = 0; i < match[0].length; i++) parasiteIndices.add(match.index + i);
                 }
             });
 
             const wordRegex = /[a-zA-ZàâäéèêëîïôöûüùçÀÂÄÉÈÊËÎÏÔÖÛÜÙÇ]{3,}/g;
-            let lastSeen = {}, badRepIndices = new Set(), repeatCounts = {}, wordCounter = 0, match;
+            let lastSeenAt = {}; let badRepeatIndices = new Set();
+            let repeatCounts = {}; let wordCounter = 0; let match;
             while ((match = wordRegex.exec(text)) !== null) {
-                wordCounter++; const w = match[0].toLowerCase();
-                if (!stopWords.includes(w) && !parasiteIndices.has(match.index) && !montageIndices.has(match.index) && !ignoredRepeats.has(w)) {
-                    if (lastSeen[w] && (wordCounter - lastSeen[w].count <= 70)) {
-                        for (let i = 0; i < w.length; i++) { badRepIndices.add(match.index + i); badRepIndices.add(lastSeen[w].pos + i); }
-                        repeatCounts[w] = (repeatCounts[w] || 0) + 1;
+                wordCounter++;
+                const word = match[0].toLowerCase();
+                if (!stopWords.includes(word) && !parasiteIndices.has(match.index) && !montageIndices.has(match.index) && !ignoredRepeats.has(word)) {
+                    if (lastSeenAt[word] && (wordCounter - lastSeenAt[word].count <= 70)) {
+                        for (let i = 0; i < word.length; i++) {
+                            badRepeatIndices.add(match.index + i); badRepeatIndices.add(lastSeenAt[word].pos + i);
+                        }
+                        repeatCounts[word] = (repeatCounts[word] || 0) + 1;
                     }
-                    lastSeen[w] = { count: wordCounter, pos: match.index };
+                    lastSeenAt[word] = { count: wordCounter, pos: match.index };
                 }
             }
 
+            const wpm = parseInt(document.getElementById('wpm-slider').value) || 150;
+            const wordCount = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
+            const totalSeconds = Math.round((wordCount / wpm) * 60);
+            document.getElementById('duration-display').innerText = `${Math.floor(totalSeconds / 60)}m ${totalSeconds % 60}s`;
+
             let focusIndices = new Set();
             if (activeFocusWord) {
-                const fRegex = new RegExp(`\\b(${activeFocusWord})\\b`, 'gi'); let fMatch;
+                const fRegex = new RegExp(`\\b(${activeFocusWord})\\b`, 'gi');
+                let fMatch;
                 while ((fMatch = fRegex.exec(text)) !== null) { for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i); }
             }
 
-            let finalHtml = "", i = 0;
+            let finalHtml = "";
+            let i = 0;
             while (i < text.length) {
-                let className = montageIndices.has(i) ? "montage" : focusIndices.has(i) ? "focus-active" : parasiteIndices.has(i) ? "parasite" : badRepIndices.has(i) ? "repeat" : "";
+                let className = "";
+                if (montageIndices.has(i)) className = "montage";
+                else if (focusIndices.has(i)) className = "focus-active";
+                else if (parasiteIndices.has(i)) className = "parasite";
+                else if (badRepeatIndices.has(i)) className = "repeat";
+
                 if (className) {
                     finalHtml += `<mark class="${className}">`;
                     while (i < text.length && (
-                        (className === "montage" && montageIndices.has(i)) || (className === "focus-active" && focusIndices.has(i)) ||
-                        (className === "parasite" && parasiteIndices.has(i)) || (className === "repeat" && badRepIndices.has(i))
-                    )) { finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++; }
+                        (className === "montage" && montageIndices.has(i)) ||
+                        (className === "focus-active" && focusIndices.has(i)) ||
+                        (className === "parasite" && parasiteIndices.has(i)) ||
+                        (className === "repeat" && badRepeatIndices.has(i))
+                    )) {
+                        finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        i++;
+                    }
                     finalHtml += `</mark>`;
-                } else { finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++; }
+                } else {
+                    finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    i++;
+                }
             }
 
             highlightLayer.innerHTML = finalHtml + (text.endsWith('\n') ? '\n ' : '');
-            document.getElementById('total-parasites').innerText = tParasites;
+            document.getElementById('total-parasites').innerText = totalParasites;
             document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
-            document.getElementById('total-words').innerText = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
-            
+            document.getElementById('total-words').innerText = wordCount;
+            document.getElementById('focus-display').innerText = activeFocusWord || "Aucun";
             updateSidebars(parasiteCounts, repeatCounts);
             autoSave();
         }
 
+        function updateSidebars(pCounts, rCounts) {
+            const pList = document.getElementById('word-list');
+            const rList = document.getElementById('repeat-list');
+            pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`
+                <li onclick="toggleFocus('${w}')" class="sidebar-item ${activeFocusWord===w?'active-focus':''} flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1">
+                    <span>${w}</span><span style="color: var(--accent-color);">${c}</span>
+                </li>`).join('') || 'RAS';
+            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`
+                <li class="sidebar-item flex justify-between items-center uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1">
+                    <span onclick="toggleFocus('${w}')">${w}</span>
+                    <div class="flex items-center gap-2"><span class="text-amber-500">${c+1}x</span><button onclick="ignoreWord('${w}')" class="ignore-btn">✕</button></div>
+                </li>`).join('') || 'RAS';
+
+            const iSection = document.getElementById('ignored-section');
+            if (ignoredRepeats.size > 0) {
+                iSection.classList.remove('hidden');
+                document.getElementById('ignored-list').innerHTML = Array.from(ignoredRepeats).map(w => `<li onclick="unignoreWord('${w}')" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer hover:bg-red-500/40">#${w}</li>`).join('');
+            } else iSection.classList.add('hidden');
+        }
+
+        let saveTimeout;
         function autoSave() {
             const content = textarea.value;
-            localStorage.setItem(`purge-content-${currentProjectIndex}`, content);
-            if (currentUser && currentScriptId && userRole !== 'viewer') {
+            localStorage.setItem('purge-content', content);
+            if (currentUser && userRole !== 'viewer') {
                 clearTimeout(saveTimeout);
                 saveTimeout = setTimeout(() => {
-                    db.collection('scripts').doc(currentScriptId).update({ content: content, ignoredWords: Array.from(ignoredRepeats), lastUpdated: firebase.firestore.FieldValue.serverTimestamp() })
-                    .then(() => { document.getElementById('save-status').style.opacity = 1; setTimeout(()=>document.getElementById('save-status').style.opacity = 0, 1000); });
+                    db.collection('scripts').doc(currentScriptId).update({
+                        content: content, ignoredWords: Array.from(ignoredRepeats),
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                    }).then(() => {
+                        const s = document.getElementById('save-status');
+                        s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 2000);
+                    });
                 }, 1000);
             }
         }
 
-        function updateSidebars(pCounts, rCounts) {
-            document.getElementById('word-list').innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus('${w}')" class="flex justify-between p-2 bg-slate-800 rounded cursor-pointer ${activeFocusWord===w?'border border-indigo-500':''}"><span>${w}</span><span style="color:var(--accent-color)">${c}</span></li>`).join('') || 'RAS';
-            document.getElementById('repeat-list').innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li class="flex justify-between p-2 bg-slate-800 rounded"><span>${w}</span><div class="flex gap-2"><span class="text-amber-500">${c+1}x</span><button onclick="ignoreWord('${w}')" class="text-red-400">✕</button></div></li>`).join('') || 'RAS';
-        }
-
-        function updateCollabsUI(data) {
-            const list = document.getElementById('collaborators-list');
-            list.innerHTML = "";
-            if (data.owner === currentUser.uid) {
-                document.getElementById('collaborators-section').classList.remove('hidden');
-                (data.editors || []).forEach(e => { list.innerHTML += `<li class="flex justify-between bg-slate-800 p-2 rounded"><span>${e}</span><button onclick="removeCollab('${e}')" class="text-red-400">✕</button></li>`; });
-            } else document.getElementById('collaborators-section').classList.add('hidden');
-        }
-
-        async function fetchSharedScripts() {
-            const snap = await db.collection('scripts').where('editors', 'array-contains', currentUser.email).get();
-            const list = document.getElementById('shared-list'); list.innerHTML = "";
-            snap.forEach(doc => {
-                const li = document.createElement('li'); li.className = "p-3 bg-slate-800/50 rounded-xl cursor-pointer hover:bg-slate-700 transition";
-                li.innerHTML = `<span class="font-bold">${doc.data().title}</span><br><span class="text-[9px] text-slate-400">De ${doc.data().ownerEmail}</span>`;
-                li.onclick = () => { if(scriptListener) scriptListener(); currentScriptId = doc.id; loadCloudProject(doc.id); };
-                list.appendChild(li);
-            });
-        }
-
-        async function renameCurrentProject() {
-            const n = prompt("Nouveau nom :"); if (!n) return;
-            if (currentUser && currentScriptId) await db.collection('scripts').doc(currentScriptId).update({ title: n });
-            else { localStorage.setItem(`p-title-${currentProjectIndex}`, n); document.getElementById(`p-tab-${currentProjectIndex}`).innerText = n; }
-        }
-
-        function toggleFocus(w) { activeFocusWord = (activeFocusWord === w) ? null : w; process(); }
-        function ignoreWord(w) { ignoredRepeats.add(w.toLowerCase()); process(); }
-        function copyText() { navigator.clipboard.writeText(textarea.value); }
+        function toggleFocus(word) { activeFocusWord = (activeFocusWord === word) ? null : word; process(); }
         function downloadText() { const blob = new Blob([textarea.value], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `script.txt`; a.click(); }
+        function copyText() { navigator.clipboard.writeText(textarea.value); }
         function clearText() { if(confirm("Effacer ?")) { textarea.value = ''; process(); } }
         function toggleDarkMode() { document.body.classList.toggle('dark-mode'); localStorage.setItem('purge-dark', document.body.classList.contains('dark-mode')); }
-        function toggleShareModal() { document.getElementById('share-modal').classList.toggle('flex'); }
-        async function confirmShare() {
-            const e = document.getElementById('share-email').value;
-            if (e) await db.collection('scripts').doc(currentScriptId).update({ editors: firebase.firestore.FieldValue.arrayUnion(e) });
-            toggleShareModal();
-        }
 
         window.onload = () => {
-            const colors = ['#ef4444','#f97316','#eab308','#84cc16','#10b981','#06b6d4','#2563eb','#6366f1','#8b5cf6','#d946ef','#ec4899','#f43f5e'];
-            colors.forEach(c => {
-                const b = document.createElement('button'); b.className = 'w-5 h-5 rounded-full border border-white/20 hover:scale-125 transition';
-                b.style.backgroundColor = c; b.onclick = () => { document.documentElement.style.setProperty('--accent-color', c); document.documentElement.style.setProperty('--accent-soft', c + '26'); process(); };
+            // Liste des 12 couleurs (Bleu Clair retiré)
+            const themes = [
+                '#ef4444', // Rouge
+                '#f97316', // Orange
+                '#eab308', // Jaune
+                '#84cc16', // Vert Clair
+                '#10b981', // Vert foncé
+                '#06b6d4', // Turquoise
+                '#2563eb', // Bleu foncé
+                '#6366f1', // Bleu violet
+                '#8b5cf6', // Violet
+                '#d946ef', // Rose-Violet
+                '#ec4899', // Rose
+                '#f43f5e'  // Rose-Rouge
+            ];
+            
+            themes.forEach(t => {
+                const b = document.createElement('button');
+                b.className = 'w-5 h-5 rounded-full border border-white/20 hover:scale-125 transition';
+                b.style.backgroundColor = t;
+                b.onclick = () => {
+                    document.documentElement.style.setProperty('--accent-color', t);
+                    document.documentElement.style.setProperty('--accent-soft', t + '26');
+                    process();
+                };
                 document.getElementById('theme-picker').appendChild(b);
             });
-            if(localStorage.getItem('purge-dark') === 'true') document.body.classList.add('dark-mode');
+            if(localStorage.getItem('purge-dark') === 'true') toggleDarkMode();
             textarea.addEventListener('input', process);
             textarea.addEventListener('scroll', () => highlightLayer.scrollTop = textarea.scrollTop);
+            process();
         };
     </script>
 </body>
