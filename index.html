@@ -40,7 +40,6 @@
         .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; border-radius: 2px; }
         mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; font-weight: 600; }
         
-        /* STYLE MONTAGE CORRIGÉ : Plus de padding ni de changement de taille pour éviter les décalages */
         .show-montage mark.montage { 
             background-color: var(--montage-color) !important; 
             color: #0369a1 !important; 
@@ -129,7 +128,8 @@
                         <svg id="moon-icon" class="w-5 h-5 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
                     </button>
                     <div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-700"></div>
-                    <div class="flex flex-wrap gap-1.5 max-w-[200px]" id="theme-picker"></div>
+                    <!-- Sélecteur de thèmes étendu -->
+                    <div class="flex flex-wrap gap-1.5 max-w-[160px]" id="theme-picker"></div>
                 </div>
             </div>
         </header>
@@ -442,7 +442,6 @@
                 while ((fMatch = fRegex.exec(text)) !== null) { for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i); }
             }
 
-            // RENDU CORRIGÉ POUR ÉVITER LE DÉCALAGE ET LE LOOK "BOITE"
             let finalHtml = "";
             let i = 0;
             while (i < text.length) {
@@ -524,7 +523,23 @@
         function toggleDarkMode() { document.body.classList.toggle('dark-mode'); localStorage.setItem('purge-dark', document.body.classList.contains('dark-mode')); }
 
         window.onload = () => {
-            const themes = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#2563eb', '#6366f1', '#d946ef'];
+            // Liste étendue des couleurs (13 couleurs arc-en-ciel)
+            const themes = [
+                '#ef4444', // Rouge
+                '#f97316', // Orange
+                '#eab308', // Jaune
+                '#84cc16', // Vert Clair
+                '#10b981', // Vert foncé
+                '#06b6d4', // Turquoise
+                '#0ea5e9', // Bleu clair
+                '#2563eb', // Bleu foncé
+                '#6366f1', // Bleu violet
+                '#8b5cf6', // Violet
+                '#d946ef', // Rose-Violet
+                '#ec4899', // Rose
+                '#f43f5e'  // Rose-Rouge
+            ];
+            
             themes.forEach(t => {
                 const b = document.createElement('button');
                 b.className = 'w-5 h-5 rounded-full border border-white/20 hover:scale-125 transition';
