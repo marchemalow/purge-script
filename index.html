@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Purge-Script Pro | Cloud Collaboration</title>
+    <title>Purge-Script Pro | Dark Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
     
@@ -13,17 +13,46 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
     <style>
-        :root { --accent-color: #6366f1; --accent-soft: rgba(99, 102, 241, 0.15); --focus-color: #f02e65; --montage-color: #7dd3fc; }
+        :root { 
+            --accent-color: #6366f1; 
+            --accent-soft: rgba(99, 102, 241, 0.15); 
+            --focus-color: #f02e65; 
+            --montage-color: #7dd3fc; 
+        }
         
-        /* Mode Clair : Fond de page gris très léger pour faire ressortir les DIV blanches */
-        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease; background-color: #f1f5f9; } 
+        /* Fixe en Mode Sombre */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #0f172a; 
+            color: #f1f5f9; 
+        } 
         
+        h1, h1 span { color: #ffffff !important; }
+
         .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.6; }
-        .editor-container { position: relative; min-height: 600px; border-radius: 1.5rem; background: white; }
-        .sync-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 30px; white-space: pre-wrap; word-wrap: break-word; overflow-y: auto; border: none; margin: 0; background: transparent; }
         
-        #textarea { color: transparent; caret-color: #1e293b; z-index: 2; resize: none; outline: none; }
-        #highlight-layer { z-index: 1; pointer-events: none; color: #1e293b; }
+        .editor-container { 
+            position: relative; 
+            min-height: 600px; 
+            border-radius: 1.5rem; 
+            background-color: #1e293b; 
+            border: 1px solid #334155;
+        }
+
+        .sync-text { 
+            position: absolute; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            padding: 30px; 
+            white-space: pre-wrap; 
+            word-wrap: break-word; 
+            overflow-y: auto; 
+            border: none; 
+            margin: 0; 
+            background: transparent; 
+        }
+        
+        #textarea { color: transparent; caret-color: #ffffff; z-index: 2; resize: none; outline: none; }
+        #highlight-layer { z-index: 1; pointer-events: none; color: #e2e8f0 !important; }
         
         mark { background: none; color: inherit; }
         .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); border-radius: 2px; }
@@ -32,16 +61,10 @@
         .show-montage mark.montage { background-color: var(--montage-color) !important; color: #0369a1 !important; font-weight: 700; }
         
         .sidebar-item { cursor: pointer; transition: all 0.2s; }
-        .sidebar-item:hover { background-color: rgba(255,255,255,0.1); }
+        .sidebar-item:hover { background-color: rgba(255,255,255,0.05); }
         .sidebar-item.active-focus { border: 1px solid var(--focus-color); background-color: rgba(240, 46, 101, 0.2) !important; }
         
-        /* Mode Nuit : Nom du site en Blanc */
-        body.dark-mode { background-color: #0f172a; color: #f1f5f9; }
-        .dark-mode h1 { color: #ffffff !important; }
-        .dark-mode h1 span { color: #ffffff !important; }
-        .dark-mode .bg-white { background-color: #1e293b; border-color: #334155; }
-        .dark-mode #highlight-layer { color: #e2e8f0 !important; }
-        .dark-mode #textarea { caret-color: #ffffff; }
+        .bg-card { background-color: #1e293b; border-color: #334155; }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -50,59 +73,55 @@
 
         .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 34px; }
         .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--accent-color); }
         input:checked + .slider:before { transform: translateX(14px); }
         
         #wpm-slider { accent-color: var(--accent-color); }
-        #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 50; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-        .modal-content { background: white; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 400px; }
-        .dark-mode .modal-content { background: #1e293b; color: white; border-color: #334155; }
+        #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 50; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        .modal-content { background: #1e293b; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 400px; color: white; border: 1px solid #334155; }
         .project-tab.active { color: white; background-color: var(--accent-color); }
     </style>
 </head>
-<body class="text-slate-800">
+<body class="antialiased">
 
     <div id="share-modal">
-        <div class="modal-content shadow-2xl border border-slate-200">
+        <div class="modal-content shadow-2xl">
             <h3 class="text-xl font-extrabold mb-2">Partager ce script</h3>
-            <p class="text-xs text-slate-500 mb-6">Travaillez à plusieurs sur le même texte.</p>
-            <label class="text-[10px] font-bold uppercase text-slate-400 mb-1 block">Email du collaborateur</label>
-            <input type="email" id="share-email" placeholder="exemple@gmail.com" class="w-full p-4 rounded-xl border mb-4 dark:bg-slate-800 dark:border-slate-700 outline-none focus:border-indigo-500 transition">
-            <label class="text-[10px] font-bold uppercase text-slate-400 mb-1 block">Permission</label>
-            <select id="share-role" class="w-full p-4 rounded-xl border mb-8 dark:bg-slate-800 dark:border-slate-700 outline-none">
+            <p class="text-xs text-slate-400 mb-6">Travaillez à plusieurs sur le même texte.</p>
+            <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Email du collaborateur</label>
+            <input type="email" id="share-email" placeholder="exemple@gmail.com" class="w-full p-4 rounded-xl border bg-slate-900 border-slate-700 outline-none focus:border-indigo-500 transition text-white">
+            <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block mt-4">Permission</label>
+            <select id="share-role" class="w-full p-4 rounded-xl border bg-slate-900 border-slate-700 outline-none text-white">
                 <option value="editors">Éditeur (Peut modifier)</option>
                 <option value="viewers">Lecteur (Lecture seule)</option>
             </select>
-            <div class="flex gap-3">
+            <div class="flex gap-3 mt-8">
                 <button onclick="confirmShare()" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-4 rounded-2xl font-bold text-sm transition" style="background-color: var(--accent-color);">Inviter</button>
-                <button onclick="toggleShareModal()" class="flex-1 bg-slate-100 dark:bg-slate-700 py-4 rounded-2xl font-bold text-sm">Annuler</button>
+                <button onclick="toggleShareModal()" class="flex-1 bg-slate-800 py-4 rounded-2xl font-bold text-sm">Annuler</button>
             </div>
         </div>
     </div>
 
     <div class="max-w-7xl mx-auto px-6 py-10">
-        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 border-b border-slate-200 dark:border-slate-700 pb-8">
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 border-b border-slate-800 pb-8">
             <div>
                 <div class="flex items-center gap-3">
-                    <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Purge-Script<span>.</span></h1>
+                    <h1 class="text-3xl font-extrabold tracking-tight">Purge-Script<span>.</span></h1>
                     <span id="save-status" class="text-[10px] uppercase font-bold transition-opacity" style="color: var(--accent-color); opacity: 0;">En direct</span>
                 </div>
                 <p class="text-slate-500 text-sm font-medium italic mt-1"><span id="user-display">Mode Local</span></p>
             </div>
             <div class="flex flex-wrap items-center gap-4">
                 <button id="share-btn" onclick="toggleShareModal()" class="hidden items-center gap-2 px-5 py-2.5 text-white rounded-xl text-xs font-bold hover:scale-105 transition shadow-lg" style="background-color: var(--accent-color);">Partager</button>
-                <button id="auth-btn" onclick="handleAuth()" class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 rounded-xl text-xs font-bold shadow-sm transition"><span id="auth-btn-text">Se connecter</span></button>
-                <div class="flex gap-4 bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-200 shadow-sm text-[10px] font-bold uppercase">
+                <button id="auth-btn" onclick="handleAuth()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold shadow-sm transition"><span id="auth-btn-text">Se connecter</span></button>
+                <div class="flex gap-4 bg-slate-800 p-3 rounded-2xl border border-slate-700 shadow-sm text-[10px] font-bold uppercase">
                     <div class="flex items-center gap-2"><span>Tics</span><label class="switch"><input type="checkbox" id="toggle-parasites" checked onchange="process()"><span class="slider"></span></label></div>
-                    <div class="flex items-center gap-2 border-l pl-4 border-slate-200"><span>Répé.</span><label class="switch"><input type="checkbox" id="toggle-repeats" checked onchange="process()"><span class="slider"></span></label></div>
-                    <div class="flex items-center gap-2 border-l pl-4 border-slate-200"><span>Mont.</span><label class="switch"><input type="checkbox" id="toggle-montage" checked onchange="process()"><span class="slider"></span></label></div>
+                    <div class="flex items-center gap-2 border-l pl-4 border-slate-700"><span>Répé.</span><label class="switch"><input type="checkbox" id="toggle-repeats" checked onchange="process()"><span class="slider"></span></label></div>
+                    <div class="flex items-center gap-2 border-l pl-4 border-slate-700"><span>Mont.</span><label class="switch"><input type="checkbox" id="toggle-montage" checked onchange="process()"><span class="slider"></span></label></div>
                 </div>
-                <div class="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
-                    <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:scale-105 transition">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
-                    </button>
+                <div class="bg-slate-800 p-3 rounded-2xl shadow-sm border border-slate-700 flex items-center gap-4">
                     <div class="flex flex-wrap gap-1.5 max-w-[130px]" id="theme-picker"></div>
                 </div>
             </div>
@@ -110,66 +129,66 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div class="lg:col-span-12 grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Tics</p>
+                <div class="bg-card p-5 rounded-3xl border shadow-sm">
+                    <p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Tics</p>
                     <p id="total-parasites" class="text-2xl font-extrabold" style="color: var(--accent-color);">0</p>
                 </div>
-                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Répétitions</p>
+                <div class="bg-card p-5 rounded-3xl border shadow-sm">
+                    <p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Répétitions</p>
                     <p id="total-repeats" class="text-2xl font-extrabold text-amber-500">0</p>
                 </div>
-                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Total Mots</p>
+                <div class="bg-card p-5 rounded-3xl border shadow-sm">
+                    <p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Total Mots</p>
                     <p id="total-words" class="text-2xl font-extrabold">0</p>
                 </div>
-                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Durée Estimée</p>
+                <div class="bg-card p-5 rounded-3xl border shadow-sm">
+                    <p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Durée Estimée</p>
                     <p id="duration-display" class="text-2xl font-extrabold" style="color: var(--accent-color);">0s</p>
                 </div>
-                <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-slate-800">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Focus Actif</p>
-                    <p id="focus-display" class="text-xl font-extrabold text-zinc-300">Aucun</p>
+                <div class="bg-card p-5 rounded-3xl border border-l-4 border-l-indigo-500 shadow-sm">
+                    <p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Focus Actif</p>
+                    <p id="focus-display" class="text-xl font-extrabold text-slate-400">Aucun</p>
                 </div>
             </div>
 
             <div class="lg:col-span-8 space-y-4">
-                <div id="projects-nav" class="hidden flex items-center justify-between bg-white dark:bg-slate-800 p-2 rounded-2xl border border-slate-200 shadow-sm">
+                <div id="projects-nav" class="hidden flex items-center justify-between bg-card p-2 rounded-2xl border shadow-sm">
                     <div class="flex gap-2" id="tabs-container">
                         <button onclick="switchProject(1)" id="p-tab-1" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 1</button>
                         <button onclick="switchProject(2)" id="p-tab-2" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 2</button>
                         <button onclick="switchProject(3)" id="p-tab-3" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 3</button>
                         <button onclick="switchProject(4)" id="p-tab-4" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 4</button>
                     </div>
-                    <button id="rename-btn" onclick="renameCurrentProject()" class="p-2 text-slate-400 hover:text-indigo-500 transition ml-4">
+                    <button id="rename-btn" onclick="renameCurrentProject()" class="p-2 text-slate-500 hover:text-indigo-400 transition ml-4">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                     </button>
                 </div>
 
-                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 flex items-center gap-4 text-xs font-bold uppercase">
+                <div class="bg-card p-4 rounded-2xl border flex items-center gap-4 text-xs font-bold uppercase">
                     <span class="text-slate-500">Débit :</span>
                     <input type="range" id="wpm-slider" min="100" max="250" value="150" class="flex-1" oninput="updateWpmDisplay(this.value); process();">
                     <span id="wpm-value" class="w-12" style="color: var(--accent-color);">150</span>
                 </div>
 
-                <div id="editor-wrapper" class="editor-container border border-slate-200 shadow-sm overflow-hidden bg-white show-parasites show-repeats show-montage">
+                <div id="editor-wrapper" class="editor-container shadow-sm overflow-hidden show-parasites show-repeats show-montage">
                     <div id="highlight-layer" class="sync-text editor-font"></div>
                     <textarea id="textarea" class="sync-text editor-font" placeholder="Écrivez ici..." spellcheck="false"></textarea>
                 </div>
                 
                 <div class="flex gap-4">
                     <button onclick="copyText()" class="text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition" style="background-color: var(--accent-color);">Copier</button>
-                    <button onclick="downloadText()" class="bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest transition">Exporter</button>
-                    <button onclick="clearText()" class="text-slate-400 hover:text-red-500 font-bold transition text-xs uppercase px-4">Effacer</button>
+                    <button onclick="downloadText()" class="bg-slate-700 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest transition">Exporter</button>
+                    <button onclick="clearText()" class="text-slate-500 hover:text-red-400 font-bold transition text-xs uppercase px-4">Effacer</button>
                 </div>
             </div>
 
             <div class="lg:col-span-4 space-y-6">
-                <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8">
-                    <div><h2 class="text-[9px] font-bold uppercase text-slate-500 mb-4">Tics</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
-                    <div><h2 class="text-[9px] font-bold uppercase text-slate-500 mb-4">Répétitions</h2><ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
+                <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8 border border-slate-800">
+                    <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4">Tics</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
+                    <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4">Répétitions</h2><ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
                     <div id="ignored-section" class="hidden"><h2 class="text-[9px] font-bold uppercase text-red-400 mb-4">Ignorés</h2><ul id="ignored-list" class="flex flex-wrap gap-2 text-[10px]"></ul></div>
-                    <div id="collaborators-section" class="hidden border-t border-slate-700 pt-6"><h2 class="text-[9px] font-bold uppercase text-indigo-400 mb-4">Collaborateurs</h2><ul id="collaborators-list" class="space-y-2 text-[11px]"></ul></div>
-                    <div id="shared-scripts-container" class="hidden border-t border-slate-700 pt-6"><h2 class="text-[9px] font-bold uppercase text-slate-500 mb-4">Partagés</h2><ul id="shared-list" class="space-y-2 text-[11px]"></ul></div>
+                    <div id="collaborators-section" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-indigo-400 mb-4">Collaborateurs</h2><ul id="collaborators-list" class="space-y-2 text-[11px]"></ul></div>
+                    <div id="shared-scripts-container" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4">Partagés</h2><ul id="shared-list" class="space-y-2 text-[11px]"></ul></div>
                 </div>
             </div>
         </div>
@@ -405,7 +424,6 @@
         function downloadText() { const blob = new Blob([textarea.value], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `script.txt`; a.click(); }
         function copyText() { navigator.clipboard.writeText(textarea.value); }
         function clearText() { if(confirm("Effacer ?")) { textarea.value = ''; process(); } }
-        function toggleDarkMode() { document.body.classList.toggle('dark-mode'); localStorage.setItem('purge-dark', document.body.classList.contains('dark-mode')); }
         function toggleShareModal() { document.getElementById('share-modal').style.display = (document.getElementById('share-modal').style.display === 'flex') ? 'none' : 'flex'; }
         async function confirmShare() { const e = document.getElementById('share-email').value.trim().toLowerCase(); const r = document.getElementById('share-role').value; if (!e.includes('@')) return alert("Email invalide"); await db.collection('scripts').doc(currentScriptId).update({ [r]: firebase.firestore.FieldValue.arrayUnion(e) }); document.getElementById('share-email').value = ""; toggleShareModal(); }
         function updateCollaboratorsUI(data) {
@@ -432,7 +450,6 @@
                 };
                 document.getElementById('theme-picker').appendChild(b);
             });
-            if(localStorage.getItem('purge-dark') === 'true') toggleDarkMode();
             textarea.addEventListener('input', process);
             textarea.addEventListener('scroll', () => highlightLayer.scrollTop = textarea.scrollTop);
         };
