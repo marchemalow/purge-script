@@ -40,14 +40,11 @@
         .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; border-radius: 2px; }
         mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; font-weight: 600; }
         
+        /* STYLE MONTAGE CORRIGÉ : Plus de padding ni de changement de taille pour éviter les décalages */
         .show-montage mark.montage { 
             background-color: var(--montage-color) !important; 
             color: #0369a1 !important; 
-            font-weight: 700; 
-            border-radius: 4px; 
-            border: 1px solid rgba(0,0,0,0.05); 
-            font-size: 0.95em; 
-            padding: 0 3px; 
+            font-weight: 700;
         }
 
         .sidebar-item { cursor: pointer; transition: all 0.2s; }
@@ -162,7 +159,6 @@
             </div>
 
             <div class="lg:col-span-8 space-y-4">
-                <!-- NAVIGATION PROJETS (MAX 4) -->
                 <div id="projects-nav" class="hidden flex items-center justify-between bg-white dark:bg-slate-800 p-2 rounded-2xl border border-slate-200 shadow-sm">
                     <div class="flex gap-2">
                         <button onclick="switchProject(1)" id="p-tab-1" class="project-tab active px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 1</button>
@@ -282,8 +278,6 @@
             currentProjectIndex = index;
             document.querySelectorAll('.project-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(`p-tab-${index}`).classList.add('active');
-            
-            // L'ID unique du projet est l'UID + l'index du projet (ex: abcde_1)
             loadScript(`${currentUser.uid}_${index}`);
         }
 
@@ -299,7 +293,6 @@
         async function loadScript(id) {
             if (scriptListener) scriptListener();
             currentScriptId = id;
-
             scriptListener = db.collection('scripts').doc(id).onSnapshot(doc => {
                 if (doc.exists) {
                     const data = doc.data();
@@ -307,7 +300,6 @@
                         textarea.value = data.content;
                     }
                     if (data.title) {
-                        // Si c'est un de nos 4 projets, on met à jour le label de l'onglet
                         const slotMatch = id.match(/_([1-4])$/);
                         if (slotMatch && data.owner === currentUser.uid) {
                             document.getElementById(`p-tab-${slotMatch[1]}`).innerText = data.title;
@@ -324,7 +316,6 @@
                     textarea.readOnly = (userRole === 'viewer');
                     process();
                 } else if (id.startsWith(currentUser.uid)) {
-                    // Initialisation du slot s'il est vide
                     db.collection('scripts').doc(id).set({
                         content: "", title: `Projet ${id.split('_')[1]}`, owner: currentUser.uid, ownerEmail: currentUser.email,
                         editors: [], viewers: [], ignoredWords: []
@@ -440,8 +431,7 @@
             }
 
             const wpm = parseInt(document.getElementById('wpm-slider').value) || 150;
-            const words = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []);
-            const wordCount = words.length;
+            const wordCount = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
             const totalSeconds = Math.round((wordCount / wpm) * 60);
             document.getElementById('duration-display').innerText = `${Math.floor(totalSeconds / 60)}m ${totalSeconds % 60}s`;
 
@@ -452,14 +442,32 @@
                 while ((fMatch = fRegex.exec(text)) !== null) { for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i); }
             }
 
+            // RENDU CORRIGÉ POUR ÉVITER LE DÉCALAGE ET LE LOOK "BOITE"
             let finalHtml = "";
-            for(let i=0; i<text.length; i++) {
-                let char = text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                if (montageIndices.has(i)) finalHtml += `<mark class="montage">${char}</mark>`;
-                else if (focusIndices.has(i)) finalHtml += `<mark class="focus-active">${char}</mark>`;
-                else if (parasiteIndices.has(i)) finalHtml += `<mark class="parasite">${char}</mark>`;
-                else if (badRepeatIndices.has(i)) finalHtml += `<mark class="repeat">${char}</mark>`;
-                else finalHtml += char;
+            let i = 0;
+            while (i < text.length) {
+                let className = "";
+                if (montageIndices.has(i)) className = "montage";
+                else if (focusIndices.has(i)) className = "focus-active";
+                else if (parasiteIndices.has(i)) className = "parasite";
+                else if (badRepeatIndices.has(i)) className = "repeat";
+
+                if (className) {
+                    finalHtml += `<mark class="${className}">`;
+                    while (i < text.length && (
+                        (className === "montage" && montageIndices.has(i)) ||
+                        (className === "focus-active" && focusIndices.has(i)) ||
+                        (className === "parasite" && parasiteIndices.has(i)) ||
+                        (className === "repeat" && badRepeatIndices.has(i))
+                    )) {
+                        finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        i++;
+                    }
+                    finalHtml += `</mark>`;
+                } else {
+                    finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    i++;
+                }
             }
 
             highlightLayer.innerHTML = finalHtml + (text.endsWith('\n') ? '\n ' : '');
@@ -467,7 +475,6 @@
             document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
             document.getElementById('total-words').innerText = wordCount;
             document.getElementById('focus-display').innerText = activeFocusWord || "Aucun";
-            
             updateSidebars(parasiteCounts, repeatCounts);
             autoSave();
         }
