@@ -1,3 +1,5 @@
+--- START OF FILE index(2).html ---
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -210,6 +212,13 @@
                         <h2 class="text-[9px] font-bold uppercase tracking-widest text-red-400 mb-4">Mots ignorés (Mémoire)</h2>
                         <ul id="ignored-list" class="flex flex-wrap gap-2 text-[10px]"></ul>
                     </div>
+                    
+                    <!-- NOUVELLE SECTION : COLLABORATEURS -->
+                    <div id="collaborators-section" class="hidden border-t border-slate-700 pt-6">
+                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-indigo-400 mb-4">Collaborateurs (Doc Actif)</h2>
+                        <ul id="collaborators-list" class="space-y-2 text-[11px]"></ul>
+                    </div>
+
                     <!-- Partages -->
                     <div id="shared-scripts-container" class="hidden border-t border-slate-700 pt-6">
                         <h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4">Partagés avec moi</h2>
@@ -242,6 +251,7 @@
         let currentScriptId = null;
         let userRole = 'owner'; 
         let ignoredRepeats = new Set(); 
+        let scriptListener = null;
 
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
@@ -272,6 +282,7 @@
                 document.getElementById('user-display').innerText = "Mode Local";
                 shareBtn.style.display = 'none';
                 sharedSection.classList.add('hidden');
+                document.getElementById('collaborators-section').classList.add('hidden');
                 textarea.readOnly = false;
                 textarea.value = localStorage.getItem('purge-content') || "";
                 process();
@@ -279,33 +290,88 @@
         });
 
         async function loadScript(id) {
+            if (scriptListener) scriptListener(); // Detach previous listener
             currentScriptId = id;
-            const doc = await db.collection('scripts').doc(id).get();
-            if (doc.exists) {
-                const data = doc.data();
-                textarea.value = data.content;
-                ignoredRepeats = new Set(data.ignoredWords || []);
-                
-                if (data.owner === currentUser.uid) {
+
+            scriptListener = db.collection('scripts').doc(id).onSnapshot(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    
+                    // On ne met à jour le texte que si on n'est pas celui qui écrit (évite les sauts de curseur)
+                    if (textarea.value !== data.content && userRole !== 'owner') {
+                        textarea.value = data.content;
+                    }
+
+                    ignoredRepeats = new Set(data.ignoredWords || []);
+                    
+                    if (data.owner === currentUser.uid) {
+                        userRole = 'owner';
+                        updateCollaboratorsUI(data);
+                    } else if (data.editors && data.editors.includes(currentUser.email)) {
+                        userRole = 'editor';
+                        document.getElementById('collaborators-section').classList.add('hidden');
+                    } else {
+                        userRole = 'viewer';
+                        document.getElementById('collaborators-section').classList.add('hidden');
+                    }
+                    textarea.readOnly = (userRole === 'viewer');
+                    process();
+                } else if (id === currentUser.uid) {
+                    // Create personal script if not exists
+                    db.collection('scripts').doc(id).set({
+                        content: textarea.value || "",
+                        owner: currentUser.uid,
+                        ownerEmail: currentUser.email,
+                        editors: [],
+                        viewers: [],
+                        ignoredWords: []
+                    });
                     userRole = 'owner';
-                } else if (data.editors && data.editors.includes(currentUser.email)) {
-                    userRole = 'editor';
-                } else {
-                    userRole = 'viewer';
                 }
-            } else if (id === currentUser.uid) {
-                await db.collection('scripts').doc(id).set({
-                    content: textarea.value || "",
-                    owner: currentUser.uid,
-                    ownerEmail: currentUser.email,
-                    editors: [],
-                    viewers: [],
-                    ignoredWords: []
-                });
-                userRole = 'owner';
+            });
+        }
+
+        function updateCollaboratorsUI(data) {
+            const section = document.getElementById('collaborators-section');
+            const list = document.getElementById('collaborators-list');
+            list.innerHTML = "";
+
+            const editors = data.editors || [];
+            const viewers = data.viewers || [];
+
+            if (editors.length === 0 && viewers.length === 0) {
+                section.classList.add('hidden');
+                return;
             }
-            textarea.readOnly = (userRole === 'viewer');
-            process();
+
+            section.classList.remove('hidden');
+
+            editors.forEach(email => addCollabItem(email, 'editors', 'Éditeur', list));
+            viewers.forEach(email => addCollabItem(email, 'viewers', 'Lecteur', list));
+        }
+
+        function addCollabItem(email, roleKey, roleLabel, container) {
+            const li = document.createElement('li');
+            li.className = "flex justify-between items-center bg-slate-800/40 p-2 rounded-lg border border-slate-700";
+            li.innerHTML = `
+                <div class="flex flex-col">
+                    <span class="font-bold truncate max-w-[120px]">${email.split('@')[0]}</span>
+                    <span class="text-[8px] text-slate-500 uppercase">${roleLabel}</span>
+                </div>
+                <button onclick="removeCollaborator('${email}', '${roleKey}')" class="text-slate-500 hover:text-red-500 transition px-2 text-lg">✕</button>
+            `;
+            container.appendChild(li);
+        }
+
+        async function removeCollaborator(email, roleKey) {
+            if (!confirm(`Retirer l'accès à ${email} ?`)) return;
+            try {
+                await db.collection('scripts').doc(currentScriptId).update({
+                    [roleKey]: firebase.firestore.FieldValue.arrayRemove(email)
+                });
+            } catch (e) {
+                alert("Erreur lors de la suppression.");
+            }
         }
 
         async function fetchSharedScripts() {
