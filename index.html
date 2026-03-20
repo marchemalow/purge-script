@@ -82,12 +82,13 @@
                 <div class="flex gap-4 bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-200 shadow-sm text-[10px] font-bold uppercase">
                     <div class="flex items-center gap-2"><span>Tics</span><label class="switch"><input type="checkbox" id="toggle-parasites" checked onchange="process()"><span class="slider"></span></label></div>
                     <div class="flex items-center gap-2 border-l pl-4 border-slate-200"><span>Répé.</span><label class="switch"><input type="checkbox" id="toggle-repeats" checked onchange="process()"><span class="slider"></span></label></div>
+                    <div class="flex items-center gap-2 border-l pl-4 border-slate-200"><span>Mont.</span><label class="switch"><input type="checkbox" id="toggle-montage" checked onchange="process()"><span class="slider"></span></label></div>
                 </div>
                 <div class="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
                     <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:scale-105 transition">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
                     </button>
-                    <div class="flex flex-wrap gap-1.5 max-w-[100px]" id="theme-picker"></div>
+                    <div class="flex flex-wrap gap-1.5 max-w-[130px]" id="theme-picker"></div>
                 </div>
             </div>
         </header>
@@ -290,11 +291,17 @@
             const text = textarea.value;
             const showP = document.getElementById('toggle-parasites').checked;
             const showR = document.getElementById('toggle-repeats').checked;
+            const showM = document.getElementById('toggle-montage').checked;
             editorWrapper.classList.toggle('show-parasites', showP);
             editorWrapper.classList.toggle('show-repeats', showR);
+            editorWrapper.classList.toggle('show-montage', showM);
+
             let montageIndices = new Set();
-            const montageRegex = /\[.*?\]/g;
-            let mMatch; while ((mMatch = montageRegex.exec(text)) !== null) { for (let i = 0; i < mMatch[0].length; i++) montageIndices.add(mMatch.index + i); }
+            if (showM) {
+                const montageRegex = /\[.*?\]/g;
+                let mMatch; while ((mMatch = montageRegex.exec(text)) !== null) { for (let i = 0; i < mMatch[0].length; i++) montageIndices.add(mMatch.index + i); }
+            }
+
             let parasiteIndices = new Set(); let parasiteCounts = {}; let totalParasites = 0;
             parasiteDictionary.forEach(word => {
                 const regex = new RegExp(`\\b(${word})\\b`, 'gi');
@@ -304,6 +311,7 @@
                     for (let i = 0; i < match[0].length; i++) parasiteIndices.add(match.index + i);
                 }
             });
+
             const wordRegex = /[a-zA-ZàâäéèêëîïôöûüùçÀÂÄÉÈÊËÎÏÔÖÛÜÙÇ]{3,}/g;
             let lastSeenAt = {}; let badRepeatIndices = new Set(); let repeatCounts = {}; let wordCounter = 0; let match;
             while ((match = wordRegex.exec(text)) !== null) {
@@ -316,16 +324,19 @@
                     lastSeenAt[word] = { count: wordCounter, pos: match.index };
                 }
             }
+
             const wpm = parseInt(document.getElementById('wpm-slider').value) || 150;
             const wordCount = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
             const totalSeconds = Math.round((wordCount / wpm) * 60);
             document.getElementById('duration-display').innerText = `${Math.floor(totalSeconds / 60)}m ${totalSeconds % 60}s`;
+
             let focusIndices = new Set();
             if (activeFocusWord) {
                 const escaped = activeFocusWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 const fRegex = new RegExp(`\\b(${escaped})\\b`, 'gi');
                 let fMatch; while ((fMatch = fRegex.exec(text)) !== null) { for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i); }
             }
+
             let finalHtml = ""; let i = 0;
             while (i < text.length) {
                 let className = "";
@@ -333,6 +344,7 @@
                 else if (focusIndices.has(i)) className = "focus-active";
                 else if (parasiteIndices.has(i)) className = "parasite";
                 else if (badRepeatIndices.has(i)) className = "repeat";
+
                 if (className) {
                     finalHtml += `<mark class="${className}">`;
                     while (i < text.length && ((className === "montage" && montageIndices.has(i)) || (className === "focus-active" && focusIndices.has(i)) || (className === "parasite" && parasiteIndices.has(i)) || (className === "repeat" && badRepeatIndices.has(i)))) {
@@ -341,6 +353,7 @@
                     finalHtml += `</mark>`;
                 } else { finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++; }
             }
+
             highlightLayer.innerHTML = finalHtml + (text.endsWith('\n') ? '\n ' : '');
             document.getElementById('total-parasites').innerText = totalParasites;
             document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
