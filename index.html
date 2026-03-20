@@ -20,11 +20,11 @@
             --montage-color: #7dd3fc; 
         }
         
-        /* Fixe en Mode Sombre */
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: #0f172a; 
             color: #f1f5f9; 
+            margin: 0;
         } 
         
         h1, h1 span { color: #ffffff !important; }
@@ -62,15 +62,13 @@
         
         .sidebar-item { cursor: pointer; transition: all 0.2s; }
         .sidebar-item:hover { background-color: rgba(255,255,255,0.05); }
-        .sidebar-item.active-focus { border: 1px solid var(--focus-color); background-color: rgba(240, 46, 101, 0.2) !important; }
         
         .bg-card { background-color: #1e293b; border-color: #334155; }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         #textarea::-webkit-scrollbar-thumb, #highlight-layer::-webkit-scrollbar-thumb, #word-list::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb { background: var(--accent-color); border-radius: 10px; }
-        #repeat-list::-webkit-scrollbar-thumb { background: #f59e0b !important; border-radius: 10px; }
-
+        
         .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 34px; }
@@ -78,28 +76,32 @@
         input:checked + .slider { background-color: var(--accent-color); }
         input:checked + .slider:before { transform: translateX(14px); }
         
-        #wpm-slider { accent-color: var(--accent-color); }
-        #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 50; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 50; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
         .modal-content { background: #1e293b; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 400px; color: white; border: 1px solid #334155; }
         .project-tab.active { color: white; background-color: var(--accent-color); }
     </style>
 </head>
 <body class="antialiased">
 
+    <!-- Modal de Partage (Invitation Link) -->
     <div id="share-modal">
         <div class="modal-content shadow-2xl">
-            <h3 class="text-xl font-extrabold mb-2">Partager ce script</h3>
-            <p class="text-xs text-slate-400 mb-6">Travaillez à plusieurs sur le même texte.</p>
-            <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Email du collaborateur</label>
-            <input type="email" id="share-email" placeholder="exemple@gmail.com" class="w-full p-4 rounded-xl border bg-slate-900 border-slate-700 outline-none focus:border-indigo-500 transition text-white">
-            <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block mt-4">Permission</label>
-            <select id="share-role" class="w-full p-4 rounded-xl border bg-slate-900 border-slate-700 outline-none text-white">
+            <h3 class="text-xl font-extrabold mb-2">Lien d'invitation</h3>
+            <p class="text-xs text-slate-400 mb-6">Générez un lien unique. Il ne fonctionnera qu'une seule fois pour un seul collaborateur.</p>
+            
+            <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Permission du lien</label>
+            <select id="share-role" class="w-full p-4 rounded-xl border bg-slate-900 border-slate-700 outline-none text-white mb-8">
                 <option value="editors">Éditeur (Peut modifier)</option>
                 <option value="viewers">Lecteur (Lecture seule)</option>
             </select>
-            <div class="flex gap-3 mt-8">
-                <button onclick="confirmShare()" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-4 rounded-2xl font-bold text-sm transition" style="background-color: var(--accent-color);">Inviter</button>
-                <button onclick="toggleShareModal()" class="flex-1 bg-slate-800 py-4 rounded-2xl font-bold text-sm">Annuler</button>
+
+            <div class="flex flex-col gap-3">
+                <button onclick="generateInviteLink()" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-4 rounded-2xl font-bold text-sm transition" style="background-color: var(--accent-color);">
+                    Générer et copier le lien
+                </button>
+                <button onclick="toggleShareModal()" class="w-full bg-slate-800 py-4 rounded-2xl font-bold text-sm text-slate-400">
+                    Annuler
+                </button>
             </div>
         </div>
     </div>
@@ -114,7 +116,7 @@
                 <p class="text-slate-500 text-sm font-medium italic mt-1"><span id="user-display">Mode Local</span></p>
             </div>
             <div class="flex flex-wrap items-center gap-4">
-                <button id="share-btn" onclick="toggleShareModal()" class="hidden items-center gap-2 px-5 py-2.5 text-white rounded-xl text-xs font-bold hover:scale-105 transition shadow-lg" style="background-color: var(--accent-color);">Partager</button>
+                <button id="share-btn" onclick="toggleShareModal()" class="hidden items-center gap-2 px-5 py-2.5 text-white rounded-xl text-xs font-bold hover:scale-105 transition shadow-lg" style="background-color: var(--accent-color);">Inviter</button>
                 <button id="auth-btn" onclick="handleAuth()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold shadow-sm transition"><span id="auth-btn-text">Se connecter</span></button>
                 <div class="flex gap-4 bg-slate-800 p-3 rounded-2xl border border-slate-700 shadow-sm text-[10px] font-bold uppercase">
                     <div class="flex items-center gap-2"><span>Tics</span><label class="switch"><input type="checkbox" id="toggle-parasites" checked onchange="process()"><span class="slider"></span></label></div>
@@ -128,6 +130,7 @@
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Stats Bar -->
             <div class="lg:col-span-12 grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div class="bg-card p-5 rounded-3xl border shadow-sm">
                     <p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Tics</p>
@@ -138,19 +141,20 @@
                     <p id="total-repeats" class="text-2xl font-extrabold text-amber-500">0</p>
                 </div>
                 <div class="bg-card p-5 rounded-3xl border shadow-sm">
-                    <p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Total Mots</p>
+                    <p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Mots</p>
                     <p id="total-words" class="text-2xl font-extrabold">0</p>
                 </div>
                 <div class="bg-card p-5 rounded-3xl border shadow-sm">
-                    <p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Durée Estimée</p>
+                    <p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Durée</p>
                     <p id="duration-display" class="text-2xl font-extrabold" style="color: var(--accent-color);">0s</p>
                 </div>
                 <div class="bg-card p-5 rounded-3xl border border-l-4 border-l-indigo-500 shadow-sm">
-                    <p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Focus Actif</p>
-                    <p id="focus-display" class="text-xl font-extrabold text-slate-400">Aucun</p>
+                    <p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Focus</p>
+                    <p id="focus-display" class="text-xl font-extrabold text-slate-400 truncate">Aucun</p>
                 </div>
             </div>
 
+            <!-- Editor Section -->
             <div class="lg:col-span-8 space-y-4">
                 <div id="projects-nav" class="hidden flex items-center justify-between bg-card p-2 rounded-2xl border shadow-sm">
                     <div class="flex gap-2" id="tabs-container">
@@ -167,12 +171,12 @@
                 <div class="bg-card p-4 rounded-2xl border flex items-center gap-4 text-xs font-bold uppercase">
                     <span class="text-slate-500">Débit :</span>
                     <input type="range" id="wpm-slider" min="100" max="250" value="150" class="flex-1" oninput="updateWpmDisplay(this.value); process();">
-                    <span id="wpm-value" class="w-12" style="color: var(--accent-color);">150</span>
+                    <span id="wpm-value" class="w-12 text-right" style="color: var(--accent-color);">150</span>
                 </div>
 
                 <div id="editor-wrapper" class="editor-container shadow-sm overflow-hidden show-parasites show-repeats show-montage">
                     <div id="highlight-layer" class="sync-text editor-font"></div>
-                    <textarea id="textarea" class="sync-text editor-font" placeholder="Écrivez ici..." spellcheck="false"></textarea>
+                    <textarea id="textarea" class="sync-text editor-font" placeholder="Écrivez ou collez votre script ici..." spellcheck="false"></textarea>
                 </div>
                 
                 <div class="flex gap-4">
@@ -182,13 +186,14 @@
                 </div>
             </div>
 
+            <!-- Sidebar Section -->
             <div class="lg:col-span-4 space-y-6">
                 <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8 border border-slate-800">
-                    <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4">Tics</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
-                    <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4">Répétitions</h2><ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
+                    <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Tics de langage</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
+                    <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Répétitions</h2><ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
                     <div id="ignored-section" class="hidden"><h2 class="text-[9px] font-bold uppercase text-red-400 mb-4">Ignorés</h2><ul id="ignored-list" class="flex flex-wrap gap-2 text-[10px]"></ul></div>
                     <div id="collaborators-section" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-indigo-400 mb-4">Collaborateurs</h2><ul id="collaborators-list" class="space-y-2 text-[11px]"></ul></div>
-                    <div id="shared-scripts-container" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4">Partagés</h2><ul id="shared-list" class="space-y-2 text-[11px]"></ul></div>
+                    <div id="shared-scripts-container" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Scripts Partagés</h2><ul id="shared-list" class="space-y-2 text-[11px]"></ul></div>
                 </div>
             </div>
         </div>
@@ -220,7 +225,7 @@
         function updateWpmDisplay(v) { document.getElementById('wpm-value').innerText = v; }
         function handleAuth() { if (currentUser) auth.signOut(); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
-        auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged(async (user) => {
             currentUser = user;
             if (user) {
                 document.getElementById('auth-btn-text').innerText = "Déconnexion";
@@ -228,25 +233,72 @@
                 document.getElementById('share-btn').style.display = 'flex';
                 document.getElementById('shared-scripts-container').classList.remove('hidden');
                 document.getElementById('projects-nav').classList.remove('hidden');
+                
+                const urlParams = new URLSearchParams(window.location.search);
+                const inviteToken = urlParams.get('invite');
+                if (inviteToken) {
+                    await consumeInvite(inviteToken);
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+
                 switchProject(1);
                 listenToSharedScripts();
             } else {
                 currentScriptId = null;
                 document.getElementById('auth-btn-text').innerText = "Se connecter";
                 document.getElementById('user-display').innerText = "Mode Local";
+                document.getElementById('share-btn').style.display = 'none';
+                document.getElementById('shared-scripts-container').classList.add('hidden');
+                document.getElementById('projects-nav').classList.add('hidden');
                 textarea.value = localStorage.getItem('purge-content') || "";
                 process();
             }
         });
+
+        // --- GESTION DES INVITATIONS ---
+        async function generateInviteLink() {
+            if (!currentUser || !currentScriptId) return;
+            const role = document.getElementById('share-role').value;
+            try {
+                const inviteRef = await db.collection('invites').add({
+                    scriptId: currentScriptId,
+                    role: role,
+                    createdBy: currentUser.email,
+                    used: false,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                const inviteURL = `${window.location.origin}${window.location.pathname}?invite=${inviteRef.id}`;
+                await navigator.clipboard.writeText(inviteURL);
+                alert("Lien d'invitation unique copié dans le presse-papier !");
+                toggleShareModal();
+            } catch (e) { alert("Erreur lors de la génération du lien."); }
+        }
+
+        async function consumeInvite(tokenId) {
+            try {
+                const doc = await db.collection('invites').doc(tokenId).get();
+                if (!doc.exists || doc.data().used === true) {
+                    alert("Lien invalide ou déjà utilisé."); return;
+                }
+                const data = doc.data();
+                await db.collection('scripts').doc(data.scriptId).update({
+                    [data.role]: firebase.firestore.FieldValue.arrayUnion(currentUser.email)
+                });
+                await db.collection('invites').doc(tokenId).update({ used: true, usedBy: currentUser.email });
+                alert("Accès accordé !");
+            } catch (e) { alert("Erreur d'invitation."); }
+        }
 
         async function switchProject(index) {
             if (!currentUser) return;
             removeSharedTab();
             document.querySelectorAll('.project-tab').forEach(t => { t.classList.remove('active'); t.style.backgroundColor = "transparent"; });
             const activeTab = document.getElementById(`p-tab-${index}`);
-            activeTab.classList.add('active');
-            activeTab.style.backgroundColor = "var(--accent-color)";
-            loadScript(`${currentUser.uid}_${index}`);
+            if(activeTab) {
+                activeTab.classList.add('active');
+                activeTab.style.backgroundColor = "var(--accent-color)";
+                loadScript(`${currentUser.uid}_${index}`);
+            }
         }
 
         async function openSharedProject(id, title) {
@@ -315,7 +367,7 @@
                 const data = doc.data();
                 const li = document.createElement('li');
                 li.className = `shared-item-${role} p-3 bg-slate-800/50 border border-slate-700 rounded-xl cursor-pointer hover:bg-indigo-900/40 transition flex justify-between items-center`;
-                li.innerHTML = `<span>${data.title}</span> <span class="text-[8px] bg-slate-700 px-2 py-1 rounded-md uppercase">${role}</span>`;
+                li.innerHTML = `<span class="truncate">${data.title}</span> <span class="text-[8px] bg-slate-700 px-2 py-1 rounded-md uppercase">${role}</span>`;
                 li.onclick = () => openSharedProject(doc.id, data.title);
                 list.appendChild(li);
             });
@@ -400,7 +452,7 @@
         function updateSidebars(pCounts, rCounts) {
             const pList = document.getElementById('word-list'); const rList = document.getElementById('repeat-list');
             pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="sidebar-item flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span>${w}</span><span style="color: var(--accent-color);">${c}</span></li>`).join('') || 'RAS';
-            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li class="sidebar-item flex justify-between items-center uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="flex-1">${w}</span><div class="flex items-center gap-2"><span class="text-amber-500">${c+1}x</span><button onclick="ignoreWord('${w}')" class="ignore-btn">✕</button></div></li>`).join('') || 'RAS';
+            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li class="sidebar-item flex justify-between items-center uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="flex-1 truncate">${w}</span><div class="flex items-center gap-2"><span class="text-amber-500">${c+1}x</span><button onclick="ignoreWord('${w}')" class="ignore-btn">✕</button></div></li>`).join('') || 'RAS';
             const iSection = document.getElementById('ignored-section');
             if (ignoredRepeats.size > 0) { iSection.classList.remove('hidden'); document.getElementById('ignored-list').innerHTML = Array.from(ignoredRepeats).map(w => `<li onclick="unignoreWord('${w}')" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer">#${w}</li>`).join(''); } else iSection.classList.add('hidden');
         }
@@ -422,22 +474,22 @@
         function ignoreWord(w) { ignoredRepeats.add(w.toLowerCase()); autoSave(); process(); }
         function unignoreWord(w) { ignoredRepeats.delete(w); autoSave(); process(); }
         function downloadText() { const blob = new Blob([textarea.value], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `script.txt`; a.click(); }
-        function copyText() { navigator.clipboard.writeText(textarea.value); }
-        function clearText() { if(confirm("Effacer ?")) { textarea.value = ''; process(); } }
+        function copyText() { navigator.clipboard.writeText(textarea.value); alert("Texte copié !"); }
+        function clearText() { if(confirm("Effacer tout le contenu ?")) { textarea.value = ''; process(); } }
         function toggleShareModal() { document.getElementById('share-modal').style.display = (document.getElementById('share-modal').style.display === 'flex') ? 'none' : 'flex'; }
-        async function confirmShare() { const e = document.getElementById('share-email').value.trim().toLowerCase(); const r = document.getElementById('share-role').value; if (!e.includes('@')) return alert("Email invalide"); await db.collection('scripts').doc(currentScriptId).update({ [r]: firebase.firestore.FieldValue.arrayUnion(e) }); document.getElementById('share-email').value = ""; toggleShareModal(); }
+        
         function updateCollaboratorsUI(data) {
             const list = document.getElementById('collaborators-list'); list.innerHTML = ""; const ed = data.editors || []; const vi = data.viewers || [];
             if (ed.length === 0 && vi.length === 0) { document.getElementById('collaborators-section').classList.add('hidden'); return; }
             document.getElementById('collaborators-section').classList.remove('hidden');
             [...ed.map(e=>({e,r:'editors',l:'Éditeur'})), ...vi.map(e=>({e,r:'viewers',l:'Lecteur'}))].forEach(o => {
                 const li = document.createElement('li'); li.className = "flex justify-between items-center bg-slate-800/40 p-2 rounded-lg border border-slate-700";
-                li.innerHTML = `<div class="flex flex-col"><span class="font-bold">${o.e.split('@')[0]}</span><span class="text-[8px] text-slate-500 uppercase">${o.l}</span></div><button onclick="removeCollaborator('${o.e}', '${o.r}')" class="text-slate-500 hover:text-red-500 px-2">✕</button>`;
+                li.innerHTML = `<div class="flex flex-col"><span class="font-bold truncate max-w-[100px]">${o.e.split('@')[0]}</span><span class="text-[8px] text-slate-500 uppercase">${o.l}</span></div><button onclick="removeCollaborator('${o.e}', '${o.r}')" class="text-slate-500 hover:text-red-500 px-2">✕</button>`;
                 list.appendChild(li);
             });
         }
         async function removeCollaborator(e, r) { if (confirm(`Retirer l'accès à ${e} ?`)) await db.collection('scripts').doc(currentScriptId).update({ [r]: firebase.firestore.FieldValue.arrayRemove(e) }); }
-        async function renameCurrentProject() { const n = prompt("Nouveau nom :"); if(n) await db.collection('scripts').doc(currentScriptId).update({ title: n }); }
+        async function renameCurrentProject() { const n = prompt("Nouveau nom du projet :"); if(n) await db.collection('scripts').doc(currentScriptId).update({ title: n }); }
 
         window.onload = () => {
             const themes = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#10b981', '#06b6d4', '#2563eb', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e'];
