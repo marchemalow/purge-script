@@ -1,3 +1,5 @@
+--- START OF FILE index(2).html ---
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -34,12 +36,10 @@
         
         mark { background: none; color: inherit; }
         
-        /* Surbrillances standards */
         .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); border-radius: 2px; }
         .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; border-radius: 2px; }
         mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; font-weight: 600; }
         
-        /* Style Montage adouci */
         .show-montage mark.montage { 
             background-color: var(--montage-color) !important; 
             color: #0369a1 !important; 
@@ -54,7 +54,6 @@
         .sidebar-item:hover { background-color: rgba(255,255,255,0.1); }
         .sidebar-item.active-focus { border: 1px solid var(--focus-color); background-color: rgba(240, 46, 101, 0.2) !important; }
         
-        /* Dark Mode */
         body.dark-mode { background-color: #0f172a; color: #f1f5f9; }
         .dark-mode .bg-white { background-color: #1e293b; border-color: #334155; }
         .dark-mode .text-slate-900 { color: #f8fafc; }
@@ -64,7 +63,6 @@
         .dark-mode #textarea { caret-color: #ffffff; }
         .dark-mode .show-montage mark.montage { color: #e0f2fe !important; background-color: #0369a1 !important; }
         
-        /* Switches & Slider dynamiques */
         .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
@@ -74,7 +72,6 @@
         
         #wpm-slider { accent-color: var(--accent-color); }
         
-        /* Modal */
         #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 50; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .modal-content { background: white; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 400px; }
         #share-modal.flex { display: flex; }
@@ -86,25 +83,23 @@
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .dark-mode ::-webkit-scrollbar-thumb { background: #475569; }
+
+        .project-tab.active { background-color: var(--accent-color); color: white; }
     </style>
 </head>
 <body class="text-slate-800 bg-slate-50">
 
-    <!-- Modal Partage -->
     <div id="share-modal">
         <div class="modal-content shadow-2xl border border-slate-200">
             <h3 class="text-xl font-extrabold mb-2">Partager ce script</h3>
             <p class="text-xs text-slate-500 mb-6">Travaillez à plusieurs sur le même texte.</p>
-            
             <label class="text-[10px] font-bold uppercase text-slate-400 mb-1 block">Email du collaborateur</label>
             <input type="email" id="share-email" placeholder="exemple@gmail.com" class="w-full p-4 rounded-xl border mb-4 dark:bg-slate-800 dark:border-slate-700 outline-none focus:border-indigo-500 transition">
-            
             <label class="text-[10px] font-bold uppercase text-slate-400 mb-1 block">Permission</label>
             <select id="share-role" class="w-full p-4 rounded-xl border mb-8 dark:bg-slate-800 dark:border-slate-700 outline-none">
                 <option value="editors">Éditeur (Peut modifier)</option>
                 <option value="viewers">Lecteur (Lecture seule)</option>
             </select>
-            
             <div class="flex gap-3">
                 <button id="confirm-invite-btn" onclick="confirmShare()" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-4 rounded-2xl font-bold text-sm transition" style="background-color: var(--accent-color);">Inviter</button>
                 <button onclick="toggleShareModal()" class="flex-1 bg-slate-100 dark:bg-slate-700 py-4 rounded-2xl font-bold text-sm">Annuler</button>
@@ -119,29 +114,21 @@
                     <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Purge-Script<span class="text-[var(--accent-color)]">.</span></h1>
                     <span id="save-status" class="text-[10px] uppercase font-bold transition-opacity" style="color: var(--accent-color); opacity: 0;">Synchronisé</span>
                 </div>
-                <div class="flex items-center gap-2 mt-1">
-                    <p class="text-slate-500 text-sm font-medium italic">Intervalle : 70 mots | <span id="user-display">Mode Local</span></p>
-                </div>
+                <p class="text-slate-500 text-sm font-medium italic mt-1"><span id="user-display">Mode Local</span></p>
             </div>
 
             <div class="flex flex-wrap items-center gap-4">
-                <button id="share-btn" onclick="toggleShareModal()" class="hidden items-center gap-2 px-5 py-2.5 text-white rounded-xl text-xs font-bold hover:scale-105 transition shadow-lg" style="background-color: var(--accent-color);">
-                    Partager
-                </button>
-
+                <button id="share-btn" onclick="toggleShareModal()" class="hidden items-center gap-2 px-5 py-2.5 text-white rounded-xl text-xs font-bold hover:scale-105 transition shadow-lg" style="background-color: var(--accent-color);">Partager</button>
                 <button id="auth-btn" onclick="handleAuth()" class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold shadow-sm hover:scale-105 transition">
                     <span id="auth-btn-text">Se connecter (Cloud)</span>
                 </button>
-
                 <div class="flex gap-4 bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-200 shadow-sm text-[10px] font-bold uppercase">
                     <div class="flex items-center gap-2"><span>Tics</span><label class="switch"><input type="checkbox" id="toggle-parasites" checked onchange="process()"><span class="slider"></span></label></div>
                     <div class="flex items-center gap-2 border-l pl-4 border-slate-200"><span>Répé.</span><label class="switch"><input type="checkbox" id="toggle-repeats" checked onchange="process()"><span class="slider"></span></label></div>
                     <div class="flex items-center gap-2 border-l pl-4 border-slate-200"><span>Montage</span><label class="switch"><input type="checkbox" id="toggle-montage" checked onchange="process()"><span class="slider"></span></label></div>
                 </div>
-
                 <div class="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
                     <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:scale-105 transition">
-                        <svg id="sun-icon" class="w-5 h-5 hidden text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path></svg>
                         <svg id="moon-icon" class="w-5 h-5 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
                     </button>
                     <div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-700"></div>
@@ -151,7 +138,6 @@
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <!-- Statistiques -->
             <div class="lg:col-span-12 grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
                     <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Tics</p>
@@ -176,21 +162,33 @@
             </div>
 
             <div class="lg:col-span-8 space-y-4">
-                <!-- Réglage Débit -->
+                <!-- NAVIGATION PROJETS (MAX 4) -->
+                <div id="projects-nav" class="hidden flex items-center justify-between bg-white dark:bg-slate-800 p-2 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex gap-2">
+                        <button onclick="switchProject(1)" id="p-tab-1" class="project-tab active px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 1</button>
+                        <button onclick="switchProject(2)" id="p-tab-2" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 2</button>
+                        <button onclick="switchProject(3)" id="p-tab-3" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 3</button>
+                        <button onclick="switchProject(4)" id="p-tab-4" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 4</button>
+                    </div>
+                    <button onclick="renameCurrentProject()" class="p-2 text-slate-400 hover:text-indigo-500 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    </button>
+                </div>
+
                 <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 flex items-center gap-4 text-xs font-bold uppercase">
-                    <span class="text-slate-500">Débit diction (mots/min) :</span>
+                    <span class="text-slate-500">Débit :</span>
                     <input type="range" id="wpm-slider" min="100" max="250" value="150" class="flex-1" oninput="updateWpmDisplay(this.value); process();">
                     <span id="wpm-value" class="w-12" style="color: var(--accent-color);">150</span>
                 </div>
 
                 <div id="editor-wrapper" class="editor-container border border-slate-200 shadow-sm overflow-hidden bg-white show-parasites show-repeats show-montage">
                     <div id="highlight-layer" class="sync-text editor-font"></div>
-                    <textarea id="textarea" class="sync-text editor-font" placeholder="Commencez à écrire... Utilisez [crochets] pour les notes de montage." spellcheck="false"></textarea>
+                    <textarea id="textarea" class="sync-text editor-font" placeholder="Écrivez ici..." spellcheck="false"></textarea>
                 </div>
                 
                 <div class="flex gap-4">
                     <button onclick="copyText()" class="text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition" style="background-color: var(--accent-color);">Copier</button>
-                    <button onclick="downloadText()" class="bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition">Exporter .txt</button>
+                    <button onclick="downloadText()" class="bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition">Exporter</button>
                     <button onclick="clearText()" class="text-slate-400 hover:text-red-500 font-bold transition text-xs uppercase px-4">Effacer</button>
                 </div>
             </div>
@@ -205,19 +203,14 @@
                         <h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4">Répétitions</h2>
                         <ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul>
                     </div>
-                    <!-- Mots Ignorés -->
                     <div id="ignored-section" class="hidden">
-                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-red-400 mb-4">Mots ignorés (Mémoire)</h2>
+                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-red-400 mb-4">Mots ignorés</h2>
                         <ul id="ignored-list" class="flex flex-wrap gap-2 text-[10px]"></ul>
                     </div>
-                    
-                    <!-- NOUVELLE SECTION : COLLABORATEURS -->
                     <div id="collaborators-section" class="hidden border-t border-slate-700 pt-6">
-                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-indigo-400 mb-4">Collaborateurs (Doc Actif)</h2>
+                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-indigo-400 mb-4">Collaborateurs</h2>
                         <ul id="collaborators-list" class="space-y-2 text-[11px]"></ul>
                     </div>
-
-                    <!-- Partages -->
                     <div id="shared-scripts-container" class="hidden border-t border-slate-700 pt-6">
                         <h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4">Partagés avec moi</h2>
                         <ul id="shared-list" class="space-y-2 text-[11px]"></ul>
@@ -228,7 +221,6 @@
     </div>
 
     <script>
-        // CONFIGURATION FIREBASE
         const firebaseConfig = { 
             apiKey: "AIzaSyCPI5JRtaODgMbhpvmb5jJ9pGaEOFms8sI", 
             authDomain: "script-p-6c6df.firebaseapp.com", 
@@ -247,6 +239,7 @@
         let activeFocusWord = null;
         let currentUser = null;
         let currentScriptId = null;
+        let currentProjectIndex = 1;
         let userRole = 'owner'; 
         let ignoredRepeats = new Set(); 
         let scriptListener = null;
@@ -257,7 +250,6 @@
 
         function updateWpmDisplay(val) { document.getElementById('wpm-value').innerText = val; }
 
-        // GESTION AUTH
         function handleAuth() {
             if (currentUser) { auth.signOut(); } 
             else { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
@@ -265,21 +257,19 @@
 
         auth.onAuthStateChanged(async user => {
             currentUser = user;
-            const shareBtn = document.getElementById('share-btn');
-            const sharedSection = document.getElementById('shared-scripts-container');
-            
             if (user) {
                 document.getElementById('auth-btn-text').innerText = "Se déconnecter";
                 document.getElementById('user-display').innerText = "Connecté : " + user.displayName;
-                shareBtn.style.display = 'flex';
-                sharedSection.classList.remove('hidden');
-                loadScript(user.uid);
+                document.getElementById('share-btn').style.display = 'flex';
+                document.getElementById('shared-scripts-container').classList.remove('hidden');
+                document.getElementById('projects-nav').classList.remove('hidden');
+                switchProject(1);
                 fetchSharedScripts();
             } else {
                 document.getElementById('auth-btn-text').innerText = "Se connecter (Cloud)";
                 document.getElementById('user-display').innerText = "Mode Local";
-                shareBtn.style.display = 'none';
-                sharedSection.classList.add('hidden');
+                document.getElementById('share-btn').style.display = 'none';
+                document.getElementById('projects-nav').classList.add('hidden');
                 document.getElementById('collaborators-section').classList.add('hidden');
                 textarea.readOnly = false;
                 textarea.value = localStorage.getItem('purge-content') || "";
@@ -287,88 +277,87 @@
             }
         });
 
+        function switchProject(index) {
+            if (!currentUser) return;
+            currentProjectIndex = index;
+            document.querySelectorAll('.project-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`p-tab-${index}`).classList.add('active');
+            
+            // L'ID unique du projet est l'UID + l'index du projet (ex: abcde_1)
+            loadScript(`${currentUser.uid}_${index}`);
+        }
+
+        async function renameCurrentProject() {
+            if (userRole !== 'owner') return;
+            const newName = prompt("Nom du projet :");
+            if (newName) {
+                await db.collection('scripts').doc(currentScriptId).update({ title: newName });
+                document.getElementById(`p-tab-${currentProjectIndex}`).innerText = newName;
+            }
+        }
+
         async function loadScript(id) {
-            if (scriptListener) scriptListener(); // Detach previous listener
+            if (scriptListener) scriptListener();
             currentScriptId = id;
 
             scriptListener = db.collection('scripts').doc(id).onSnapshot(doc => {
                 if (doc.exists) {
                     const data = doc.data();
-                    
-                    // On ne met à jour le texte que si on n'est pas celui qui écrit (évite les sauts de curseur)
                     if (textarea.value !== data.content && userRole !== 'owner') {
                         textarea.value = data.content;
                     }
-
+                    if (data.title) {
+                        // Si c'est un de nos 4 projets, on met à jour le label de l'onglet
+                        const slotMatch = id.match(/_([1-4])$/);
+                        if (slotMatch && data.owner === currentUser.uid) {
+                            document.getElementById(`p-tab-${slotMatch[1]}`).innerText = data.title;
+                        }
+                    }
                     ignoredRepeats = new Set(data.ignoredWords || []);
-                    
                     if (data.owner === currentUser.uid) {
                         userRole = 'owner';
                         updateCollaboratorsUI(data);
-                    } else if (data.editors && data.editors.includes(currentUser.email)) {
-                        userRole = 'editor';
-                        document.getElementById('collaborators-section').classList.add('hidden');
                     } else {
-                        userRole = 'viewer';
+                        userRole = data.editors?.includes(currentUser.email) ? 'editor' : 'viewer';
                         document.getElementById('collaborators-section').classList.add('hidden');
                     }
                     textarea.readOnly = (userRole === 'viewer');
                     process();
-                } else if (id === currentUser.uid) {
-                    // Create personal script if not exists
+                } else if (id.startsWith(currentUser.uid)) {
+                    // Initialisation du slot s'il est vide
                     db.collection('scripts').doc(id).set({
-                        content: textarea.value || "",
-                        owner: currentUser.uid,
-                        ownerEmail: currentUser.email,
-                        editors: [],
-                        viewers: [],
-                        ignoredWords: []
+                        content: "", title: `Projet ${id.split('_')[1]}`, owner: currentUser.uid, ownerEmail: currentUser.email,
+                        editors: [], viewers: [], ignoredWords: []
                     });
-                    userRole = 'owner';
                 }
             });
         }
 
         function updateCollaboratorsUI(data) {
-            const section = document.getElementById('collaborators-section');
             const list = document.getElementById('collaborators-list');
             list.innerHTML = "";
-
             const editors = data.editors || [];
             const viewers = data.viewers || [];
-
             if (editors.length === 0 && viewers.length === 0) {
-                section.classList.add('hidden');
+                document.getElementById('collaborators-section').classList.add('hidden');
                 return;
             }
-
-            section.classList.remove('hidden');
-
-            editors.forEach(email => addCollabItem(email, 'editors', 'Éditeur', list));
-            viewers.forEach(email => addCollabItem(email, 'viewers', 'Lecteur', list));
+            document.getElementById('collaborators-section').classList.remove('hidden');
+            editors.forEach(e => addCollabItem(e, 'editors', 'Éditeur', list));
+            viewers.forEach(e => addCollabItem(e, 'viewers', 'Lecteur', list));
         }
 
         function addCollabItem(email, roleKey, roleLabel, container) {
             const li = document.createElement('li');
             li.className = "flex justify-between items-center bg-slate-800/40 p-2 rounded-lg border border-slate-700";
-            li.innerHTML = `
-                <div class="flex flex-col">
-                    <span class="font-bold truncate max-w-[120px]">${email.split('@')[0]}</span>
-                    <span class="text-[8px] text-slate-500 uppercase">${roleLabel}</span>
-                </div>
-                <button onclick="removeCollaborator('${email}', '${roleKey}')" class="text-slate-500 hover:text-red-500 transition px-2 text-lg">✕</button>
-            `;
+            li.innerHTML = `<div class="flex flex-col"><span class="font-bold truncate max-w-[120px]">${email.split('@')[0]}</span><span class="text-[8px] text-slate-500 uppercase">${roleLabel}</span></div>
+                <button onclick="removeCollaborator('${email}', '${roleKey}')" class="text-slate-500 hover:text-red-500 transition px-2 text-lg">✕</button>`;
             container.appendChild(li);
         }
 
         async function removeCollaborator(email, roleKey) {
-            if (!confirm(`Retirer l'accès à ${email} ?`)) return;
-            try {
-                await db.collection('scripts').doc(currentScriptId).update({
-                    [roleKey]: firebase.firestore.FieldValue.arrayRemove(email)
-                });
-            } catch (e) {
-                alert("Erreur lors de la suppression.");
+            if (confirm(`Retirer l'accès à ${email} ?`)) {
+                await db.collection('scripts').doc(currentScriptId).update({ [roleKey]: firebase.firestore.FieldValue.arrayRemove(email) });
             }
         }
 
@@ -385,22 +374,21 @@
             const data = doc.data();
             const li = document.createElement('li');
             li.className = "p-3 bg-slate-800/50 border border-slate-700 rounded-xl cursor-pointer hover:bg-indigo-900/40 transition flex justify-between items-center";
-            li.innerHTML = `<span>Script de <b>${data.ownerEmail.split('@')[0]}</b></span> <span class="text-[8px] bg-slate-700 px-2 py-1 rounded-md uppercase">${roleName}</span>`;
-            li.onclick = () => loadScript(doc.id);
+            li.innerHTML = `<span>${data.title || 'Sans titre'} (par ${data.ownerEmail.split('@')[0]})</span> <span class="text-[8px] bg-slate-700 px-2 py-1 rounded-md uppercase">${roleName}</span>`;
+            li.onclick = () => {
+                document.querySelectorAll('.project-tab').forEach(t => t.classList.remove('active'));
+                loadScript(doc.id);
+            };
             list.appendChild(li);
         }
 
         function toggleShareModal() { document.getElementById('share-modal').classList.toggle('flex'); }
-
         async function confirmShare() {
             const email = document.getElementById('share-email').value.trim();
             const role = document.getElementById('share-role').value; 
-            if (!email || !email.includes('@')) return alert("Email invalide");
-            try {
-                await db.collection('scripts').doc(currentScriptId).update({ [role]: firebase.firestore.FieldValue.arrayUnion(email) });
-                alert("Invité avec succès !");
-                toggleShareModal();
-            } catch (e) { alert("Erreur permissions Firestore."); }
+            if (!email.includes('@')) return alert("Email invalide");
+            await db.collection('scripts').doc(currentScriptId).update({ [role]: firebase.firestore.FieldValue.arrayUnion(email) });
+            toggleShareModal();
         }
 
         function ignoreWord(word) { ignoredRepeats.add(word.toLowerCase()); process(); }
@@ -411,7 +399,6 @@
             const showP = document.getElementById('toggle-parasites').checked;
             const showR = document.getElementById('toggle-repeats').checked;
             const showM = document.getElementById('toggle-montage').checked;
-            
             editorWrapper.classList.toggle('show-parasites', showP);
             editorWrapper.classList.toggle('show-repeats', showR);
             editorWrapper.classList.toggle('show-montage', showM);
@@ -419,9 +406,7 @@
             let montageIndices = new Set();
             const montageRegex = /\[.*?\]/g;
             let mMatch;
-            while ((mMatch = montageRegex.exec(text)) !== null) {
-                for (let i = 0; i < mMatch[0].length; i++) montageIndices.add(mMatch.index + i);
-            }
+            while ((mMatch = montageRegex.exec(text)) !== null) { for (let i = 0; i < mMatch[0].length; i++) montageIndices.add(mMatch.index + i); }
 
             let parasiteIndices = new Set();
             let parasiteCounts = {};
@@ -454,53 +439,27 @@
                 }
             }
 
-            // Durée
             const wpm = parseInt(document.getElementById('wpm-slider').value) || 150;
-            const wordCount = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
+            const words = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []);
+            const wordCount = words.length;
             const totalSeconds = Math.round((wordCount / wpm) * 60);
-            const displayMin = Math.floor(totalSeconds / 60);
-            const displaySec = totalSeconds % 60;
-            document.getElementById('duration-display').innerText = `${displayMin}m ${displaySec}s`;
+            document.getElementById('duration-display').innerText = `${Math.floor(totalSeconds / 60)}m ${totalSeconds % 60}s`;
 
             let focusIndices = new Set();
             if (activeFocusWord) {
                 const fRegex = new RegExp(`\\b(${activeFocusWord})\\b`, 'gi');
                 let fMatch;
-                while ((fMatch = fRegex.exec(text)) !== null) {
-                    for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i);
-                }
+                while ((fMatch = fRegex.exec(text)) !== null) { for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i); }
             }
 
             let finalHtml = "";
-            let i = 0;
-            while (i < text.length) {
-                if (montageIndices.has(i)) {
-                    finalHtml += `<mark class="montage">`;
-                    while (i < text.length && montageIndices.has(i)) {
-                        finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++;
-                    }
-                    finalHtml += `</mark>`;
-                } else if (focusIndices.has(i)) {
-                    finalHtml += `<mark class="focus-active">`;
-                    while (i < text.length && focusIndices.has(i)) {
-                        finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++;
-                    }
-                    finalHtml += `</mark>`;
-                } else if (parasiteIndices.has(i)) {
-                    finalHtml += `<mark class="parasite">`;
-                    while (i < text.length && parasiteIndices.has(i)) {
-                        finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++;
-                    }
-                    finalHtml += `</mark>`;
-                } else if (badRepeatIndices.has(i)) {
-                    finalHtml += `<mark class="repeat">`;
-                    while (i < text.length && badRepeatIndices.has(i)) {
-                        finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++;
-                    }
-                    finalHtml += `</mark>`;
-                } else {
-                    finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++;
-                }
+            for(let i=0; i<text.length; i++) {
+                let char = text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                if (montageIndices.has(i)) finalHtml += `<mark class="montage">${char}</mark>`;
+                else if (focusIndices.has(i)) finalHtml += `<mark class="focus-active">${char}</mark>`;
+                else if (parasiteIndices.has(i)) finalHtml += `<mark class="parasite">${char}</mark>`;
+                else if (badRepeatIndices.has(i)) finalHtml += `<mark class="repeat">${char}</mark>`;
+                else finalHtml += char;
             }
 
             highlightLayer.innerHTML = finalHtml + (text.endsWith('\n') ? '\n ' : '');
@@ -516,27 +475,21 @@
         function updateSidebars(pCounts, rCounts) {
             const pList = document.getElementById('word-list');
             const rList = document.getElementById('repeat-list');
-            const iSection = document.getElementById('ignored-section');
-            const iList = document.getElementById('ignored-list');
-
             pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`
                 <li onclick="toggleFocus('${w}')" class="sidebar-item ${activeFocusWord===w?'active-focus':''} flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1">
                     <span>${w}</span><span style="color: var(--accent-color);">${c}</span>
                 </li>`).join('') || 'RAS';
-            
             rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`
                 <li class="sidebar-item flex justify-between items-center uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1">
                     <span onclick="toggleFocus('${w}')">${w}</span>
-                    <div class="flex items-center gap-2">
-                        <span class="text-amber-500">${c+1}x</span>
-                        <button onclick="ignoreWord('${w}')" class="ignore-btn">✕</button>
-                    </div>
+                    <div class="flex items-center gap-2"><span class="text-amber-500">${c+1}x</span><button onclick="ignoreWord('${w}')" class="ignore-btn">✕</button></div>
                 </li>`).join('') || 'RAS';
 
+            const iSection = document.getElementById('ignored-section');
             if (ignoredRepeats.size > 0) {
                 iSection.classList.remove('hidden');
-                iList.innerHTML = Array.from(ignoredRepeats).map(w => `<li onclick="unignoreWord('${w}')" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer hover:bg-red-500/40">#${w}</li>`).join('');
-            } else { iSection.classList.add('hidden'); }
+                document.getElementById('ignored-list').innerHTML = Array.from(ignoredRepeats).map(w => `<li onclick="unignoreWord('${w}')" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer hover:bg-red-500/40">#${w}</li>`).join('');
+            } else iSection.classList.add('hidden');
         }
 
         let saveTimeout;
@@ -547,8 +500,7 @@
                 clearTimeout(saveTimeout);
                 saveTimeout = setTimeout(() => {
                     db.collection('scripts').doc(currentScriptId).update({
-                        content: content,
-                        ignoredWords: Array.from(ignoredRepeats),
+                        content: content, ignoredWords: Array.from(ignoredRepeats),
                         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                     }).then(() => {
                         const s = document.getElementById('save-status');
@@ -559,32 +511,27 @@
         }
 
         function toggleFocus(word) { activeFocusWord = (activeFocusWord === word) ? null : word; process(); }
-        function downloadText() { const blob = new Blob([textarea.value], { type: 'text/plain' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `script.txt`; a.click(); }
-        function syncScroll() { highlightLayer.scrollTop = textarea.scrollTop; }
+        function downloadText() { const blob = new Blob([textarea.value], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `script.txt`; a.click(); }
         function copyText() { navigator.clipboard.writeText(textarea.value); }
         function clearText() { if(confirm("Effacer ?")) { textarea.value = ''; process(); } }
         function toggleDarkMode() { document.body.classList.toggle('dark-mode'); localStorage.setItem('purge-dark', document.body.classList.contains('dark-mode')); }
 
         window.onload = () => {
-            const themes = [
-                { hex: '#ef4444' }, { hex: '#f97316' }, { hex: '#eab308' }, { hex: '#22c55e' }, 
-                { hex: '#10b981' }, { hex: '#2563eb' }, { hex: '#06b6d4' }, { hex: '#0ea5e9' }, 
-                { hex: '#6366f1' }, { hex: '#d946ef' }, { hex: '#f43f5e' }
-            ];
+            const themes = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#2563eb', '#6366f1', '#d946ef'];
             themes.forEach(t => {
                 const b = document.createElement('button');
                 b.className = 'w-5 h-5 rounded-full border border-white/20 hover:scale-125 transition';
-                b.style.backgroundColor = t.hex;
+                b.style.backgroundColor = t;
                 b.onclick = () => {
-                    document.documentElement.style.setProperty('--accent-color', t.hex);
-                    document.documentElement.style.setProperty('--accent-soft', t.hex + '26');
+                    document.documentElement.style.setProperty('--accent-color', t);
+                    document.documentElement.style.setProperty('--accent-soft', t + '26');
                     process();
                 };
                 document.getElementById('theme-picker').appendChild(b);
             });
             if(localStorage.getItem('purge-dark') === 'true') toggleDarkMode();
             textarea.addEventListener('input', process);
-            textarea.addEventListener('scroll', syncScroll);
+            textarea.addEventListener('scroll', () => highlightLayer.scrollTop = textarea.scrollTop);
             process();
         };
     </script>
