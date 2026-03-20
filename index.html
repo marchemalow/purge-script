@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Purge-Script Pro | Cloud Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -20,45 +20,8 @@
             --montage-color: #7dd3fc; 
         }
         body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease; }
-        .editor-font { font-family: 'IBM Plex Sans', sans-serif !important; font-size: 1.05rem; line-height: 1.6; }
-        
-        /* Forcer la police et la couleur dans l'éditeur même pour le gras/italique */
-        #textarea b, #textarea i, #textarea u, #highlight-layer b, #highlight-layer i, #highlight-layer u {
-            font-family: 'IBM Plex Sans', sans-serif !important;
-            color: inherit !important;
-        }
-
-        .editor-container { position: relative; min-height: 600px; border-radius: 1.5rem; background: white; display: flex; }
-        
-        /* Barre de formatage à gauche */
-        .format-sidebar {
-            width: 50px;
-            border-right: 1px solid #e2e8f0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px 0;
-            gap: 15px;
-            background: #f8fafc;
-            border-radius: 1.5rem 0 0 1.5rem;
-        }
-        .dark-mode .format-sidebar { background: #1e293b; border-right-color: #334155; }
-        
-        .format-btn {
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            font-family: 'serif';
-            font-weight: bold;
-            transition: all 0.2s;
-            color: #64748b;
-        }
-        .format-btn:hover { background: var(--accent-soft); color: var(--accent-color); }
-
-        .editor-content-area { position: relative; flex: 1; overflow: hidden; }
+        .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.6; }
+        .editor-container { position: relative; min-height: 600px; border-radius: 1.5rem; background: white; }
         
         .sync-text { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
@@ -66,15 +29,17 @@
             overflow-y: auto; border: none; margin: 0; background: transparent; 
         }
         
-        #textarea { color: transparent; caret-color: #1e293b; z-index: 2; outline: none; }
+        #textarea { color: transparent; caret-color: #1e293b; z-index: 2; resize: none; outline: none; }
         #highlight-layer { z-index: 1; pointer-events: none; color: #1e293b; }
         
         mark { background: none; color: inherit; }
         
+        /* Surbrillances standards */
         .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); border-radius: 2px; }
         .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; border-radius: 2px; }
         mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; font-weight: 600; }
         
+        /* Style Montage adouci */
         .show-montage mark.montage { 
             background-color: var(--montage-color) !important; 
             color: #0369a1 !important; 
@@ -89,6 +54,7 @@
         .sidebar-item:hover { background-color: rgba(255,255,255,0.1); }
         .sidebar-item.active-focus { border: 1px solid var(--focus-color); background-color: rgba(240, 46, 101, 0.2) !important; }
         
+        /* Dark Mode */
         body.dark-mode { background-color: #0f172a; color: #f1f5f9; }
         .dark-mode .bg-white { background-color: #1e293b; border-color: #334155; }
         .dark-mode .text-slate-900 { color: #f8fafc; }
@@ -98,6 +64,7 @@
         .dark-mode #textarea { caret-color: #ffffff; }
         .dark-mode .show-montage mark.montage { color: #e0f2fe !important; background-color: #0369a1 !important; }
         
+        /* Switches & Slider dynamiques */
         .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
@@ -107,6 +74,7 @@
         
         #wpm-slider { accent-color: var(--accent-color); }
         
+        /* Modal */
         #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 50; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .modal-content { background: white; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 400px; }
         #share-modal.flex { display: flex; }
@@ -183,6 +151,7 @@
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Statistiques -->
             <div class="lg:col-span-12 grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
                     <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Tics</p>
@@ -207,6 +176,7 @@
             </div>
 
             <div class="lg:col-span-8 space-y-4">
+                <!-- Réglage Débit -->
                 <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 flex items-center gap-4 text-xs font-bold uppercase">
                     <span class="text-slate-500">Débit diction (mots/min) :</span>
                     <input type="range" id="wpm-slider" min="100" max="250" value="150" class="flex-1" oninput="updateWpmDisplay(this.value); process();">
@@ -214,15 +184,8 @@
                 </div>
 
                 <div id="editor-wrapper" class="editor-container border border-slate-200 shadow-sm overflow-hidden bg-white show-parasites show-repeats show-montage">
-                    <div class="format-sidebar">
-                        <button onclick="format('bold')" class="format-btn text-lg" title="Gras">B</button>
-                        <button onclick="format('italic')" class="format-btn italic text-lg" title="Italique">I</button>
-                        <button onclick="format('underline')" class="format-btn underline text-lg" title="Souligné">U</button>
-                    </div>
-                    <div class="editor-content-area">
-                        <div id="highlight-layer" class="sync-text editor-font"></div>
-                        <div id="textarea" contenteditable="true" class="sync-text editor-font" spellcheck="false"></div>
-                    </div>
+                    <div id="highlight-layer" class="sync-text editor-font"></div>
+                    <textarea id="textarea" class="sync-text editor-font" placeholder="Commencez à écrire... Utilisez [crochets] pour les notes de montage." spellcheck="false"></textarea>
                 </div>
                 
                 <div class="flex gap-4">
@@ -242,10 +205,12 @@
                         <h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4">Répétitions</h2>
                         <ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul>
                     </div>
+                    <!-- Mots Ignorés -->
                     <div id="ignored-section" class="hidden">
                         <h2 class="text-[9px] font-bold uppercase tracking-widest text-red-400 mb-4">Mots ignorés (Mémoire)</h2>
                         <ul id="ignored-list" class="flex flex-wrap gap-2 text-[10px]"></ul>
                     </div>
+                    <!-- Partages -->
                     <div id="shared-scripts-container" class="hidden border-t border-slate-700 pt-6">
                         <h2 class="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-4">Partagés avec moi</h2>
                         <ul id="shared-list" class="space-y-2 text-[11px]"></ul>
@@ -282,14 +247,9 @@
         const highlightLayer = document.getElementById('highlight-layer');
         const editorWrapper = document.getElementById('editor-wrapper');
 
-        function format(cmd) {
-            document.execCommand(cmd, false, null);
-            textarea.focus();
-            process();
-        }
-
         function updateWpmDisplay(val) { document.getElementById('wpm-value').innerText = val; }
 
+        // GESTION AUTH
         function handleAuth() {
             if (currentUser) { auth.signOut(); } 
             else { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
@@ -312,8 +272,8 @@
                 document.getElementById('user-display').innerText = "Mode Local";
                 shareBtn.style.display = 'none';
                 sharedSection.classList.add('hidden');
-                textarea.contentEditable = "true";
-                textarea.innerHTML = localStorage.getItem('purge-content-html') || "";
+                textarea.readOnly = false;
+                textarea.value = localStorage.getItem('purge-content') || "";
                 process();
             }
         });
@@ -323,7 +283,7 @@
             const doc = await db.collection('scripts').doc(id).get();
             if (doc.exists) {
                 const data = doc.data();
-                textarea.innerHTML = data.contentHtml || data.content || "";
+                textarea.value = data.content;
                 ignoredRepeats = new Set(data.ignoredWords || []);
                 
                 if (data.owner === currentUser.uid) {
@@ -335,7 +295,7 @@
                 }
             } else if (id === currentUser.uid) {
                 await db.collection('scripts').doc(id).set({
-                    contentHtml: textarea.innerHTML || "",
+                    content: textarea.value || "",
                     owner: currentUser.uid,
                     ownerEmail: currentUser.email,
                     editors: [],
@@ -344,7 +304,7 @@
                 });
                 userRole = 'owner';
             }
-            textarea.contentEditable = (userRole !== 'viewer');
+            textarea.readOnly = (userRole === 'viewer');
             process();
         }
 
@@ -383,8 +343,7 @@
         function unignoreWord(word) { ignoredRepeats.delete(word); process(); }
 
         function process() {
-            // On utilise innerText pour le calcul mais on garde la structure HTML pour l'affichage
-            const text = textarea.innerText;
+            const text = textarea.value;
             const showP = document.getElementById('toggle-parasites').checked;
             const showR = document.getElementById('toggle-repeats').checked;
             const showM = document.getElementById('toggle-montage').checked;
@@ -431,6 +390,7 @@
                 }
             }
 
+            // Durée
             const wpm = parseInt(document.getElementById('wpm-slider').value) || 150;
             const wordCount = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
             const totalSeconds = Math.round((wordCount / wpm) * 60);
@@ -447,11 +407,8 @@
                 }
             }
 
-            // Reconstruction du layer de surbrillance
             let finalHtml = "";
             let i = 0;
-            // Pour le layer de surbrillance, on utilise le texte brut. 
-            // La superposition fonctionnera car l'innerText garde la structure spatiale du div contenteditable.
             while (i < text.length) {
                 if (montageIndices.has(i)) {
                     finalHtml += `<mark class="montage">`;
@@ -520,15 +477,13 @@
 
         let saveTimeout;
         function autoSave() {
-            const contentHtml = textarea.innerHTML;
-            const plainText = textarea.innerText;
-            localStorage.setItem('purge-content-html', contentHtml);
+            const content = textarea.value;
+            localStorage.setItem('purge-content', content);
             if (currentUser && userRole !== 'viewer') {
                 clearTimeout(saveTimeout);
                 saveTimeout = setTimeout(() => {
                     db.collection('scripts').doc(currentScriptId).update({
-                        contentHtml: contentHtml,
-                        content: plainText,
+                        content: content,
                         ignoredWords: Array.from(ignoredRepeats),
                         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                     }).then(() => {
@@ -540,10 +495,10 @@
         }
 
         function toggleFocus(word) { activeFocusWord = (activeFocusWord === word) ? null : word; process(); }
-        function downloadText() { const blob = new Blob([textarea.innerText], { type: 'text/plain' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `script.txt`; a.click(); }
+        function downloadText() { const blob = new Blob([textarea.value], { type: 'text/plain' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `script.txt`; a.click(); }
         function syncScroll() { highlightLayer.scrollTop = textarea.scrollTop; }
-        function copyText() { navigator.clipboard.writeText(textarea.innerText); }
-        function clearText() { if(confirm("Effacer ?")) { textarea.innerHTML = ''; process(); } }
+        function copyText() { navigator.clipboard.writeText(textarea.value); }
+        function clearText() { if(confirm("Effacer ?")) { textarea.value = ''; process(); } }
         function toggleDarkMode() { document.body.classList.toggle('dark-mode'); localStorage.setItem('purge-dark', document.body.classList.contains('dark-mode')); }
 
         window.onload = () => {
