@@ -40,6 +40,7 @@
         .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--accent-color); }
         input:checked + .slider:before { transform: translateX(14px); }
+        #wpm-slider { accent-color: var(--accent-color); }
         #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 50; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .modal-content { background: white; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 400px; }
         .dark-mode .modal-content { background: #1e293b; color: white; border-color: #334155; }
@@ -86,7 +87,7 @@
                     <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:scale-105 transition">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
                     </button>
-                    <div class="flex gap-1.5" id="theme-picker"></div>
+                    <div class="flex flex-wrap gap-1.5 max-w-[100px]" id="theme-picker"></div>
                 </div>
             </div>
         </header>
@@ -242,10 +243,7 @@
                 const isOwner = data.owner === currentUser.uid;
                 const isEditor = data.editors?.includes(currentUser.email);
                 const isViewer = data.viewers?.includes(currentUser.email);
-
-                // --- KICK LOGIC ---
                 if (!isOwner && !isEditor && !isViewer) { alert("Accès révoqué."); switchProject(1); return; }
-
                 lastRemoteContent = data.content || "";
                 if (data.content !== textarea.value) {
                     if (document.activeElement !== textarea || isViewer) {
@@ -253,11 +251,9 @@
                         textarea.value = data.content; textarea.setSelectionRange(start, end);
                     }
                 }
-
                 userRole = isOwner ? 'owner' : (isEditor ? 'editor' : 'viewer');
                 textarea.readOnly = (userRole === 'viewer');
                 document.getElementById('rename-btn').style.display = isOwner ? 'block' : 'none';
-                
                 if (isOwner) {
                     updateCollaboratorsUI(data);
                     const slotMatch = id.match(/_([1-4])$/);
@@ -296,11 +292,9 @@
             const showR = document.getElementById('toggle-repeats').checked;
             editorWrapper.classList.toggle('show-parasites', showP);
             editorWrapper.classList.toggle('show-repeats', showR);
-
             let montageIndices = new Set();
             const montageRegex = /\[.*?\]/g;
             let mMatch; while ((mMatch = montageRegex.exec(text)) !== null) { for (let i = 0; i < mMatch[0].length; i++) montageIndices.add(mMatch.index + i); }
-
             let parasiteIndices = new Set(); let parasiteCounts = {}; let totalParasites = 0;
             parasiteDictionary.forEach(word => {
                 const regex = new RegExp(`\\b(${word})\\b`, 'gi');
@@ -310,7 +304,6 @@
                     for (let i = 0; i < match[0].length; i++) parasiteIndices.add(match.index + i);
                 }
             });
-
             const wordRegex = /[a-zA-ZàâäéèêëîïôöûüùçÀÂÄÉÈÊËÎÏÔÖÛÜÙÇ]{3,}/g;
             let lastSeenAt = {}; let badRepeatIndices = new Set(); let repeatCounts = {}; let wordCounter = 0; let match;
             while ((match = wordRegex.exec(text)) !== null) {
@@ -323,18 +316,16 @@
                     lastSeenAt[word] = { count: wordCounter, pos: match.index };
                 }
             }
-
             const wpm = parseInt(document.getElementById('wpm-slider').value) || 150;
             const wordCount = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
             const totalSeconds = Math.round((wordCount / wpm) * 60);
             document.getElementById('duration-display').innerText = `${Math.floor(totalSeconds / 60)}m ${totalSeconds % 60}s`;
-
             let focusIndices = new Set();
             if (activeFocusWord) {
-                const fRegex = new RegExp(`\\b(${activeFocusWord})\\b`, 'gi');
+                const escaped = activeFocusWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const fRegex = new RegExp(`\\b(${escaped})\\b`, 'gi');
                 let fMatch; while ((fMatch = fRegex.exec(text)) !== null) { for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i); }
             }
-
             let finalHtml = ""; let i = 0;
             while (i < text.length) {
                 let className = "";
@@ -342,7 +333,6 @@
                 else if (focusIndices.has(i)) className = "focus-active";
                 else if (parasiteIndices.has(i)) className = "parasite";
                 else if (badRepeatIndices.has(i)) className = "repeat";
-
                 if (className) {
                     finalHtml += `<mark class="${className}">`;
                     while (i < text.length && ((className === "montage" && montageIndices.has(i)) || (className === "focus-active" && focusIndices.has(i)) || (className === "parasite" && parasiteIndices.has(i)) || (className === "repeat" && badRepeatIndices.has(i)))) {
@@ -351,7 +341,6 @@
                     finalHtml += `</mark>`;
                 } else { finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++; }
             }
-
             highlightLayer.innerHTML = finalHtml + (text.endsWith('\n') ? '\n ' : '');
             document.getElementById('total-parasites').innerText = totalParasites;
             document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
@@ -363,8 +352,8 @@
 
         function updateSidebars(pCounts, rCounts) {
             const pList = document.getElementById('word-list'); const rList = document.getElementById('repeat-list');
-            pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus('${w}')" class="sidebar-item flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span>${w}</span><span style="color: var(--accent-color);">${c}</span></li>`).join('') || 'RAS';
-            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li class="sidebar-item flex justify-between items-center uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span onclick="toggleFocus('${w}')">${w}</span><div class="flex items-center gap-2"><span class="text-amber-500">${c+1}x</span><button onclick="ignoreWord('${w}')" class="ignore-btn">✕</button></div></li>`).join('') || 'RAS';
+            pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="sidebar-item flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span>${w}</span><span style="color: var(--accent-color);">${c}</span></li>`).join('') || 'RAS';
+            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li class="sidebar-item flex justify-between items-center uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="flex-1">${w}</span><div class="flex items-center gap-2"><span class="text-amber-500">${c+1}x</span><button onclick="ignoreWord('${w}')" class="ignore-btn">✕</button></div></li>`).join('') || 'RAS';
             const iSection = document.getElementById('ignored-section');
             if (ignoredRepeats.size > 0) { iSection.classList.remove('hidden'); document.getElementById('ignored-list').innerHTML = Array.from(ignoredRepeats).map(w => `<li onclick="unignoreWord('${w}')" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer">#${w}</li>`).join(''); } else iSection.classList.add('hidden');
         }
@@ -408,7 +397,11 @@
             const themes = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#10b981', '#06b6d4', '#2563eb', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e'];
             themes.forEach(t => {
                 const b = document.createElement('button'); b.className = 'w-4 h-4 rounded-full border border-white/20'; b.style.backgroundColor = t;
-                b.onclick = () => { document.documentElement.style.setProperty('--accent-color', t); process(); };
+                b.onclick = () => { 
+                    document.documentElement.style.setProperty('--accent-color', t); 
+                    document.getElementById('wpm-slider').style.accentColor = t;
+                    process(); 
+                };
                 document.getElementById('theme-picker').appendChild(b);
             });
             if(localStorage.getItem('purge-dark') === 'true') toggleDarkMode();
