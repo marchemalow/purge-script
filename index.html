@@ -75,6 +75,12 @@
         .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--accent-color); }
         input:checked + .slider:before { transform: translateX(14px); }
+
+        /* Correction du Slider */
+        #wpm-slider { 
+            accent-color: var(--accent-color); 
+            cursor: pointer;
+        }
         
         #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 50; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
         .modal-content { background: #1e293b; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 400px; color: white; border: 1px solid #334155; }
@@ -83,11 +89,11 @@
 </head>
 <body class="antialiased">
 
-    <!-- Modal de Partage (Invitation Link) -->
+    <!-- Modal de Partage -->
     <div id="share-modal">
         <div class="modal-content shadow-2xl">
             <h3 class="text-xl font-extrabold mb-2">Lien d'invitation</h3>
-            <p class="text-xs text-slate-400 mb-6">Générez un lien unique. Il ne fonctionnera qu'une seule fois pour un seul collaborateur.</p>
+            <p class="text-xs text-slate-400 mb-6">Générez un lien unique à usage unique pour un collaborateur.</p>
             
             <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Permission du lien</label>
             <select id="share-role" class="w-full p-4 rounded-xl border bg-slate-900 border-slate-700 outline-none text-white mb-8">
@@ -130,7 +136,6 @@
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <!-- Stats Bar -->
             <div class="lg:col-span-12 grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div class="bg-card p-5 rounded-3xl border shadow-sm">
                     <p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Tics</p>
@@ -154,7 +159,6 @@
                 </div>
             </div>
 
-            <!-- Editor Section -->
             <div class="lg:col-span-8 space-y-4">
                 <div id="projects-nav" class="hidden flex items-center justify-between bg-card p-2 rounded-2xl border shadow-sm">
                     <div class="flex gap-2" id="tabs-container">
@@ -176,7 +180,7 @@
 
                 <div id="editor-wrapper" class="editor-container shadow-sm overflow-hidden show-parasites show-repeats show-montage">
                     <div id="highlight-layer" class="sync-text editor-font"></div>
-                    <textarea id="textarea" class="sync-text editor-font" placeholder="Écrivez ou collez votre script ici..." spellcheck="false"></textarea>
+                    <textarea id="textarea" class="sync-text editor-font" placeholder="Écrivez ici..." spellcheck="false"></textarea>
                 </div>
                 
                 <div class="flex gap-4">
@@ -186,14 +190,13 @@
                 </div>
             </div>
 
-            <!-- Sidebar Section -->
             <div class="lg:col-span-4 space-y-6">
                 <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8 border border-slate-800">
-                    <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Tics de langage</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
+                    <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Tics</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
                     <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Répétitions</h2><ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
                     <div id="ignored-section" class="hidden"><h2 class="text-[9px] font-bold uppercase text-red-400 mb-4">Ignorés</h2><ul id="ignored-list" class="flex flex-wrap gap-2 text-[10px]"></ul></div>
                     <div id="collaborators-section" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-indigo-400 mb-4">Collaborateurs</h2><ul id="collaborators-list" class="space-y-2 text-[11px]"></ul></div>
-                    <div id="shared-scripts-container" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Scripts Partagés</h2><ul id="shared-list" class="space-y-2 text-[11px]"></ul></div>
+                    <div id="shared-scripts-container" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Partagés</h2><ul id="shared-list" class="space-y-2 text-[11px]"></ul></div>
                 </div>
             </div>
         </div>
@@ -233,14 +236,9 @@
                 document.getElementById('share-btn').style.display = 'flex';
                 document.getElementById('shared-scripts-container').classList.remove('hidden');
                 document.getElementById('projects-nav').classList.remove('hidden');
-                
                 const urlParams = new URLSearchParams(window.location.search);
                 const inviteToken = urlParams.get('invite');
-                if (inviteToken) {
-                    await consumeInvite(inviteToken);
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                }
-
+                if (inviteToken) { await consumeInvite(inviteToken); window.history.replaceState({}, document.title, window.location.pathname); }
                 switchProject(1);
                 listenToSharedScripts();
             } else {
@@ -248,45 +246,32 @@
                 document.getElementById('auth-btn-text').innerText = "Se connecter";
                 document.getElementById('user-display').innerText = "Mode Local";
                 document.getElementById('share-btn').style.display = 'none';
-                document.getElementById('shared-scripts-container').classList.add('hidden');
-                document.getElementById('projects-nav').classList.add('hidden');
                 textarea.value = localStorage.getItem('purge-content') || "";
                 process();
             }
         });
 
-        // --- GESTION DES INVITATIONS ---
         async function generateInviteLink() {
             if (!currentUser || !currentScriptId) return;
             const role = document.getElementById('share-role').value;
             try {
-                const inviteRef = await db.collection('invites').add({
-                    scriptId: currentScriptId,
-                    role: role,
-                    createdBy: currentUser.email,
-                    used: false,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                const inviteRef = await db.collection('invites').add({ scriptId: currentScriptId, role: role, createdBy: currentUser.email, used: false, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
                 const inviteURL = `${window.location.origin}${window.location.pathname}?invite=${inviteRef.id}`;
                 await navigator.clipboard.writeText(inviteURL);
-                alert("Lien d'invitation unique copié dans le presse-papier !");
+                alert("Lien d'invitation copié !");
                 toggleShareModal();
-            } catch (e) { alert("Erreur lors de la génération du lien."); }
+            } catch (e) { alert("Erreur."); }
         }
 
         async function consumeInvite(tokenId) {
             try {
                 const doc = await db.collection('invites').doc(tokenId).get();
-                if (!doc.exists || doc.data().used === true) {
-                    alert("Lien invalide ou déjà utilisé."); return;
-                }
+                if (!doc.exists || doc.data().used === true) { alert("Lien invalide."); return; }
                 const data = doc.data();
-                await db.collection('scripts').doc(data.scriptId).update({
-                    [data.role]: firebase.firestore.FieldValue.arrayUnion(currentUser.email)
-                });
+                await db.collection('scripts').doc(data.scriptId).update({ [data.role]: firebase.firestore.FieldValue.arrayUnion(currentUser.email) });
                 await db.collection('invites').doc(tokenId).update({ used: true, usedBy: currentUser.email });
                 alert("Accès accordé !");
-            } catch (e) { alert("Erreur d'invitation."); }
+            } catch (e) { alert("Erreur."); }
         }
 
         async function switchProject(index) {
@@ -294,11 +279,7 @@
             removeSharedTab();
             document.querySelectorAll('.project-tab').forEach(t => { t.classList.remove('active'); t.style.backgroundColor = "transparent"; });
             const activeTab = document.getElementById(`p-tab-${index}`);
-            if(activeTab) {
-                activeTab.classList.add('active');
-                activeTab.style.backgroundColor = "var(--accent-color)";
-                loadScript(`${currentUser.uid}_${index}`);
-            }
+            if(activeTab) { activeTab.classList.add('active'); activeTab.style.backgroundColor = "var(--accent-color)"; loadScript(`${currentUser.uid}_${index}`); }
         }
 
         async function openSharedProject(id, title) {
@@ -321,9 +302,7 @@
             currentScriptId = id;
             scriptListener = db.collection('scripts').doc(id).onSnapshot(doc => {
                 if (!doc.exists) {
-                    if (id.startsWith(currentUser.uid)) {
-                        db.collection('scripts').doc(id).set({ content: "", title: `Projet ${id.split('_')[1]}`, owner: currentUser.uid, ownerEmail: currentUser.email, editors: [], viewers: [], ignoredWords: [], lastUpdated: firebase.firestore.FieldValue.serverTimestamp() });
-                    }
+                    if (id.startsWith(currentUser.uid)) { db.collection('scripts').doc(id).set({ content: "", title: `Projet ${id.split('_')[1]}`, owner: currentUser.uid, ownerEmail: currentUser.email, editors: [], viewers: [], ignoredWords: [], lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }); }
                     return;
                 }
                 const data = doc.data();
@@ -332,24 +311,12 @@
                 const isViewer = data.viewers?.includes(currentUser.email);
                 if (!isOwner && !isEditor && !isViewer) { alert("Accès révoqué."); switchProject(1); return; }
                 lastRemoteContent = data.content || "";
-                if (data.content !== textarea.value) {
-                    if (document.activeElement !== textarea || isViewer) {
-                        const start = textarea.selectionStart; const end = textarea.selectionEnd;
-                        textarea.value = data.content; textarea.setSelectionRange(start, end);
-                    }
-                }
+                if (data.content !== textarea.value) { if (document.activeElement !== textarea || isViewer) { const start = textarea.selectionStart; const end = textarea.selectionEnd; textarea.value = data.content; textarea.setSelectionRange(start, end); } }
                 userRole = isOwner ? 'owner' : (isEditor ? 'editor' : 'viewer');
                 textarea.readOnly = (userRole === 'viewer');
                 document.getElementById('rename-btn').style.display = isOwner ? 'block' : 'none';
-                if (isOwner) {
-                    updateCollaboratorsUI(data);
-                    const slotMatch = id.match(/_([1-4])$/);
-                    if (slotMatch) document.getElementById(`p-tab-${slotMatch[1]}`).innerText = data.title;
-                } else {
-                    document.getElementById('collaborators-section').classList.add('hidden');
-                    const sTab = document.getElementById('p-tab-shared');
-                    if(sTab) sTab.innerText = `🤝 ${data.title}`;
-                }
+                if (isOwner) { updateCollaboratorsUI(data); const slotMatch = id.match(/_([1-4])$/); if (slotMatch) document.getElementById(`p-tab-${slotMatch[1]}`).innerText = data.title; }
+                else { document.getElementById('collaborators-section').classList.add('hidden'); const sTab = document.getElementById('p-tab-shared'); if(sTab) sTab.innerText = `🤝 ${data.title}`; }
                 ignoredRepeats = new Set(data.ignoredWords || []);
                 process();
             });
@@ -474,8 +441,8 @@
         function ignoreWord(w) { ignoredRepeats.add(w.toLowerCase()); autoSave(); process(); }
         function unignoreWord(w) { ignoredRepeats.delete(w); autoSave(); process(); }
         function downloadText() { const blob = new Blob([textarea.value], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `script.txt`; a.click(); }
-        function copyText() { navigator.clipboard.writeText(textarea.value); alert("Texte copié !"); }
-        function clearText() { if(confirm("Effacer tout le contenu ?")) { textarea.value = ''; process(); } }
+        function copyText() { navigator.clipboard.writeText(textarea.value); alert("Copié !"); }
+        function clearText() { if(confirm("Effacer ?")) { textarea.value = ''; process(); } }
         function toggleShareModal() { document.getElementById('share-modal').style.display = (document.getElementById('share-modal').style.display === 'flex') ? 'none' : 'flex'; }
         
         function updateCollaboratorsUI(data) {
@@ -488,8 +455,8 @@
                 list.appendChild(li);
             });
         }
-        async function removeCollaborator(e, r) { if (confirm(`Retirer l'accès à ${e} ?`)) await db.collection('scripts').doc(currentScriptId).update({ [r]: firebase.firestore.FieldValue.arrayRemove(e) }); }
-        async function renameCurrentProject() { const n = prompt("Nouveau nom du projet :"); if(n) await db.collection('scripts').doc(currentScriptId).update({ title: n }); }
+        async function removeCollaborator(e, r) { if (confirm(`Retirer ${e} ?`)) await db.collection('scripts').doc(currentScriptId).update({ [r]: firebase.firestore.FieldValue.arrayRemove(e) }); }
+        async function renameCurrentProject() { const n = prompt("Nom :"); if(n) await db.collection('scripts').doc(currentScriptId).update({ title: n }); }
 
         window.onload = () => {
             const themes = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#10b981', '#06b6d4', '#2563eb', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e'];
@@ -497,6 +464,7 @@
                 const b = document.createElement('button'); b.className = 'w-4 h-4 rounded-full border border-white/20'; b.style.backgroundColor = t;
                 b.onclick = () => { 
                     document.documentElement.style.setProperty('--accent-color', t); 
+                    // Met à jour explicitement le slider au clic
                     document.getElementById('wpm-slider').style.accentColor = t;
                     process(); 
                 };
