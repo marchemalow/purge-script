@@ -1,3 +1,5 @@
+--- START OF FILE index(2).html ---
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -38,6 +40,7 @@
         .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; border-radius: 2px; }
         mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; font-weight: 600; }
         
+        /* Correction crochets : Surlignage simple sans décalage */
         .show-montage mark.montage { 
             background-color: var(--montage-color) !important; 
             color: #0369a1 !important; 
@@ -83,10 +86,11 @@
 </head>
 <body class="text-slate-800 bg-slate-50">
 
+    <!-- Modal Partage -->
     <div id="share-modal">
         <div class="modal-content shadow-2xl border border-slate-200">
-            <h3 class="text-xl font-extrabold mb-2">Partager ce script</h3>
-            <p class="text-xs text-slate-500 mb-6">Travaillez à plusieurs sur le même texte.</p>
+            <h3 class="text-xl font-extrabold mb-2">Partager ce projet</h3>
+            <p class="text-xs text-slate-500 mb-6">Seuls les accès à ce projet spécifique seront partagés.</p>
             <label class="text-[10px] font-bold uppercase text-slate-400 mb-1 block">Email du collaborateur</label>
             <input type="email" id="share-email" placeholder="exemple@gmail.com" class="w-full p-4 rounded-xl border mb-4 dark:bg-slate-800 dark:border-slate-700 outline-none focus:border-indigo-500 transition">
             <label class="text-[10px] font-bold uppercase text-slate-400 mb-1 block">Permission</label>
@@ -95,7 +99,7 @@
                 <option value="viewers">Lecteur (Lecture seule)</option>
             </select>
             <div class="flex gap-3">
-                <button id="confirm-invite-btn" onclick="confirmShare()" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white py-4 rounded-2xl font-bold text-sm transition" style="background-color: var(--accent-color);">Inviter</button>
+                <button onclick="confirmShare()" class="flex-1 bg-indigo-500 text-white py-4 rounded-2xl font-bold text-sm" style="background-color: var(--accent-color);">Inviter</button>
                 <button onclick="toggleShareModal()" class="flex-1 bg-slate-100 dark:bg-slate-700 py-4 rounded-2xl font-bold text-sm">Annuler</button>
             </div>
         </div>
@@ -132,6 +136,7 @@
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Stats -->
             <div class="lg:col-span-12 grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
                     <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Tics</p>
@@ -142,20 +147,21 @@
                     <p id="total-repeats" class="text-2xl font-extrabold text-amber-500">0</p>
                 </div>
                 <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Total Mots</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Mots</p>
                     <p id="total-words" class="text-2xl font-extrabold">0</p>
                 </div>
                 <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Durée Estimée</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Durée</p>
                     <p id="duration-display" class="text-2xl font-extrabold" style="color: var(--accent-color);">0s</p>
                 </div>
                 <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 shadow-sm border-l-4 border-l-slate-800">
-                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Focus Actif</p>
+                    <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Focus</p>
                     <p id="focus-display" class="text-xl font-extrabold text-zinc-300">Aucun</p>
                 </div>
             </div>
 
             <div class="lg:col-span-8 space-y-4">
+                <!-- ONGLET PROJETS : Chaque onglet charge un document DIFFERENT -->
                 <div id="projects-nav" class="hidden flex items-center justify-between bg-white dark:bg-slate-800 p-2 rounded-2xl border border-slate-200 shadow-sm">
                     <div class="flex gap-2">
                         <button onclick="switchProject(1)" id="p-tab-1" class="project-tab active px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 1</button>
@@ -180,8 +186,8 @@
                 </div>
                 
                 <div class="flex gap-4">
-                    <button onclick="copyText()" class="text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition" style="background-color: var(--accent-color);">Copier</button>
-                    <button onclick="downloadText()" class="bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition">Exporter</button>
+                    <button onclick="copyText()" class="text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest transition" style="background-color: var(--accent-color);">Copier</button>
+                    <button onclick="downloadText()" class="bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest transition">Exporter</button>
                     <button onclick="clearText()" class="text-slate-400 hover:text-red-500 font-bold transition text-xs uppercase px-4">Effacer</button>
                 </div>
             </div>
@@ -200,8 +206,9 @@
                         <h2 class="text-[9px] font-bold uppercase tracking-widest text-red-400 mb-4">Mots ignorés</h2>
                         <ul id="ignored-list" class="flex flex-wrap gap-2 text-[10px]"></ul>
                     </div>
+                    <!-- Collaborateurs Propres au Projet Actif -->
                     <div id="collaborators-section" class="hidden border-t border-slate-700 pt-6">
-                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-indigo-400 mb-4">Collaborateurs</h2>
+                        <h2 class="text-[9px] font-bold uppercase tracking-widest text-indigo-400 mb-4">Collaborateurs (Ce Projet)</h2>
                         <ul id="collaborators-list" class="space-y-2 text-[11px]"></ul>
                     </div>
                     <div id="shared-scripts-container" class="hidden border-t border-slate-700 pt-6">
@@ -274,8 +281,54 @@
             if (!currentUser) return;
             currentProjectIndex = index;
             document.querySelectorAll('.project-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(`p-tab-${index}`).classList.add('active');
+            const tab = document.getElementById(`p-tab-${index}`);
+            if(tab) tab.classList.add('active');
+            
+            // On charge l'ID unique lié au slot
             loadScript(`${currentUser.uid}_${index}`);
+        }
+
+        async function loadScript(id) {
+            if (scriptListener) scriptListener(); // On coupe l'ancien flux
+            currentScriptId = id;
+            
+            scriptListener = db.collection('scripts').doc(id).onSnapshot(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    
+                    // Mise à jour du texte si on n'est pas le rédacteur principal à cet instant
+                    if (textarea.value !== data.content && userRole !== 'owner') {
+                        textarea.value = data.content;
+                    }
+                    
+                    // Mise à jour du label de l'onglet si c'est un projet personnel
+                    if (data.title && id.startsWith(currentUser?.uid)) {
+                        const slot = id.split('_')[1];
+                        const btn = document.getElementById(`p-tab-${slot}`);
+                        if(btn) btn.innerText = data.title;
+                    }
+
+                    ignoredRepeats = new Set(data.ignoredWords || []);
+                    
+                    // Droits d'accès
+                    if (data.owner === currentUser?.uid) {
+                        userRole = 'owner';
+                        updateCollaboratorsUI(data); // Affiche les collabs de ce document
+                    } else {
+                        userRole = data.editors?.includes(currentUser?.email) ? 'editor' : 'viewer';
+                        document.getElementById('collaborators-section').classList.add('hidden');
+                    }
+                    
+                    textarea.readOnly = (userRole === 'viewer');
+                    process();
+                } else if (id.startsWith(currentUser?.uid)) {
+                    // Création du slot s'il est vide
+                    db.collection('scripts').doc(id).set({
+                        content: "", title: `Projet ${id.split('_')[1]}`, owner: currentUser.uid, ownerEmail: currentUser.email,
+                        editors: [], viewers: [], ignoredWords: []
+                    });
+                }
+            });
         }
 
         async function renameCurrentProject() {
@@ -283,42 +336,7 @@
             const newName = prompt("Nom du projet :");
             if (newName) {
                 await db.collection('scripts').doc(currentScriptId).update({ title: newName });
-                document.getElementById(`p-tab-${currentProjectIndex}`).innerText = newName;
             }
-        }
-
-        async function loadScript(id) {
-            if (scriptListener) scriptListener();
-            currentScriptId = id;
-            scriptListener = db.collection('scripts').doc(id).onSnapshot(doc => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    if (textarea.value !== data.content && userRole !== 'owner') {
-                        textarea.value = data.content;
-                    }
-                    if (data.title) {
-                        const slotMatch = id.match(/_([1-4])$/);
-                        if (slotMatch && data.owner === currentUser.uid) {
-                            document.getElementById(`p-tab-${slotMatch[1]}`).innerText = data.title;
-                        }
-                    }
-                    ignoredRepeats = new Set(data.ignoredWords || []);
-                    if (data.owner === currentUser.uid) {
-                        userRole = 'owner';
-                        updateCollaboratorsUI(data);
-                    } else {
-                        userRole = data.editors?.includes(currentUser.email) ? 'editor' : 'viewer';
-                        document.getElementById('collaborators-section').classList.add('hidden');
-                    }
-                    textarea.readOnly = (userRole === 'viewer');
-                    process();
-                } else if (id.startsWith(currentUser.uid)) {
-                    db.collection('scripts').doc(id).set({
-                        content: "", title: `Projet ${id.split('_')[1]}`, owner: currentUser.uid, ownerEmail: currentUser.email,
-                        editors: [], viewers: [], ignoredWords: []
-                    });
-                }
-            });
         }
 
         function updateCollaboratorsUI(data) {
@@ -338,13 +356,13 @@
         function addCollabItem(email, roleKey, roleLabel, container) {
             const li = document.createElement('li');
             li.className = "flex justify-between items-center bg-slate-800/40 p-2 rounded-lg border border-slate-700";
-            li.innerHTML = `<div class="flex flex-col"><span class="font-bold truncate max-w-[120px]">${email.split('@')[0]}</span><span class="text-[8px] text-slate-500 uppercase">${roleLabel}</span></div>
+            li.innerHTML = `<div class="flex flex-col"><span class="font-bold truncate max-w-[120px] text-xs">${email}</span><span class="text-[8px] text-slate-500 uppercase">${roleLabel}</span></div>
                 <button onclick="removeCollaborator('${email}', '${roleKey}')" class="text-slate-500 hover:text-red-500 transition px-2 text-lg">✕</button>`;
             container.appendChild(li);
         }
 
         async function removeCollaborator(email, roleKey) {
-            if (confirm(`Retirer l'accès à ${email} ?`)) {
+            if (confirm(`Retirer l'accès à ${email} pour ce projet ?`)) {
                 await db.collection('scripts').doc(currentScriptId).update({ [roleKey]: firebase.firestore.FieldValue.arrayRemove(email) });
             }
         }
@@ -362,7 +380,7 @@
             const data = doc.data();
             const li = document.createElement('li');
             li.className = "p-3 bg-slate-800/50 border border-slate-700 rounded-xl cursor-pointer hover:bg-indigo-900/40 transition flex justify-between items-center";
-            li.innerHTML = `<span>${data.title || 'Sans titre'} (par ${data.ownerEmail.split('@')[0]})</span> <span class="text-[8px] bg-slate-700 px-2 py-1 rounded-md uppercase">${roleName}</span>`;
+            li.innerHTML = `<div class="flex flex-col"><span class="font-bold text-xs">${data.title || 'Sans titre'}</span><span class="text-[9px] text-slate-400">De ${data.ownerEmail}</span></div> <span class="text-[8px] bg-slate-700 px-2 py-1 rounded-md uppercase">${roleName}</span>`;
             li.onclick = () => {
                 document.querySelectorAll('.project-tab').forEach(t => t.classList.remove('active'));
                 loadScript(doc.id);
@@ -377,6 +395,7 @@
             if (!email.includes('@')) return alert("Email invalide");
             await db.collection('scripts').doc(currentScriptId).update({ [role]: firebase.firestore.FieldValue.arrayUnion(email) });
             toggleShareModal();
+            alert("Accès partagé pour ce projet.");
         }
 
         function ignoreWord(word) { ignoredRepeats.add(word.toLowerCase()); process(); }
@@ -520,22 +539,7 @@
         function toggleDarkMode() { document.body.classList.toggle('dark-mode'); localStorage.setItem('purge-dark', document.body.classList.contains('dark-mode')); }
 
         window.onload = () => {
-            // Liste des 12 couleurs (Bleu Clair retiré)
-            const themes = [
-                '#ef4444', // Rouge
-                '#f97316', // Orange
-                '#eab308', // Jaune
-                '#84cc16', // Vert Clair
-                '#10b981', // Vert foncé
-                '#06b6d4', // Turquoise
-                '#2563eb', // Bleu foncé
-                '#6366f1', // Bleu violet
-                '#8b5cf6', // Violet
-                '#d946ef', // Rose-Violet
-                '#ec4899', // Rose
-                '#f43f5e'  // Rose-Rouge
-            ];
-            
+            const themes = ['#ef4444','#f97316','#eab308','#84cc16','#10b981','#06b6d4','#2563eb','#6366f1','#8b5cf6','#d946ef','#ec4899','#f43f5e'];
             themes.forEach(t => {
                 const b = document.createElement('button');
                 b.className = 'w-5 h-5 rounded-full border border-white/20 hover:scale-125 transition';
