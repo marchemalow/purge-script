@@ -34,6 +34,7 @@
         
         body.dark-mode { background-color: #0f172a; color: #f1f5f9; }
         .dark-mode .bg-white { background-color: #1e293b; border-color: #334155; }
+        .dark-mode h1 { color: white !important; }
         .dark-mode #highlight-layer { color: #e2e8f0 !important; }
         .dark-mode #textarea { caret-color: #ffffff; }
 
@@ -41,7 +42,6 @@
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         
-        /* Main Scrollbar (User Color) */
         #textarea::-webkit-scrollbar-thumb, 
         #highlight-layer::-webkit-scrollbar-thumb,
         #word-list::-webkit-scrollbar-thumb,
@@ -50,7 +50,6 @@
             border-radius: 10px; 
         }
 
-        /* Repeat List Scrollbar (Yellow) */
         #repeat-list::-webkit-scrollbar-thumb { 
             background: #f59e0b !important; 
             border-radius: 10px; 
@@ -142,7 +141,7 @@
             </div>
 
             <div class="lg:col-span-8 space-y-4">
-                <div id="projects-nav" class="hidden flex items-center justify-between bg-white dark:bg-slate-800 p-2 rounded-2xl border border-slate-200 shadow-sm">
+                <div id="projects-nav" class="flex items-center justify-between bg-white dark:bg-slate-800 p-2 rounded-2xl border border-slate-200 shadow-sm hidden">
                     <div class="flex gap-2" id="tabs-container">
                         <button onclick="switchProject(1)" id="p-tab-1" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 1</button>
                         <button onclick="switchProject(2)" id="p-tab-2" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 2</button>
