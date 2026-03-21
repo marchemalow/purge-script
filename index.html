@@ -62,8 +62,8 @@
         .sidebar-item { cursor: pointer; transition: all 0.2s; }
         .sidebar-item:hover { background-color: rgba(255,255,255,0.05); }
         
-        /* Blocs avec bande épaisse (Draft, Editor settings, etc.) */
-        .bg-card { background-color: #1e293b; border: 1px solid #334155; border-left: 10px solid var(--accent-color); }
+        /* Blocs avec bande latérale épaisse (Step 1 et Step 2) */
+        .bg-card { background-color: #1e293b; border: 1px solid #334155; border-left: 16px solid var(--accent-color); }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -86,7 +86,7 @@
         .wf-step-num { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid currentColor; margin-right: 8px; font-size: 10px; }
         .wf-tab.active .wf-step-num { background: var(--accent-color); border-color: var(--accent-color); color: white; }
 
-        .timeline-block { border-left-width: 10px; transition: border-color 0.3s; }
+        .timeline-block { border-left-width: 16px; transition: border-color 0.3s; }
     </style>
 </head>
 <body class="antialiased">
@@ -134,7 +134,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            <!-- ETAPE 3 STATS : Bordures retirées -->
+            <!-- ETAPE 3 STATS : Bordures latérales retirées -->
             <div id="stats-row" class="lg:col-span-12 hidden grid grid-cols-5 gap-3">
                 <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
                     <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Tics</p>
@@ -192,7 +192,7 @@
 
                 <!-- ETAPE 3 -->
                 <div id="step-3-view" class="hidden space-y-4">
-                    <div class="bg-card p-4 rounded-2xl border flex flex-wrap items-center gap-6 text-[10px] font-bold uppercase">
+                    <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm flex flex-wrap items-center gap-6 text-[10px] font-bold uppercase">
                         <div class="flex items-center gap-4 flex-1">
                             <span class="text-slate-500">Débit :</span>
                             <input type="range" id="wpm-slider" min="100" max="250" value="150" class="flex-1" style="accent-color: var(--accent-color);" oninput="updateWpmDisplay(this.value); process();">
