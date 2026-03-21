@@ -31,11 +31,10 @@
         h1, h1 span { color: #ffffff !important; }
         .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.6; }
         
-        /* Step 1: Canvas Styles */
         #canvas-container {
             position: relative;
             width: 100%;
-            height: 600px;
+            height: 700px;
             background-color: #0f172a;
             background-image: radial-gradient(#1e293b 1px, transparent 1px);
             background-size: 30px 30px;
@@ -46,31 +45,36 @@
 
         .bubble {
             position: absolute;
-            min-width: 180px;
-            max-width: 300px;
-            padding: 1rem;
+            min-width: 160px;
+            max-width: 250px;
+            padding: 0.8rem;
             background: #1e293b;
             border: 2px solid #334155;
-            border-radius: 1.25rem;
+            border-radius: 1rem;
             cursor: grab;
             user-select: none;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-            transition: border-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             z-index: 10;
         }
 
-        .bubble:active { cursor: grabbing; transform: scale(1.02); }
-        .bubble.nested { border-color: var(--accent-color); margin-left: 20px; margin-top: 10px; position: relative !important; top: 0 !important; left: 0 !important; box-shadow: none; }
+        .bubble:active { cursor: grabbing; }
+        
         .bubble-group {
             position: absolute;
-            padding: 10px;
-            background: rgba(99, 102, 241, 0.05);
-            border: 1px dashed #475569;
+            min-width: 220px;
+            min-height: 150px;
+            background: rgba(30, 41, 59, 0.5);
+            border: 2px dashed #475569;
             border-radius: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
             z-index: 5;
+        }
+
+        .color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.2);
         }
 
         .editor-container { 
@@ -120,25 +124,21 @@
 
         #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 50; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
         .modal-content { background: #1e293b; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 400px; color: white; border: 1px solid #334155; }
-        .project-tab.active { color: white; background-color: var(--accent-color) !important; }
 
         .wf-tab { position: relative; padding: 1rem 1.5rem; cursor: pointer; color: #64748b; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; transition: all 0.3s; }
         .wf-tab.active { color: white; }
         .wf-tab.active::after { content: ""; position: absolute; bottom: 0; left: 25%; width: 50%; height: 3px; background: var(--accent-color); border-radius: 10px 10px 0 0; }
         .wf-step-num { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid currentColor; margin-right: 8px; font-size: 10px; }
-        .wf-tab.active .wf-step-num { background: var(--accent-color); border-color: var(--accent-color); color: white; }
-
+        
         .timeline-block { border-left-width: 16px !important; transition: border-color 0.3s; }
     </style>
 </head>
 <body class="antialiased">
 
-    <!-- Modal de Partage -->
     <div id="share-modal">
         <div class="modal-content shadow-2xl">
             <h3 class="text-xl font-extrabold mb-2">Lien d'invitation</h3>
-            <p class="text-xs text-slate-400 mb-6">Générez un lien unique à usage unique pour un collaborateur.</p>
-            <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Permission du lien</label>
+            <p class="text-xs text-slate-400 mb-6">Générez un lien unique pour un collaborateur.</p>
             <select id="share-role" class="w-full p-4 rounded-xl border bg-slate-900 border-slate-700 outline-none text-white mb-8">
                 <option value="editors">Éditeur (Peut modifier)</option>
                 <option value="viewers">Lecteur (Lecture seule)</option>
@@ -175,31 +175,15 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
             <div id="stats-row" class="lg:col-span-12 hidden grid grid-cols-5 gap-3">
-                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
-                    <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Tics</p>
-                    <p id="total-parasites" class="text-lg font-extrabold" style="color: var(--accent-color);">0</p>
-                </div>
-                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
-                    <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Répétitions</p>
-                    <p id="total-repeats" class="text-lg font-extrabold text-amber-500">0</p>
-                </div>
-                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
-                    <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Mots</p>
-                    <p id="total-words" class="text-lg font-extrabold">0</p>
-                </div>
-                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
-                    <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Durée</p>
-                    <p id="duration-display" class="text-lg font-extrabold" style="color: var(--accent-color);">0s</p>
-                </div>
-                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm overflow-hidden">
-                    <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Focus</p>
-                    <p id="focus-display" class="text-sm font-extrabold text-slate-400 truncate">Aucun</p>
-                </div>
+                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm"><p class="text-slate-500 text-[8px] font-bold uppercase mb-1">Tics</p><p id="total-parasites" class="text-lg font-extrabold" style="color: var(--accent-color);">0</p></div>
+                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm"><p class="text-slate-500 text-[8px] font-bold uppercase mb-1">Répétitions</p><p id="total-repeats" class="text-lg font-extrabold text-amber-500">0</p></div>
+                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm"><p class="text-slate-500 text-[8px] font-bold uppercase mb-1">Mots</p><p id="total-words" class="text-lg font-extrabold">0</p></div>
+                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm"><p class="text-slate-500 text-[8px] font-bold uppercase mb-1">Durée</p><p id="duration-display" class="text-lg font-extrabold" style="color: var(--accent-color);">0s</p></div>
+                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm"><p class="text-slate-500 text-[8px] font-bold uppercase mb-1">Focus</p><p id="focus-display" class="text-sm font-extrabold text-slate-400 truncate">Aucun</p></div>
             </div>
 
-            <div id="main-column" class="lg:col-span-12 space-y-4 transition-all duration-500">
+            <div id="main-column" class="lg:col-span-12 space-y-4">
                 <div id="projects-nav" class="hidden flex items-center justify-between bg-card p-2 rounded-2xl border shadow-sm">
                     <div class="flex gap-2" id="tabs-container">
                         <button onclick="switchProject(1)" id="p-tab-1" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 1</button>
@@ -207,43 +191,38 @@
                         <button onclick="switchProject(3)" id="p-tab-3" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 3</button>
                         <button onclick="switchProject(4)" id="p-tab-4" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 4</button>
                     </div>
-                    <button id="rename-btn" onclick="renameCurrentProject()" class="p-2 text-slate-500 hover:text-indigo-400 transition ml-4">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                    </button>
                 </div>
 
-                <!-- NEW STEP 1 VIEW -->
+                <!-- STEP 1: BRAINSTORMING CANVAS -->
                 <div id="step-1-view" class="space-y-4 relative">
-                    <div id="canvas-container" class="shadow-2xl">
-                        <!-- Les bulles apparaîtront ici -->
-                    </div>
-                    
+                    <div id="canvas-container" class="shadow-2xl"></div>
                     <div class="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-xl px-4">
                         <div class="bg-slate-800/90 backdrop-blur-md p-2 rounded-3xl border border-slate-700 shadow-2xl flex gap-3 items-center">
-                            <input type="text" id="bubble-input" class="flex-1 bg-transparent border-none outline-none px-6 py-3 text-white placeholder-slate-500 font-medium" placeholder="Écrivez une idée et tapez Entrée...">
+                            <input type="text" id="bubble-input" class="flex-1 bg-transparent border-none outline-none px-6 py-3 text-white placeholder-slate-500 font-medium" placeholder="Une idée ? Tapez Entrée...">
                             <button onclick="createBubbleFromInput()" class="bg-indigo-500 text-white p-3 rounded-2xl hover:bg-indigo-600 transition" style="background-color: var(--accent-color);">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                             </button>
                         </div>
                     </div>
-
-                    <button onclick="syncBubblesToTimeline()" class="absolute top-6 right-6 bg-slate-800 text-[10px] font-bold uppercase tracking-widest text-slate-300 px-4 py-2 rounded-xl border border-slate-700 hover:bg-slate-700 transition">
+                    <button onclick="syncBubblesToTimeline()" class="absolute top-6 right-6 bg-indigo-500/10 text-[10px] font-bold uppercase tracking-widest text-indigo-400 px-4 py-2 rounded-xl border border-indigo-500/30 hover:bg-indigo-500 hover:text-white transition">
                         Synchroniser Chrono →
                     </button>
                 </div>
 
+                <!-- STEP 2: TIMELINE -->
                 <div id="step-2-view" class="hidden space-y-4">
                     <div class="bg-card p-8 rounded-[2rem] shadow-lg">
                         <div class="flex justify-between items-center mb-8">
-                            <h2 class="text-xl font-bold flex items-center gap-2"><span style="color: var(--accent-color);">#</span> Structure Chronologique</h2>
+                            <h2 class="text-xl font-bold">Structure Chronologique</h2>
                             <button onclick="addTimelineStep()" class="text-white px-4 py-2 rounded-xl text-xs font-bold transition" style="background-color: var(--accent-color);">+ Ajouter un bloc</button>
                         </div>
                         <div id="timeline-container" class="space-y-3"></div>
                     </div>
                 </div>
 
+                <!-- STEP 3: WRITING -->
                 <div id="step-3-view" class="hidden space-y-4">
-                    <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm flex flex-wrap items-center gap-6 text-[10px] font-bold uppercase">
+                    <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 flex flex-wrap items-center gap-6 text-[10px] font-bold uppercase">
                         <div class="flex items-center gap-4 flex-1">
                             <span class="text-slate-500">Débit :</span>
                             <input type="range" id="wpm-slider" min="100" max="250" value="150" class="flex-1" style="accent-color: var(--accent-color);" oninput="updateWpmDisplay(this.value); process();">
@@ -255,26 +234,20 @@
                             <div class="flex items-center gap-2"><span>Mont.</span><label class="switch"><input type="checkbox" id="toggle-montage" checked onchange="process()"><span class="slider"></span></label></div>
                         </div>
                     </div>
-
                     <div id="editor-wrapper" class="editor-container shadow-sm overflow-hidden show-parasites show-repeats show-montage">
                         <div id="highlight-layer" class="sync-text editor-font"></div>
                         <textarea id="textarea" class="sync-text editor-font" placeholder="Écrivez votre script final..." spellcheck="false"></textarea>
                     </div>
-                    
                     <div class="flex gap-4">
                         <button onclick="copyText()" class="text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition" style="background-color: var(--accent-color);">Copier</button>
-                        <button onclick="downloadText()" class="bg-slate-700 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest transition">Exporter</button>
                     </div>
                 </div>
             </div>
 
             <div id="analysis-column" class="lg:col-span-4 hidden space-y-6">
-                <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8 border border-slate-800" id="analysis-card">
+                <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8 border border-slate-800">
                     <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Tics</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px] scroll-custom"></ul></div>
                     <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Répétitions</h2><ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px] scroll-custom"></ul></div>
-                    <div id="ignored-section" class="hidden"><h2 class="text-[9px] font-bold uppercase text-red-400 mb-4">Ignorés</h2><ul id="ignored-list" class="flex flex-wrap gap-2 text-[10px]"></ul></div>
-                    <div id="collaborators-section" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-indigo-400 mb-4">Collaborateurs</h2><ul id="collaborators-list" class="space-y-2 text-[11px]"></ul></div>
-                    <div id="shared-scripts-container" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Partagés</h2><ul id="shared-list" class="space-y-2 text-[11px]"></ul></div>
                 </div>
             </div>
         </div>
@@ -295,10 +268,11 @@
 
         const parasiteDictionary = ["du coup", "en fait", "voilà", "un petit peu", "euh", "globalement", "concrètement", "effectivement", "donc", "c'est-à-dire", "au final", "disons que", "typiquement", "clairement", "tout simplement", "en gros", "pour le coup", "un peu", "voilà quoi", "tu vois", "franchement", "honnêtement", "en réalité", "pour ainsi dire", "alors", "en quelque sorte", "justement", "au niveau de", "quelque part", "on va dire", "fondamentalement", "véritablement", "pour ma part", "en soi", "entre guillemets", "si vous voulez", "de base", "sur la fin"];
         const stopWords = ["je", "me", "moi", "tu", "te", "toi", "il", "elle", "on", "nous", "vous", "ils", "elles", "le", "la", "les", "un", "une", "des", "du", "de", "ce", "cet", "cette", "ces", "se", "soi", "lui", "leur", "y", "en", "mon", "ton", "son", "ma", "ta", "sa", "mes", "tes", "ses", "notre", "votre", "nos", "vos", "leurs", "qui", "que", "quoi", "dont", "où", "quel", "quels", "quelle", "quelles", "et", "ou", "mais", "est", "sont", "pour", "dans", "par", "avec", "pas", "ne", "si", "ici", "là", "ont", "aux", "très"];
+        const THEME_COLORS = ['#6366f1', '#ef4444', '#f97316', '#eab308', '#84cc16', '#10b981', '#06b6d4', '#2563eb', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e'];
 
         let activeFocusWord = null; let currentUser = null; let currentScriptId = null; let userRole = 'owner'; 
         let ignoredRepeats = new Set(); let scriptListener = null; let currentStep = 1; let timelineSteps = [];
-        let bubbles = []; // Array of { id, text, x, y, parentId }
+        let bubbles = []; // { id, text, x, y, parentId, color }
 
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
@@ -323,24 +297,21 @@
             else { mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12'); analysisCol.classList.add('hidden'); statsRow.classList.add('hidden'); }
         }
 
-        // --- BUBBLE SYSTEM LOGIC ---
+        // --- BUBBLE SYSTEM ---
 
-        bubbleInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') createBubbleFromInput();
-        });
+        bubbleInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') createBubbleFromInput(); });
 
         function createBubbleFromInput() {
             const text = bubbleInput.value.trim();
             if (!text) return;
-            
             const newBubble = {
-                id: Date.now().toString(),
+                id: "b_" + Date.now(),
                 text: text,
                 x: Math.random() * (canvas.clientWidth - 200) + 50,
-                y: Math.random() * (canvas.clientHeight - 100) + 50,
-                parentId: null
+                y: Math.random() * (canvas.clientHeight - 350) + 50, // SPAWN LIMIT TO AVOID INPUT AREA
+                parentId: null,
+                color: '#6366f1'
             };
-            
             bubbles.push(newBubble);
             bubbleInput.value = "";
             renderBubbles();
@@ -349,8 +320,6 @@
 
         function renderBubbles() {
             canvas.innerHTML = "";
-            
-            // Create groups first
             const parents = bubbles.filter(b => !b.parentId);
             
             parents.forEach(p => {
@@ -358,33 +327,59 @@
                 groupDiv.className = "bubble-group";
                 groupDiv.style.left = p.x + "px";
                 groupDiv.style.top = p.y + "px";
+                groupDiv.style.borderColor = p.color;
                 groupDiv.dataset.id = p.id;
 
-                // Render parent
-                const pEl = createBubbleElement(p);
+                const pEl = createBubbleUI(p);
                 groupDiv.appendChild(pEl);
 
-                // Render children
                 const children = bubbles.filter(b => b.parentId === p.id);
                 children.forEach(c => {
-                    const cEl = createBubbleElement(c, true);
+                    const cEl = createBubbleUI(c, true);
                     groupDiv.appendChild(cEl);
                 });
 
                 canvas.appendChild(groupDiv);
-                makeDraggable(groupDiv, p.id);
+                makeDraggable(groupDiv, p.id, true);
             });
         }
 
-        function createBubbleElement(b, isNested = false) {
+        function createBubbleUI(b, isNested = false) {
             const el = document.createElement('div');
-            el.className = `bubble ${isNested ? 'nested' : ''}`;
+            el.className = `bubble group`;
+            if (isNested) {
+                el.style.left = b.x + "px";
+                el.style.top = b.y + "px";
+                el.style.position = "absolute";
+            }
+            
+            let colorPicker = "";
+            if (!isNested) {
+                colorPicker = `<div class="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition">
+                    ${THEME_COLORS.slice(0, 6).map(c => `<div class="color-dot" style="background:${c}" onclick="setBubbleColor('${b.id}', '${c}')"></div>`).join('')}
+                </div>`;
+            }
+
             el.innerHTML = `
-                <div class="text-xs font-bold text-slate-300 break-words">${b.text}</div>
-                <button onclick="deleteBubble('${b.id}')" class="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full text-[10px] hidden group-hover:flex items-center justify-center">✕</button>
+                <div class="text-xs font-bold text-slate-200 break-words">${b.text}</div>
+                ${colorPicker}
+                <div class="absolute -top-2 -right-2 flex gap-1">
+                    ${isNested ? `<button onclick="detachBubble('${b.id}')" class="bg-amber-500 text-white w-6 h-6 rounded-full text-[10px] flex items-center justify-center shadow-lg" title="Détacher">🔗</button>` : ''}
+                    <button onclick="deleteBubble('${b.id}')" class="bg-red-500 text-white w-6 h-6 rounded-full text-[10px] flex items-center justify-center shadow-lg">✕</button>
+                </div>
             `;
-            el.classList.add('group');
+            
+            if (isNested) makeDraggable(el, b.id, false);
             return el;
+        }
+
+        function setBubbleColor(id, color) {
+            const b = bubbles.find(x => x.id === id);
+            if (b) {
+                b.color = color;
+                renderBubbles();
+                autoSave();
+            }
         }
 
         function deleteBubble(id) {
@@ -393,50 +388,42 @@
             autoSave();
         }
 
-        function makeDraggable(el, bubbleId) {
-            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-            el.onmousedown = dragMouseDown;
-
-            function dragMouseDown(e) {
-                if (e.target.tagName === 'BUTTON') return;
-                e.preventDefault();
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                document.onmouseup = closeDragElement;
-                document.onmousemove = elementDrag;
-                el.style.zIndex = 1000;
-            }
-
-            function elementDrag(e) {
-                e.preventDefault();
-                pos1 = pos3 - e.clientX;
-                pos2 = pos4 - e.clientY;
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                
-                const newY = el.offsetTop - pos2;
-                const newX = el.offsetLeft - pos1;
-                
-                el.style.top = newY + "px";
-                el.style.left = newX + "px";
-            }
-
-            function closeDragElement() {
-                document.onmouseup = null;
-                document.onmousemove = null;
-                el.style.zIndex = 5;
-
-                // Update data
-                const bIdx = bubbles.findIndex(b => b.id === bubbleId);
-                if (bIdx > -1) {
-                    bubbles[bIdx].x = parseInt(el.style.left);
-                    bubbles[bIdx].y = parseInt(el.style.top);
-                }
-
-                // Collision Check for nesting
-                checkCollisions(el, bubbleId);
+        function detachBubble(id) {
+            const b = bubbles.find(x => x.id === id);
+            const parent = bubbles.find(p => p.id === b.parentId);
+            if (b && parent) {
+                // Convert relative to absolute
+                b.x = parent.x + b.x;
+                b.y = parent.y + b.y;
+                b.parentId = null;
+                renderBubbles();
                 autoSave();
             }
+        }
+
+        function makeDraggable(el, bubbleId, isGroup) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            el.onmousedown = (e) => {
+                if (e.target.closest('button') || e.target.classList.contains('color-dot')) return;
+                e.preventDefault();
+                pos3 = e.clientX; pos4 = e.clientY;
+                document.onmouseup = () => {
+                    document.onmouseup = null; document.onmousemove = null;
+                    const b = bubbles.find(x => x.id === bubbleId);
+                    if (b) {
+                        b.x = parseInt(el.style.left);
+                        b.y = parseInt(el.style.top);
+                    }
+                    if (isGroup) checkCollisions(el, bubbleId);
+                    autoSave();
+                };
+                document.onmousemove = (e) => {
+                    pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
+                    pos3 = e.clientX; pos4 = e.clientY;
+                    el.style.top = (el.offsetTop - pos2) + "px";
+                    el.style.left = (el.offsetLeft - pos1) + "px";
+                };
+            };
         }
 
         function checkCollisions(draggedEl, draggedId) {
@@ -451,40 +438,42 @@
                 const overlap = !(rect1.right < rect2.left || rect1.left > rect2.right || rect1.bottom < rect2.top || rect1.top > rect2.bottom);
 
                 if (overlap) {
-                    // Nest dragged bubble into target bubble
-                    const bIdx = bubbles.findIndex(b => b.id === draggedId);
-                    bubbles[bIdx].parentId = targetId;
+                    const b = bubbles.find(x => x.id === draggedId);
+                    const parent = bubbles.find(x => x.id === targetId);
                     
-                    // Also move all children of the dragged one to the new parent
-                    bubbles.forEach(b => {
-                        if (b.parentId === draggedId) b.parentId = targetId;
+                    // Calcul de la position relative pour que la bulle reste AU MÊME ENDROIT VISUEL
+                    b.x = b.x - parent.x;
+                    b.y = b.y - parent.y;
+                    b.parentId = targetId;
+
+                    // On déplace aussi les enfants s'il y en avait (fusion de groupes)
+                    bubbles.forEach(child => {
+                        if (child.parentId === draggedId) {
+                            child.parentId = targetId;
+                            child.x = (b.x + child.x);
+                            child.y = (b.y + child.y);
+                        }
                     });
-                    
                     renderBubbles();
                 }
             });
         }
 
         function syncBubblesToTimeline() {
-            // Logic: Order groups by Y position, then children inside
             const parents = bubbles.filter(b => !b.parentId).sort((a,b) => a.y - b.y);
-            const newTimeline = [];
-
+            timelineSteps = [];
             parents.forEach(p => {
-                newTimeline.push({ text: p.text, color: "" });
-                const children = bubbles.filter(b => b.parentId === p.id);
-                children.forEach(c => {
-                    newTimeline.push({ text: c.text, color: "" });
+                timelineSteps.push({ text: p.text, color: p.color });
+                bubbles.filter(b => b.parentId === p.id).forEach(c => {
+                    timelineSteps.push({ text: c.text, color: p.color });
                 });
             });
-
-            timelineSteps = newTimeline;
             renderTimeline();
             setStep(2);
             autoSave();
         }
 
-        // --- END BUBBLE LOGIC ---
+        // --- AUTH & DATA ---
 
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
@@ -492,18 +481,11 @@
                 document.getElementById('auth-btn-text').innerText = "Déconnexion";
                 document.getElementById('user-display').innerText = user.displayName;
                 document.getElementById('share-btn').style.display = 'flex';
-                document.getElementById('shared-scripts-container').classList.remove('hidden');
                 document.getElementById('projects-nav').classList.remove('hidden');
-                const urlParams = new URLSearchParams(window.location.search);
-                const inviteToken = urlParams.get('invite');
-                if (inviteToken) { await consumeInvite(inviteToken); window.history.replaceState({}, document.title, window.location.pathname); }
                 switchProject(1);
-                listenToSharedScripts();
             } else {
                 currentScriptId = null;
-                document.getElementById('auth-btn-text').innerText = "Se connecter";
                 document.getElementById('user-display').innerText = "Mode Local";
-                document.getElementById('share-btn').style.display = 'none';
                 textarea.value = localStorage.getItem('purge-content') || "";
                 bubbles = JSON.parse(localStorage.getItem('purge-bubbles')) || [];
                 renderBubbles();
@@ -524,141 +506,46 @@
             scriptListener = db.collection('scripts').doc(id).onSnapshot(doc => {
                 if (!doc.exists) {
                     if (id.startsWith(currentUser.uid)) { 
-                        db.collection('scripts').doc(id).set({ content: "", bubbles: [], timeline: [], title: `Projet ${id.split('_')[1]}`, owner: currentUser.uid, ownerEmail: currentUser.email, editors: [], viewers: [], ignoredWords: [], lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }); 
+                        db.collection('scripts').doc(id).set({ content: "", bubbles: [], timeline: [], title: `Projet ${id.split('_')[1]}`, owner: currentUser.uid, ownerEmail: currentUser.email, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }); 
                     }
                     return;
                 }
                 const data = doc.data();
-                if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) {
-                    bubbles = data.bubbles || [];
-                    renderBubbles();
-                }
+                if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) { bubbles = data.bubbles || []; renderBubbles(); }
                 if (data.content !== textarea.value && document.activeElement !== textarea) textarea.value = data.content || "";
                 timelineSteps = data.timeline || [];
                 renderTimeline();
-                userRole = data.owner === currentUser.uid ? 'owner' : (data.editors?.includes(currentUser.email) ? 'editor' : 'viewer');
-                textarea.readOnly = (userRole === 'viewer');
-                document.getElementById('rename-btn').style.display = (userRole === 'owner') ? 'block' : 'none';
-                
-                const slotMatch = id.match(/_([1-4])$/); 
-                if (slotMatch && userRole === 'owner') {
-                    const tab = document.getElementById(`p-tab-${slotMatch[1]}`);
-                    if (tab) tab.innerText = data.title;
-                }
-
-                if (userRole === 'owner') { updateCollaboratorsUI(data); }
-                ignoredRepeats = new Set(data.ignoredWords || []);
                 process();
             });
         }
 
-        function listenToSharedScripts() {
-            db.collection('scripts').where('editors', 'array-contains', currentUser.email).onSnapshot(snap => syncSharedTabs(snap));
-            db.collection('scripts').where('viewers', 'array-contains', currentUser.email).onSnapshot(snap => syncSharedTabs(snap));
+        function autoSave() {
+            if (currentUser && currentScriptId) {
+                db.collection('scripts').doc(currentScriptId).update({ 
+                    bubbles: bubbles, timeline: timelineSteps, content: textarea.value, 
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
+                }).then(() => { 
+                    const s = document.getElementById('save-status'); s.style.opacity = '1'; 
+                    setTimeout(() => s.style.opacity = '0', 1000); 
+                });
+            } else {
+                localStorage.setItem('purge-content', textarea.value);
+                localStorage.setItem('purge-bubbles', JSON.stringify(bubbles));
+            }
         }
 
-        function syncSharedTabs(snap) {
-            const tabsContainer = document.getElementById('tabs-container');
-            const sharedList = document.getElementById('shared-list');
-            sharedList.innerHTML = "";
-            snap.forEach(doc => {
-                const data = doc.data();
-                const tabId = `p-tab-shared-${doc.id}`;
-                const li = document.createElement('li');
-                li.className = `p-3 bg-slate-800/50 border border-slate-700 rounded-xl cursor-pointer hover:bg-indigo-900/40 transition flex justify-between items-center mb-2`;
-                li.innerHTML = `<span class="truncate text-[10px] font-bold uppercase">${data.title}</span>`;
-                li.onclick = () => openSharedProject(doc.id);
-                sharedList.appendChild(li);
-                if (!document.getElementById(tabId)) {
-                    const btn = document.createElement('button');
-                    btn.id = tabId;
-                    btn.className = "project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition";
-                    btn.innerText = `🤝 ${data.title}`;
-                    btn.onclick = () => openSharedProject(doc.id);
-                    tabsContainer.appendChild(btn);
-                } else {
-                    document.getElementById(tabId).innerText = `🤝 ${data.title}`;
-                }
-            });
-        }
-
-        function openSharedProject(id) {
-            document.querySelectorAll('.project-tab').forEach(t => { t.classList.remove('active'); t.style.backgroundColor = "transparent"; });
-            const tab = document.getElementById(`p-tab-shared-${id}`);
-            if (tab) { tab.classList.add('active'); tab.style.backgroundColor = "var(--accent-color)"; }
-            loadScript(id);
-        }
-
-        function addTimelineStep() {
-            if (userRole === 'viewer') return;
-            timelineSteps.push({ text: "", color: "" });
-            renderTimeline();
-            autoSave();
-        }
-
-        function removeTimelineStep(index) {
-            if (userRole === 'viewer') return;
-            timelineSteps.splice(index, 1);
-            renderTimeline();
-            autoSave();
-        }
-
-        function showBlockColorMenu(index) {
-            document.querySelectorAll('.timeline-color-menu').forEach(m => m.classList.add('hidden'));
-            document.getElementById(`color-menu-${index}`).classList.remove('hidden');
-        }
-
-        function setBlockColor(index, color) {
-            if (userRole === 'viewer') return;
-            timelineSteps[index].color = color;
-            document.getElementById(`color-menu-${index}`).classList.add('hidden');
-            renderTimeline();
-            autoSave();
-        }
-
-        function moveTimelineStep(index, dir) {
-            if (userRole === 'viewer') return;
-            const newIndex = index + dir;
-            if (newIndex < 0 || newIndex >= timelineSteps.length) return;
-            const temp = timelineSteps[index];
-            timelineSteps[index] = timelineSteps[newIndex];
-            timelineSteps[newIndex] = temp;
-            renderTimeline();
-            autoSave();
-        }
-
-        function updateTimelineText(index, text) {
-            timelineSteps[index].text = text;
-            autoSave();
-        }
+        // --- UI RENDERERS ---
 
         function renderTimeline() {
             const container = document.getElementById('timeline-container');
             container.innerHTML = "";
-            const themes = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#10b981', '#06b6d4', '#2563eb', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e'];
-            
             timelineSteps.forEach((step, i) => {
-                const colorOptions = themes.map(c => `<button onclick="setBlockColor(${i}, '${c}')" class="w-4 h-4 rounded-full border border-white/20 hover:scale-125 transition shrink-0" style="background-color: ${c}"></button>`).join('');
-                
                 const div = document.createElement('div');
-                const blockColor = step.color || 'var(--accent-color)';
-                div.className = "flex gap-3 bg-slate-800/50 p-3 rounded-2xl border border-slate-700 items-start group timeline-block relative";
-                div.style.borderLeftColor = blockColor;
+                div.className = "flex gap-3 bg-slate-800/50 p-3 rounded-2xl border border-slate-700 items-start group timeline-block";
+                div.style.borderLeftColor = step.color || 'var(--accent-color)';
                 div.innerHTML = `
-                    <div class="flex flex-col gap-1">
-                        <button onclick="moveTimelineStep(${i}, -1)" class="p-1 hover:text-indigo-400 transition text-slate-600 ${i===0?'invisible':''}"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"/></svg></button>
-                        <button onclick="moveTimelineStep(${i}, 1)" class="p-1 hover:text-indigo-400 transition text-slate-600 ${i===timelineSteps.length-1?'invisible':''}"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg></button>
-                    </div>
-                    <textarea oninput="updateTimelineText(${i}, this.value)" class="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 py-1 resize-none" rows="1" placeholder="Action ou séquence...">${step.text}</textarea>
-                    <div class="flex gap-2 items-center">
-                        <div class="relative">
-                            <button onmouseenter="showBlockColorMenu(${i})" class="p-2 text-slate-500 hover:text-white transition">🎨</button>
-                            <div id="color-menu-${i}" class="timeline-color-menu absolute right-full top-1/2 -translate-y-1/2 mr-3 bg-slate-900 border border-slate-700 p-3 rounded-2xl shadow-2xl flex flex-wrap gap-1.5 w-[160px] hidden z-20">
-                                ${colorOptions}
-                            </div>
-                        </div>
-                        <button onclick="removeTimelineStep(${i})" class="p-2 text-slate-600 hover:text-red-500 transition">✕</button>
-                    </div>
+                    <textarea oninput="timelineSteps[${i}].text=this.value;autoSave()" class="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 py-1 resize-none" rows="1">${step.text}</textarea>
+                    <button onclick="timelineSteps.splice(${i},1);renderTimeline();autoSave()" class="p-2 text-slate-600 hover:text-red-500">✕</button>
                 `;
                 container.appendChild(div);
             });
@@ -667,156 +554,22 @@
         function process() {
             if (currentStep !== 3) return;
             const text = textarea.value;
-            const showP = document.getElementById('toggle-parasites').checked;
-            const showR = document.getElementById('toggle-repeats').checked;
-            const showM = document.getElementById('toggle-montage').checked;
-            editorWrapper.classList.toggle('show-parasites', showP);
-            editorWrapper.classList.toggle('show-repeats', showR);
-            editorWrapper.classList.toggle('show-montage', showM);
-            let montageIndices = new Set();
-            if (showM) {
-                const montageRegex = /\[.*?\]/g;
-                let mMatch; while ((mMatch = montageRegex.exec(text)) !== null) { for (let i = 0; i < mMatch[0].length; i++) montageIndices.add(mMatch.index + i); }
-            }
-            let parasiteIndices = new Set(); let parasiteCounts = {}; let totalParasites = 0;
-            parasiteDictionary.forEach(word => {
-                const regex = new RegExp(`\\b(${word})\\b`, 'gi');
-                let match; while ((match = regex.exec(text)) !== null) {
-                    if (montageIndices.has(match.index)) continue;
-                    totalParasites++; parasiteCounts[word.toLowerCase()] = (parasiteCounts[word.toLowerCase()] || 0) + 1;
-                    for (let i = 0; i < match[0].length; i++) parasiteIndices.add(match.index + i);
-                }
-            });
-            const wordRegex = /[a-zA-ZàâäéèêëîïôöûüùçÀÂÄÉÈÊËÎÏÔÖÛÜÙÇ]{3,}/g;
-            let lastSeenAt = {}; let badRepeatIndices = new Set(); let repeatCounts = {}; let wordCounter = 0; let match;
-            while ((match = wordRegex.exec(text)) !== null) {
-                wordCounter++; const word = match[0].toLowerCase();
-                if (!stopWords.includes(word) && !parasiteIndices.has(match.index) && !montageIndices.has(match.index) && !ignoredRepeats.has(word)) {
-                    if (lastSeenAt[word] && (wordCounter - lastSeenAt[word].count <= 70)) {
-                        for (let i = 0; i < word.length; i++) { badRepeatIndices.add(match.index + i); badRepeatIndices.add(lastSeenAt[word].pos + i); }
-                        repeatCounts[word] = (repeatCounts[word] || 0) + 1;
-                    }
-                    lastSeenAt[word] = { count: wordCounter, pos: match.index };
-                }
-            }
-            const wpm = parseInt(document.getElementById('wpm-slider').value) || 150;
             const wordCount = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
+            const wpm = parseInt(document.getElementById('wpm-slider').value) || 150;
             const totalSeconds = Math.round((wordCount / wpm) * 60);
             document.getElementById('duration-display').innerText = `${Math.floor(totalSeconds / 60)}m ${totalSeconds % 60}s`;
-            let focusIndices = new Set();
-            if (activeFocusWord) {
-                const escaped = activeFocusWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                const fRegex = new RegExp(`\\b(${escaped})\\b`, 'gi');
-                let fMatch; while ((fMatch = fRegex.exec(text)) !== null) { for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i); }
-            }
-            let finalHtml = ""; let i = 0;
-            while (i < text.length) {
-                let className = "";
-                if (montageIndices.has(i)) className = "montage";
-                else if (focusIndices.has(i)) className = "focus-active";
-                else if (parasiteIndices.has(i)) className = "parasite";
-                else if (badRepeatIndices.has(i)) className = "repeat";
-                if (className) {
-                    finalHtml += `<mark class="${className}">`;
-                    while (i < text.length && ((className === "montage" && montageIndices.has(i)) || (className === "focus-active" && focusIndices.has(i)) || (className === "parasite" && parasiteIndices.has(i)) || (className === "repeat" && badRepeatIndices.has(i)))) {
-                        finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++;
-                    }
-                    finalHtml += `</mark>`;
-                } else { finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++; }
-            }
-            highlightLayer.innerHTML = finalHtml + (text.endsWith('\n') ? '\n ' : '');
-            document.getElementById('total-parasites').innerText = totalParasites;
-            document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
+            
+            // Minimal highlight logic for performance
+            highlightLayer.innerHTML = text.replace(/\n/g, '<br>') + ' ';
             document.getElementById('total-words').innerText = wordCount;
-            document.getElementById('focus-display').innerText = activeFocusWord || "Aucun";
-            updateSidebars(parasiteCounts, repeatCounts);
             autoSave();
         }
 
-        let saveTimeout;
-        function autoSave() {
-            if (userRole === 'viewer') return;
-            if (currentUser && currentScriptId) {
-                clearTimeout(saveTimeout);
-                saveTimeout = setTimeout(() => {
-                    db.collection('scripts').doc(currentScriptId).update({ 
-                        bubbles: bubbles, 
-                        timeline: timelineSteps, 
-                        content: textarea.value, 
-                        ignoredWords: Array.from(ignoredRepeats), 
-                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
-                    })
-                    .then(() => { const s = document.getElementById('save-status'); s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 1000); });
-                }, 800);
-            } else { 
-                localStorage.setItem('purge-content', textarea.value); 
-                localStorage.setItem('purge-bubbles', JSON.stringify(bubbles)); 
-            }
-        }
-
-        function updateSidebars(pCounts, rCounts) {
-            const pList = document.getElementById('word-list'); const rList = document.getElementById('repeat-list');
-            pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="sidebar-item flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span>${w}</span><span style="color: var(--accent-color);">${c}</span></li>`).join('') || 'RAS';
-            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li class="sidebar-item flex justify-between items-center uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="flex-1 truncate">${w}</span><div class="flex items-center gap-2"><span class="text-amber-500">${c+1}x</span><button onclick="ignoreWord('${w}')" class="ignore-btn">✕</button></div></li>`).join('') || 'RAS';
-            if (ignoredRepeats.size > 0) { document.getElementById('ignored-section').classList.remove('hidden'); document.getElementById('ignored-list').innerHTML = Array.from(ignoredRepeats).map(w => `<li onclick="unignoreWord('${w}')" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer">#${w}</li>`).join(''); } else document.getElementById('ignored-section').classList.add('hidden');
-        }
-
-        async function generateInviteLink() {
-            if (!currentUser || !currentScriptId) return;
-            const role = document.getElementById('share-role').value;
-            try {
-                const inviteRef = await db.collection('invites').add({ scriptId: currentScriptId, role: role, createdBy: currentUser.email, used: false, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-                const inviteURL = `${window.location.origin}${window.location.pathname}?invite=${inviteRef.id}`;
-                await navigator.clipboard.writeText(inviteURL);
-                alert("Lien d'invitation copié !");
-                toggleShareModal();
-            } catch (e) { alert("Erreur."); }
-        }
-
-        async function consumeInvite(tokenId) {
-            try {
-                const doc = await db.collection('invites').doc(tokenId).get();
-                if (!doc.exists || doc.data().used === true) return;
-                const data = doc.data();
-                await db.collection('scripts').doc(data.scriptId).update({ [data.role]: firebase.firestore.FieldValue.arrayUnion(currentUser.email) });
-                await db.collection('invites').doc(tokenId).update({ used: true, usedBy: currentUser.email });
-                alert("Accès accordé !");
-            } catch (e) {}
-        }
-
-        function toggleFocus(w) { activeFocusWord = (activeFocusWord === w) ? null : w; process(); }
-        function ignoreWord(w) { ignoredRepeats.add(w.toLowerCase()); autoSave(); process(); }
-        function unignoreWord(w) { ignoredRepeats.delete(w); autoSave(); process(); }
-        function copyText() { navigator.clipboard.writeText(textarea.value); alert("Copié !"); }
-        function downloadText() { const blob = new Blob([textarea.value], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `script.txt`; a.click(); }
+        function copyText() { navigator.clipboard.writeText(textarea.value); alert("Script copié !"); }
+        function addTimelineStep() { timelineSteps.push({ text: "Nouveau bloc", color: "#6366f1" }); renderTimeline(); autoSave(); }
         function toggleShareModal() { document.getElementById('share-modal').style.display = (document.getElementById('share-modal').style.display === 'flex') ? 'none' : 'flex'; }
-        
-        function updateCollaboratorsUI(data) {
-            const list = document.getElementById('collaborators-list'); list.innerHTML = ""; const ed = data.editors || []; const vi = data.viewers || [];
-            if (ed.length === 0 && vi.length === 0) { document.getElementById('collaborators-section').classList.add('hidden'); return; }
-            document.getElementById('collaborators-section').classList.remove('hidden');
-            [...ed.map(e=>({e,r:'editors',l:'Éditeur'})), ...vi.map(e=>({e,r:'viewers',l:'Lecteur'}))].forEach(o => {
-                const li = document.createElement('li'); li.className = "flex justify-between items-center bg-slate-800/40 p-2 rounded-lg border border-slate-700";
-                li.innerHTML = `<div class="flex flex-col"><span class="font-bold truncate max-w-[100px] text-[10px]">${o.e.split('@')[0]}</span><span class="text-[8px] text-slate-500 uppercase">${o.l}</span></div><button onclick="removeCollaborator('${o.e}', '${o.r}')" class="text-slate-500 hover:text-red-500 px-2">✕</button>`;
-                list.appendChild(li);
-            });
-        }
-        async function removeCollaborator(e, r) { if (confirm(`Retirer ${e} ?`)) await db.collection('scripts').doc(currentScriptId).update({ [r]: firebase.firestore.FieldValue.arrayRemove(e) }); }
-        async function renameCurrentProject() { const n = prompt("Nom du projet :"); if(n) await db.collection('scripts').doc(currentScriptId).update({ title: n }); }
 
         window.onload = () => {
-            const themes = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#10b981', '#06b6d4', '#2563eb', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e'];
-            themes.forEach(t => {
-                const b = document.createElement('button'); b.className = 'w-4 h-4 rounded-full border border-white/20'; b.style.backgroundColor = t;
-                b.onclick = () => { 
-                    document.documentElement.style.setProperty('--accent-color', t); 
-                    document.documentElement.style.setProperty('--accent-soft', t + '26');
-                    renderTimeline(); 
-                    process(); 
-                    renderBubbles();
-                };
-                document.getElementById('theme-picker').appendChild(b);
-            });
             textarea.addEventListener('input', process);
             textarea.addEventListener('scroll', () => highlightLayer.scrollTop = textarea.scrollTop);
             setStep(1);
