@@ -383,7 +383,7 @@
 
         function cycleBlockColor(index) {
             if (userRole === 'viewer') return;
-            const colors = ["", "#ef4444", "#eab308", "#22c55e", "#06b6d4", "#ec4899"];
+            const colors = ["", "#ef4444", "#f97316", "#eab308", "#84cc16", "#22c55e", "#10b981", "#06b6d4", "#3b82f6", "#6366f1", "#8b5cf6", "#d946ef", "#ec4899", "#f43f5e", "#94a3b8"];
             let current = colors.indexOf(timelineSteps[index].color);
             timelineSteps[index].color = colors[(current + 1) % colors.length];
             renderTimeline();
