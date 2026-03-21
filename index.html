@@ -62,8 +62,8 @@
         .sidebar-item { cursor: pointer; transition: all 0.2s; }
         .sidebar-item:hover { background-color: rgba(255,255,255,0.05); }
         
-        /* Blocs avec bande latérale épaisse (Step 1 et Step 2) */
-        .bg-card { background-color: #1e293b; border: 1px solid #334155; border-left: 16px solid var(--accent-color); }
+        /* Gros blocs : Bande fine 4px */
+        .bg-card { background-color: #1e293b; border: 1px solid #334155; border-left: 4px solid var(--accent-color); }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -86,6 +86,7 @@
         .wf-step-num { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid currentColor; margin-right: 8px; font-size: 10px; }
         .wf-tab.active .wf-step-num { background: var(--accent-color); border-color: var(--accent-color); color: white; }
 
+        /* Petits blocs (Timeline) : Bande massive 16px */
         .timeline-block { border-left-width: 16px; transition: border-color 0.3s; }
     </style>
 </head>
@@ -108,8 +109,8 @@
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-6 py-10">
-        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 border-b border-slate-800 pb-8">
+    <div class="max-w-7xl mx-auto px-6 py-6 md:py-10">
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-4 border-b border-slate-800 pb-8">
             <div>
                 <div class="flex items-center gap-3">
                     <h1 class="text-3xl font-extrabold tracking-tight">Purge-Script<span>.</span></h1>
@@ -126,7 +127,7 @@
             </div>
         </header>
 
-        <div class="flex items-center justify-center mb-10 bg-slate-900/50 p-1 rounded-2xl border border-slate-800 max-w-2xl mx-auto">
+        <div class="flex items-center justify-center mb-6 bg-slate-900/50 p-1 rounded-2xl border border-slate-800 max-w-2xl mx-auto">
             <div onclick="setStep(1)" id="wf-tab-1" class="wf-tab active flex-1 text-center"><span class="wf-step-num">1</span>Brouillon</div>
             <div onclick="setStep(2)" id="wf-tab-2" class="wf-tab flex-1 text-center"><span class="wf-step-num">2</span>Chronologie</div>
             <div onclick="setStep(3)" id="wf-tab-3" class="wf-tab flex-1 text-center"><span class="wf-step-num">3</span>Rédaction</div>
@@ -134,7 +135,6 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            <!-- ETAPE 3 STATS : Bordures latérales retirées -->
             <div id="stats-row" class="lg:col-span-12 hidden grid grid-cols-5 gap-3">
                 <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
                     <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Tics</p>
@@ -171,7 +171,6 @@
                     </button>
                 </div>
 
-                <!-- ETAPE 1 -->
                 <div id="step-1-view" class="space-y-4">
                     <div class="bg-card p-8 rounded-[2rem] shadow-lg">
                         <h2 class="text-xl font-bold mb-4 flex items-center gap-2"><span style="color: var(--accent-color);">#</span> Brouillon & Idées</h2>
@@ -179,7 +178,6 @@
                     </div>
                 </div>
 
-                <!-- ETAPE 2 -->
                 <div id="step-2-view" class="hidden space-y-4">
                     <div class="bg-card p-8 rounded-[2rem] shadow-lg">
                         <div class="flex justify-between items-center mb-8">
@@ -190,7 +188,6 @@
                     </div>
                 </div>
 
-                <!-- ETAPE 3 -->
                 <div id="step-3-view" class="hidden space-y-4">
                     <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm flex flex-wrap items-center gap-6 text-[10px] font-bold uppercase">
                         <div class="flex items-center gap-4 flex-1">
