@@ -86,7 +86,7 @@
             border-top: 1px solid #334155;
             border-right: 1px solid #334155;
             border-bottom: 1px solid #334155;
-            height: 80px; /* Taille fixe */
+            height: 80px; 
             position: relative;
         }
         .timeline-block.dragging { opacity: 0.5; transform: scale(0.98); }
@@ -188,6 +188,31 @@
         .drag-handle { cursor: grab; color: #475569; }
         .sync-input { background: transparent; border: none; outline: none; color: white; width: 100%; font-weight: 500; height: 100%; resize: none; overflow: hidden; }
         .bubble-input-field { background: transparent; border: none; outline: none; color: white; width: 100%; font-size: 11px; font-weight: 600; }
+
+        /* Bouton Suggérer Pilule */
+        .pill-suggest-btn {
+            position: absolute;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            background-color: var(--accent-color);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 50;
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .pill-suggest-btn:hover { transform: translateY(-2px) scale(1.05); filter: brightness(1.1); }
+        .pill-suggest-btn:active { transform: translateY(0) scale(0.95); }
+        .kbd-hint { background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px; font-size: 9px; }
     </style>
 </head>
 <body class="antialiased">
@@ -228,7 +253,7 @@
             </div>
         </header>
 
-        <!-- NAVIGATION PROJETS (TOUT EN HAUT) -->
+        <!-- NAVIGATION PROJETS -->
         <div id="projects-nav" class="hidden flex items-center justify-between bg-slate-800/50 p-2 rounded-2xl border border-slate-700 mb-6 shadow-sm">
             <div class="flex gap-2" id="tabs-container">
                 <button onclick="switchProject(1)" id="p-tab-1" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 1</button>
@@ -248,7 +273,7 @@
             <div onclick="setStep(3)" id="wf-tab-3" class="wf-tab flex-1 text-center"><span class="wf-step-num">3</span>Rédaction</div>
         </div>
 
-        <!-- STATS (Visible en étape 3) -->
+        <!-- STATS -->
         <div id="stats-row" class="hidden grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
             <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
                 <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Tics</p>
@@ -273,15 +298,11 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
             <div id="main-column" class="lg:col-span-12 space-y-4">
                 
-                <!-- STEP 1 VIEW (BROUILLON) -->
+                <!-- STEP 1 VIEW -->
                 <div id="step-1-view" class="space-y-4">
-                    <div id="canvas-container" class="shadow-2xl">
-                        <!-- Bulles flottantes -->
-                    </div>
-                    
+                    <div id="canvas-container" class="shadow-2xl"></div>
                     <div class="flex gap-3 bg-slate-900/50 p-4 rounded-3xl border border-slate-800 max-w-2xl mx-auto w-full">
                         <input type="text" id="bubble-input" class="flex-1 bg-slate-800 border border-slate-700 rounded-2xl px-6 py-3 text-white placeholder-slate-500 font-medium outline-none focus:border-indigo-500" placeholder="Une idée ? Tapez Entrée...">
                         <button onclick="createBubbleFromInput()" class="bg-indigo-500 text-white p-4 rounded-2xl hover:bg-indigo-600 transition" style="background-color: var(--accent-color);">
@@ -290,14 +311,12 @@
                     </div>
                 </div>
 
-                <!-- STEP 2 VIEW (CHRONOLOGIE) -->
+                <!-- STEP 2 VIEW -->
                 <div id="step-2-view" class="hidden space-y-4">
-                    <div id="timeline-container" class="shadow-inner">
-                        <!-- Blocs synchronisés -->
-                    </div>
+                    <div id="timeline-container" class="shadow-inner"></div>
                 </div>
 
-                <!-- STEP 3 VIEW (RÉDACTION) -->
+                <!-- STEP 3 VIEW -->
                 <div id="step-3-view" class="hidden space-y-4">
                     <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm flex flex-wrap items-center gap-6 text-[10px] font-bold uppercase">
                         <div class="flex items-center gap-4 flex-1">
@@ -315,6 +334,13 @@
                     <div id="editor-wrapper" class="editor-container shadow-sm overflow-hidden show-parasites show-repeats show-montage">
                         <div id="highlight-layer" class="sync-text editor-font"></div>
                         <textarea id="textarea" class="sync-text editor-font" placeholder="Rédigez votre script final ici..." spellcheck="false"></textarea>
+                        
+                        <!-- Nouveau bouton Suggérer -->
+                        <button onclick="handleSuggestion()" class="pill-suggest-btn">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L14.85 8.65L22 9.24L16.5 13.97L18.18 21L12 17.27L5.82 21L7.5 13.97L2 9.24L9.15 8.65L12 2Z"/></svg>
+                            <span>Suggérer</span>
+                            <span class="kbd-hint">CTRL+S</span>
+                        </button>
                     </div>
                     
                     <div class="flex gap-4">
@@ -324,7 +350,7 @@
                 </div>
             </div>
 
-            <!-- ASIDE ANALYSE (Visible en étape 3) -->
+            <!-- ASIDE ANALYSE -->
             <div id="analysis-column" class="lg:col-span-4 hidden space-y-6">
                 <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8 border border-slate-800" id="analysis-card">
                     <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Tics de langage</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px] scroll-custom"></ul></div>
@@ -353,7 +379,6 @@
         const parasiteDictionary = ["du coup", "en fait", "voilà", "un petit peu", "euh", "globalement", "concrètement", "effectivement", "donc", "c'est-à-dire", "au final", "disons que", "typiquement", "clairement", "tout simplement", "en gros", "pour le coup", "un peu", "voilà quoi", "tu vois", "franchement", "honnêtement", "en réalité", "pour ainsi dire", "alors", "en quelque sorte", "justement", "au niveau de", "quelque part", "on va dire", "fondablement", "véritablement", "pour ma part", "en soi", "entre guillemets", "si vous voulez", "de base", "sur la fin"];
         const stopWords = ["je", "me", "moi", "tu", "te", "toi", "il", "elle", "on", "nous", "vous", "ils", "elles", "le", "la", "les", "un", "une", "des", "du", "de", "ce", "cet", "cette", "ces", "se", "soi", "lui", "leur", "y", "en", "mon", "ton", "son", "ma", "ta", "sa", "mes", "tes", "ses", "notre", "votre", "nos", "vos", "leurs", "qui", "que", "quoi", "dont", "où", "quel", "quels", "quelle", "quelles", "et", "ou", "mais", "est", "sont", "pour", "dans", "par", "avec", "pas", "ne", "si", "ici", "là", "ont", "aux", "très"];
         
-        // ARC-EN-CIEL RESTAURÉ (12)
         const bubblePalette = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#10b981', '#06b6d4', '#2563eb', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e'];
 
         let activeFocusWord = null; 
@@ -381,6 +406,35 @@
                 document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
             }
         });
+
+        // --- GESTION DU THEME PERSISTANT ---
+        function applyAccentColor(color) {
+            document.documentElement.style.setProperty('--accent-color', color); 
+            document.documentElement.style.setProperty('--accent-soft', color + '26');
+            localStorage.setItem('purge-preferred-color', color);
+            process(); 
+            if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
+        }
+
+        // --- RACCOURCI CTRL+S ---
+        window.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                handleSuggestion();
+            }
+        });
+
+        function handleSuggestion() {
+            // Logique de suggestion (placeholder pour expansion future)
+            const sStatus = document.getElementById('save-status');
+            sStatus.innerText = "Analyse en cours...";
+            sStatus.style.opacity = '1';
+            process();
+            setTimeout(() => {
+                sStatus.innerText = "En direct";
+                sStatus.style.opacity = '0';
+            }, 1500);
+        }
 
         function setStep(step) {
             currentStep = step;
@@ -417,7 +471,7 @@
             }
         }
 
-        // --- GESTION DES BULLES (DATA SOURCE) ---
+        // --- GESTION DES BULLES ---
 
         bubbleInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') createBubbleFromInput(); });
 
@@ -438,8 +492,6 @@
             renderDraft();
             autoSave();
         }
-
-        // --- STEP 1: BROUILLON (VUE FLOTTANTE) ---
 
         function renderDraft() {
             canvas.innerHTML = "";
@@ -513,7 +565,7 @@
             document.addEventListener('mouseup', stopDrag);
         }
 
-        // --- STEP 2: CHRONOLOGIE (VUE LISTE SYNCHRO) ---
+        // --- STEP 2: CHRONOLOGIE ---
 
         function renderTimeline() {
             timeline.innerHTML = "";
@@ -596,7 +648,6 @@
         function setBubbleColor(id, color) {
             const b = bubbles.find(b => b.id === id);
             if (b) b.color = color;
-            // Fermeture immédiate du menu après choix
             document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
             if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
             autoSave();
@@ -608,7 +659,7 @@
             autoSave();
         }
 
-        // --- FIREBASE & CORE LOGIC ---
+        // --- FIREBASE CORE LOGIC ---
 
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
@@ -651,13 +702,27 @@
                     return;
                 }
                 const data = doc.data();
-                if (data.content !== textarea.value && document.activeElement !== textarea) textarea.value = data.content || "";
+
+                // Synchronisation intelligente pour éviter le saut de curseur
+                if (data.content !== textarea.value) {
+                    if (document.activeElement !== textarea) {
+                        textarea.value = data.content || "";
+                    } else {
+                        // Si l'utilisateur tape, on ne synchronise que si le curseur est statique ou via un diff (ici simple préservation)
+                        const start = textarea.selectionStart;
+                        const end = textarea.selectionEnd;
+                        textarea.value = data.content || "";
+                        textarea.setSelectionRange(start, end);
+                    }
+                }
+
                 if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) {
                     bubbles = data.bubbles || [];
-                    currentStep === 1 ? renderDraft() : renderTimeline();
+                    if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
                 }
                 userRole = data.owner === currentUser.uid ? 'owner' : (data.editors?.includes(currentUser.email) ? 'editor' : 'viewer');
                 textarea.readOnly = (userRole === 'viewer');
+                
                 const slotMatch = id.match(/_([1-4])$/); 
                 if (slotMatch && userRole === 'owner') {
                     const tab = document.getElementById(`p-tab-${slotMatch[1]}`);
@@ -855,17 +920,17 @@
         async function renameCurrentProject() { const n = prompt("Nouveau nom du projet :"); if(n) await db.collection('scripts').doc(currentScriptId).update({ title: n }); }
 
         window.onload = () => {
-            // ARC-EN-CIEL RESTAURÉ
+            // ARC-EN-CIEL
             bubblePalette.forEach(t => {
                 const b = document.createElement('button'); b.className = 'w-4 h-4 rounded-full border border-white/20 hover:scale-125 transition'; b.style.backgroundColor = t;
-                b.onclick = () => { 
-                    document.documentElement.style.setProperty('--accent-color', t); 
-                    document.documentElement.style.setProperty('--accent-soft', t + '26');
-                    process(); 
-                    if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
-                };
+                b.onclick = () => applyAccentColor(t);
                 document.getElementById('theme-picker').appendChild(b);
             });
+
+            // Restauration du thème préféré
+            const savedColor = localStorage.getItem('purge-preferred-color');
+            if (savedColor) applyAccentColor(savedColor);
+
             textarea.addEventListener('input', process);
             textarea.addEventListener('scroll', () => highlightLayer.scrollTop = textarea.scrollTop);
             setStep(1);
