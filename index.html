@@ -1,174 +1,150 @@
+--- START OF FILE index (1).html ---
+
 <!DOCTYPE html>
 <html lang="fr" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Purge-Script Pro | Workflow Edition (Collaborative)</title>
-    
-    <!-- Framework & Fonts -->
+    <title>Purge-Script Pro | Workflow Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
     
-    <!-- Firebase SDK (Compat mode for reliability) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
     <style>
-        /**
-         * VARIABLES DE THÈME DYNAMIQUES
-         * Ces variables sont mises à jour par le JS pour changer l'accent color
-         */
         :root { 
             --accent-color: #ef4444; 
             --accent-soft: rgba(239, 68, 68, 0.15); 
             --focus-color: #f02e65; 
             --montage-color: #7dd3fc; 
-            --bg-main: #0f172a;
-            --bg-card: #1e293b;
-            --border-ui: #334155;
-            --text-main: #f1f5f9;
-            --text-dim: #64748b;
         }
         
-        /* Global Reset & Scrollbars */
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: var(--bg-main); 
-            color: var(--text-main); 
+            background-color: #0f172a; 
+            color: #f1f5f9; 
             margin: 0;
             overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
         } 
-
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--accent-color); border-radius: 10px; }
         
         h1, h1 span { color: #ffffff !important; }
         .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.6; }
-        .mono-font { font-family: 'Fira Code', monospace; }
         
-        /* --- LAYOUT STEP 1: BROUILLON (CANVAS) --- */
+        /* Layout */
         #canvas-container {
             position: relative;
             width: 100%;
             height: 600px;
-            background-color: var(--bg-main);
+            background-color: #0f172a;
             background-image: radial-gradient(circle at 2px 2px, #1e293b 1px, transparent 0);
             background-size: 40px 40px;
             overflow: hidden;
-            border-radius: 2.5rem;
-            border: 1px solid var(--border-ui);
+            border-radius: 2rem;
+            border: 1px solid #334155;
             touch-action: none;
-            box-shadow: inset 0 0 40px rgba(0,0,0,0.2);
         }
 
+        /* Bubbles (Draft) */
         .bubble {
             position: absolute;
             min-width: 200px;
             max-width: 300px;
-            padding: 1.25rem;
-            background: var(--bg-card);
-            border: 2px solid var(--border-ui);
-            border-radius: 1.5rem;
+            padding: 1rem;
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 1.25rem;
             cursor: grab;
             user-select: none;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
             z-index: 10;
-            transition: transform 0.1s ease, border-color 0.3s ease;
         }
-        .bubble:active { cursor: grabbing; transform: scale(1.02); }
+        .bubble:active { cursor: grabbing; }
 
-        /* --- LAYOUT STEP 2: CHRONOLOGIE --- */
+        /* Timeline Blocks (Step 2) */
         #timeline-container {
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            padding: 24px;
+            gap: 12px;
+            padding: 20px;
             min-height: 500px;
-            background: var(--bg-main);
-            border-radius: 2.5rem;
-            border: 1px solid var(--border-ui);
+            background: #0f172a;
+            border-radius: 2rem;
+            border: 1px solid #334155;
         }
         .timeline-block {
             width: 100%;
-            background: var(--bg-card);
+            background: #1e293b;
             border-left: 6px solid var(--accent-color);
-            border-radius: 1.25rem;
-            padding: 0 1.5rem;
+            border-radius: 1rem;
+            padding: 0 1.25rem;
             display: flex;
             align-items: center;
             gap: 15px;
             cursor: move;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            border-top: 1px solid var(--border-ui);
-            border-right: 1px solid var(--border-ui);
-            border-bottom: 1px solid var(--border-ui);
-            height: 85px;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.3s;
+            border-top: 1px solid #334155;
+            border-right: 1px solid #334155;
+            border-bottom: 1px solid #334155;
+            height: 80px;
             position: relative;
         }
-        .timeline-block.dragging { opacity: 0.4; transform: scale(0.95); background: var(--border-ui); }
+        .timeline-block.dragging { opacity: 0.5; transform: scale(0.98); }
 
-        /* --- COLOR PICKER SYSTEM --- */
+        /* Color Picker Component */
         .color-picker-trigger {
-            width: 32px;
-            height: 32px;
-            border-radius: 10px;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: background 0.2s;
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
         }
-        .color-picker-trigger:hover { background: rgba(255,255,255,0.15); transform: translateY(-1px); }
+        .color-picker-trigger:hover { background: rgba(255,255,255,0.1); }
         
         .color-menu {
             display: none;
             position: absolute;
             background: #1e293b;
-            border: 1px solid var(--border-ui);
-            padding: 12px;
-            border-radius: 1.25rem;
+            border: 1px solid #334155;
+            padding: 10px;
+            border-radius: 1rem;
             grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
+            gap: 6px;
             z-index: 1000;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-            margin-top: 12px;
-            backdrop-filter: blur(10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+            margin-top: 8px;
         }
-        .color-menu.active { display: grid; animation: popIn 0.2s ease-out; }
+        .color-menu.active { display: grid; }
         
-        @keyframes popIn {
-            from { opacity: 0; transform: scale(0.9) translateY(-10px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-
         .color-dot-btn { 
-            width: 22px; 
-            height: 22px; 
+            width: 18px; 
+            height: 18px; 
             border-radius: 50%; 
             cursor: pointer; 
-            border: 2px solid rgba(255,255,255,0.1); 
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            border: 1px solid rgba(255,255,255,0.2); 
+            transition: transform 0.1s; 
         }
-        .color-dot-btn:hover { transform: scale(1.4); border-color: white; }
+        .color-dot-btn:hover { transform: scale(1.3); }
 
-        /* --- EDITOR ENGINE (STEP 3) --- */
+        /* Step 3 Styling */
         .editor-container { 
             position: relative; 
-            min-height: 650px; 
-            border-radius: 2rem; 
-            background-color: var(--bg-card); 
-            border: 1px solid var(--border-ui);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            min-height: 600px; 
+            border-radius: 1.5rem; 
+            background-color: #1e293b; 
+            border: 1px solid #334155;
         }
         .sync-text { 
             position: absolute; 
             top: 0; left: 0; width: 100%; height: 100%; 
-            padding: 35px; 
+            padding: 30px; 
             white-space: pre-wrap; 
             word-wrap: break-word; 
             overflow-y: auto; 
@@ -179,248 +155,185 @@
         #textarea { color: transparent; caret-color: #ffffff; z-index: 2; resize: none; outline: none; }
         #highlight-layer { z-index: 1; pointer-events: none; color: #e2e8f0 !important; }
         
-        mark { background: none; color: inherit; transition: background 0.3s; }
+        mark { background: none; color: inherit; }
         .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); border-radius: 2px; }
         .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; border-radius: 2px; }
         mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; font-weight: 600; }
-        .show-montage mark.montage { background-color: var(--montage-color) !important; color: #0369a1 !important; font-weight: 700; border-radius: 4px; padding: 0 2px; }
+        .show-montage mark.montage { background-color: var(--montage-color) !important; color: #0369a1 !important; font-weight: 700; }
         
-        /* UI Components */
-        .sidebar-item { cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
-        .sidebar-item:hover { background-color: rgba(255,255,255,0.08); border-color: var(--border-ui); }
+        .sidebar-item { cursor: pointer; transition: all 0.2s; }
+        .sidebar-item:hover { background-color: rgba(255,255,255,0.05); }
         
-        .switch { position: relative; display: inline-block; width: 38px; height: 22px; }
+        .bg-card { background-color: #1e293b; border: 1px solid #334155; border-left: 4px solid var(--accent-color); }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        #textarea::-webkit-scrollbar-thumb, .scroll-custom::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb { background: var(--accent-color); border-radius: 10px; }
+        
+        .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--accent-color); }
-        input:checked + .slider:before { transform: translateX(16px); }
+        input:checked + .slider:before { transform: translateX(14px); }
 
-        #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(12px); }
-        .modal-content { background: var(--bg-card); padding: 2.5rem; border-radius: 2rem; width: 90%; max-width: 450px; color: white; border: 1px solid var(--border-ui); }
+        #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        .modal-content { background: #1e293b; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 400px; color: white; border: 1px solid #334155; }
+        .project-tab.active { color: white; background-color: var(--accent-color) !important; }
 
-        .project-tab.active { color: white; background-color: var(--accent-color) !important; transform: scale(1.05); }
-
-        .wf-tab { position: relative; padding: 1.25rem 1.75rem; cursor: pointer; color: var(--text-dim); font-weight: 700; font-size: 0.8rem; text-transform: uppercase; transition: all 0.3s; letter-spacing: 0.05em; }
+        .wf-tab { position: relative; padding: 1rem 1.5rem; cursor: pointer; color: #64748b; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; transition: all 0.3s; }
         .wf-tab.active { color: white; }
-        .wf-tab.active::after { content: ""; position: absolute; bottom: 0; left: 20%; width: 60%; height: 4px; background: var(--accent-color); border-radius: 10px 10px 0 0; }
-        .wf-step-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; border: 1px solid currentColor; margin-right: 10px; font-size: 11px; }
+        .wf-tab.active::after { content: ""; position: absolute; bottom: 0; left: 25%; width: 50%; height: 3px; background: var(--accent-color); border-radius: 10px 10px 0 0; }
+        .wf-step-num { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid currentColor; margin-right: 8px; font-size: 10px; }
         .wf-tab.active .wf-step-num { background: var(--accent-color); border-color: var(--accent-color); color: white; }
 
-        .drag-handle { cursor: grab; color: #475569; padding: 10px; }
+        .drag-handle { cursor: grab; color: #475569; }
         .sync-input { background: transparent; border: none; outline: none; color: white; width: 100%; font-weight: 500; height: 100%; resize: none; overflow: hidden; }
-        .bubble-input-field { background: transparent; border: none; outline: none; color: white; width: 100%; font-size: 11px; font-weight: 600; min-height: 40px; }
-
-        /* Status & Toasts */
-        #status-toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 24px; border-radius: 12px; background: #1e293b; border: 1px solid var(--border-ui); font-size: 12px; font-weight: 700; z-index: 2000; transform: translateY(100px); transition: transform 0.3s; }
-        #status-toast.visible { transform: translateY(0); }
+        .bubble-input-field { background: transparent; border: none; outline: none; color: white; width: 100%; font-size: 11px; font-weight: 600; }
     </style>
 </head>
 <body class="antialiased">
 
-    <!-- Toast de notification -->
-    <div id="status-toast" class="flex items-center gap-3">
-        <div id="toast-icon" class="w-2 h-2 rounded-full bg-green-500"></div>
-        <span id="toast-message">Message</span>
-    </div>
-
     <!-- Modal de Partage -->
     <div id="share-modal">
         <div class="modal-content shadow-2xl">
-            <h3 class="text-2xl font-extrabold mb-2">Inviter un collaborateur</h3>
-            <p class="text-sm text-slate-400 mb-8 font-medium">Le lien généré sera à usage unique pour garantir la sécurité de votre script.</p>
-            
-            <div class="space-y-6">
-                <div>
-                    <label class="text-[10px] font-bold uppercase text-slate-500 mb-2 block tracking-widest">Rôle de l'invité</label>
-                    <select id="share-role" class="w-full p-4 rounded-2xl border bg-slate-900 border-slate-700 outline-none text-white font-semibold appearance-none">
-                        <option value="editors">Éditeur (Modification autorisée)</option>
-                        <option value="viewers">Lecteur (Lecture seule)</option>
-                    </select>
-                </div>
-
-                <div class="flex flex-col gap-3">
-                    <button onclick="generateInviteLink()" class="w-full py-4 rounded-2xl font-bold text-sm transition hover:brightness-110 shadow-lg" style="background-color: var(--accent-color);">Générer et copier le lien</button>
-                    <button onclick="toggleShareModal()" class="w-full bg-slate-800 py-4 rounded-2xl font-bold text-sm text-slate-400 hover:bg-slate-700 transition">Annuler</button>
-                </div>
+            <h3 class="text-xl font-extrabold mb-2">Lien d'invitation</h3>
+            <p class="text-xs text-slate-400 mb-6">Générez un lien unique à usage unique pour un collaborateur.</p>
+            <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Permission du lien</label>
+            <select id="share-role" class="w-full p-4 rounded-xl border bg-slate-900 border-slate-700 outline-none text-white mb-8">
+                <option value="editors">Éditeur (Peut modifier)</option>
+                <option value="viewers">Lecteur (Lecture seule)</option>
+            </select>
+            <div class="flex flex-col gap-3">
+                <button onclick="generateInviteLink()" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-4 rounded-2xl font-bold text-sm transition" style="background-color: var(--accent-color);">Générer et copier le lien</button>
+                <button onclick="toggleShareModal()" class="w-full bg-slate-800 py-4 rounded-2xl font-bold text-sm text-slate-400">Annuler</button>
             </div>
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-6 py-6 md:py-12">
-        <!-- HEADER PRINCIPAL -->
-        <header class="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-10">
+    <div class="max-w-7xl mx-auto px-6 py-6 md:py-10">
+        <!-- HEADER -->
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
             <div>
-                <div class="flex items-center gap-4">
-                    <h1 class="text-4xl font-extrabold tracking-tighter">Purge-Script<span style="color: var(--accent-color);">.</span></h1>
-                    <div id="live-indicator" class="flex items-center gap-2 px-3 py-1 bg-slate-800 rounded-full border border-slate-700">
-                        <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                        <span id="save-status" class="text-[9px] uppercase font-bold text-slate-400">Synchronisé</span>
-                    </div>
-                </div>
-                <p class="text-slate-500 text-sm font-medium italic mt-2">Design & Workflow Edition pour créateurs.</p>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-5">
-                <div id="user-info" class="hidden flex items-center gap-3 bg-slate-800/40 p-2 pr-4 rounded-2xl border border-slate-700">
-                    <img id="user-avatar" src="" class="w-8 h-8 rounded-xl border border-slate-600">
-                    <span id="user-display" class="text-xs font-bold text-slate-300">Utilisateur</span>
-                </div>
-                
                 <div class="flex items-center gap-3">
-                    <button id="share-btn" onclick="toggleShareModal()" class="hidden items-center gap-2 px-6 py-3 text-white rounded-2xl text-xs font-bold hover:scale-105 transition shadow-xl" style="background-color: var(--accent-color);">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-                        Inviter
-                    </button>
-                    <button id="auth-btn" onclick="handleAuth()" class="flex items-center gap-2 px-6 py-3 bg-slate-800 border border-slate-700 rounded-2xl text-xs font-bold shadow-sm hover:bg-slate-700 transition">
-                        <span id="auth-btn-text">Se connecter</span>
-                    </button>
+                    <h1 class="text-3xl font-extrabold tracking-tight">Purge-Script<span>.</span></h1>
+                    <span id="save-status" class="text-[10px] uppercase font-bold transition-opacity" style="color: var(--accent-color); opacity: 0;">En direct</span>
                 </div>
-
-                <div class="bg-slate-800/80 p-3 rounded-2xl shadow-inner border border-slate-700/50 flex items-center gap-4">
-                    <div class="flex flex-wrap gap-2 max-w-[150px]" id="theme-picker">
-                        <!-- Couleurs injectées par JS -->
-                    </div>
+                <p class="text-slate-500 text-sm font-medium italic mt-1"><span id="user-display">Mode Local</span></p>
+            </div>
+            <div class="flex flex-wrap items-center gap-4">
+                <button id="share-btn" onclick="toggleShareModal()" class="hidden items-center gap-2 px-5 py-2.5 text-white rounded-xl text-xs font-bold hover:scale-105 transition shadow-lg" style="background-color: var(--accent-color);">Inviter</button>
+                <button id="auth-btn" onclick="handleAuth()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold shadow-sm transition"><span id="auth-btn-text">Se connecter</span></button>
+                <div class="bg-slate-800 p-3 rounded-2xl shadow-sm border border-slate-700 flex items-center gap-4">
+                    <div class="flex flex-wrap gap-1.5 max-w-[130px]" id="theme-picker"></div>
                 </div>
             </div>
         </header>
 
-        <!-- NAVIGATION DES PROJETS (FIREBASE) -->
-        <div id="projects-nav" class="hidden flex items-center justify-between bg-slate-800/30 p-2.5 rounded-3xl border border-slate-700/50 mb-8 backdrop-blur-sm">
-            <div class="flex gap-2 overflow-x-auto scroll-none" id="tabs-container">
-                <button onclick="switchProject(1)" id="p-tab-1" class="project-tab px-6 py-2.5 rounded-2xl text-[10px] font-bold uppercase transition whitespace-nowrap">Projet 1</button>
-                <button onclick="switchProject(2)" id="p-tab-2" class="project-tab px-6 py-2.5 rounded-2xl text-[10px] font-bold uppercase transition whitespace-nowrap">Projet 2</button>
-                <button onclick="switchProject(3)" id="p-tab-3" class="project-tab px-6 py-2.5 rounded-2xl text-[10px] font-bold uppercase transition whitespace-nowrap">Projet 3</button>
-                <button onclick="switchProject(4)" id="p-tab-4" class="project-tab px-6 py-2.5 rounded-2xl text-[10px] font-bold uppercase transition whitespace-nowrap">Projet 4</button>
+        <!-- NAVIGATION PROJETS -->
+        <div id="projects-nav" class="hidden flex items-center justify-between bg-slate-800/50 p-2 rounded-2xl border border-slate-700 mb-6 shadow-sm">
+            <div class="flex gap-2" id="tabs-container">
+                <button onclick="switchProject(1)" id="p-tab-1" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 1</button>
+                <button onclick="switchProject(2)" id="p-tab-2" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 2</button>
+                <button onclick="switchProject(3)" id="p-tab-3" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 3</button>
+                <button onclick="switchProject(4)" id="p-tab-4" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 4</button>
             </div>
-            <button id="rename-btn" onclick="renameCurrentProject()" class="p-3 text-slate-500 hover:text-white transition-colors bg-slate-800/50 rounded-2xl ml-4">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+            <button id="rename-btn" onclick="renameCurrentProject()" class="p-2 text-slate-500 hover:text-indigo-400 transition ml-4">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
             </button>
         </div>
 
-        <!-- WORKFLOW PROGRESS TABS -->
-        <nav class="flex items-center justify-center mb-10 bg-slate-900/40 p-1.5 rounded-[2rem] border border-slate-800/50 max-w-3xl mx-auto shadow-2xl">
+        <!-- WORKFLOW TABS -->
+        <div class="flex items-center justify-center mb-6 bg-slate-900/50 p-1 rounded-2xl border border-slate-800 max-w-2xl mx-auto">
             <div onclick="setStep(1)" id="wf-tab-1" class="wf-tab active flex-1 text-center"><span class="wf-step-num">1</span>Brouillon</div>
             <div onclick="setStep(2)" id="wf-tab-2" class="wf-tab flex-1 text-center"><span class="wf-step-num">2</span>Chronologie</div>
             <div onclick="setStep(3)" id="wf-tab-3" class="wf-tab flex-1 text-center"><span class="wf-step-num">3</span>Rédaction</div>
-        </nav>
+        </div>
 
-        <!-- STATS BAR (DYNAMIQUE) -->
-        <div id="stats-row" class="hidden grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-            <div class="bg-slate-800/30 p-5 rounded-3xl border border-slate-700/50 shadow-sm backdrop-blur-md">
-                <p class="text-slate-500 text-[9px] font-extrabold uppercase mb-2 tracking-widest">Tics détectés</p>
-                <p id="total-parasites" class="text-2xl font-black" style="color: var(--accent-color);">0</p>
+        <!-- STATS -->
+        <div id="stats-row" class="hidden grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+            <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
+                <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Tics</p>
+                <p id="total-parasites" class="text-lg font-extrabold" style="color: var(--accent-color);">0</p>
             </div>
-            <div class="bg-slate-800/30 p-5 rounded-3xl border border-slate-700/50 shadow-sm backdrop-blur-md">
-                <p class="text-slate-500 text-[9px] font-extrabold uppercase mb-2 tracking-widest">Répétitions</p>
-                <p id="total-repeats" class="text-2xl font-black text-amber-500">0</p>
+            <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
+                <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Répétitions</p>
+                <p id="total-repeats" class="text-lg font-extrabold text-amber-500">0</p>
             </div>
-            <div class="bg-slate-800/30 p-5 rounded-3xl border border-slate-700/50 shadow-sm backdrop-blur-md">
-                <p class="text-slate-500 text-[9px] font-extrabold uppercase mb-2 tracking-widest">Mots totaux</p>
-                <p id="total-words" class="text-2xl font-black">0</p>
+            <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
+                <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Mots</p>
+                <p id="total-words" class="text-lg font-extrabold">0</p>
             </div>
-            <div class="bg-slate-800/30 p-5 rounded-3xl border border-slate-700/50 shadow-sm backdrop-blur-md">
-                <p class="text-slate-500 text-[9px] font-extrabold uppercase mb-2 tracking-widest">Temps estimé</p>
-                <p id="duration-display" class="text-2xl font-black" style="color: var(--accent-color);">0s</p>
+            <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
+                <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Durée</p>
+                <p id="duration-display" class="text-lg font-extrabold" style="color: var(--accent-color);">0s</p>
             </div>
-            <div class="bg-slate-800/30 p-5 rounded-3xl border border-slate-700/50 shadow-sm backdrop-blur-md overflow-hidden">
-                <p class="text-slate-500 text-[9px] font-extrabold uppercase mb-2 tracking-widest">Focus Actif</p>
-                <p id="focus-display" class="text-sm font-black text-slate-400 truncate mt-2">Aucun</p>
+            <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm overflow-hidden">
+                <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Focus</p>
+                <p id="focus-display" class="text-sm font-extrabold text-slate-400 truncate">Aucun</p>
             </div>
         </div>
 
-        <main class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            
-            <section id="main-column" class="lg:col-span-12 space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div id="main-column" class="lg:col-span-12 space-y-4">
                 
-                <!-- STEP 1 VIEW: BUBBLE CANVAS -->
-                <div id="step-1-view" class="space-y-6 animate-fadeIn">
-                    <div id="canvas-container">
-                        <!-- Bulles injectées par JS -->
-                    </div>
-                    
-                    <div class="flex gap-4 bg-slate-900/60 p-5 rounded-[2.5rem] border border-slate-800 max-w-2xl mx-auto w-full shadow-2xl backdrop-blur-xl">
-                        <input type="text" id="bubble-input" class="flex-1 bg-slate-800/50 border border-slate-700 rounded-2xl px-6 py-4 text-white placeholder-slate-500 font-semibold outline-none focus:border-indigo-500 transition-all" placeholder="Une nouvelle idée ? Tapez Entrée...">
-                        <button onclick="createBubbleFromInput()" class="text-white p-4 rounded-2xl hover:scale-105 transition-transform shadow-lg" style="background-color: var(--accent-color);">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
+                <!-- STEP 1 VIEW -->
+                <div id="step-1-view" class="space-y-4">
+                    <div id="canvas-container" class="shadow-2xl"></div>
+                    <div class="flex gap-3 bg-slate-900/50 p-4 rounded-3xl border border-slate-800 max-w-2xl mx-auto w-full">
+                        <input type="text" id="bubble-input" class="flex-1 bg-slate-800 border border-slate-700 rounded-2xl px-6 py-3 text-white placeholder-slate-500 font-medium outline-none focus:border-indigo-500" placeholder="Une idée ? Tapez Entrée...">
+                        <button onclick="createBubbleFromInput()" class="bg-indigo-500 text-white p-4 rounded-2xl hover:bg-indigo-600 transition" style="background-color: var(--accent-color);">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                         </button>
                     </div>
                 </div>
 
-                <!-- STEP 2 VIEW: TIMELINE LIST -->
-                <div id="step-2-view" class="hidden space-y-6">
-                    <div id="timeline-container" class="shadow-2xl">
-                        <!-- Blocs synchronisés injectés par JS -->
-                    </div>
+                <!-- STEP 2 VIEW -->
+                <div id="step-2-view" class="hidden space-y-4">
+                    <div id="timeline-container" class="shadow-inner"></div>
                 </div>
 
-                <!-- STEP 3 VIEW: EDITOR -->
-                <div id="step-3-view" class="hidden space-y-6">
-                    <!-- Control Bar -->
-                    <div class="bg-slate-800/40 p-5 rounded-3xl border border-slate-700/50 shadow-lg flex flex-wrap items-center gap-8 text-[10px] font-bold uppercase tracking-widest">
-                        <div class="flex items-center gap-6 flex-1">
-                            <span class="text-slate-500">Débit (WPM) :</span>
-                            <input type="range" id="wpm-slider" min="100" max="250" value="150" class="flex-1 cursor-pointer" style="accent-color: var(--accent-color);" oninput="updateWpmDisplay(this.value); process();">
-                            <span id="wpm-value" class="w-12 text-right text-lg font-black" style="color: var(--accent-color);">150</span>
+                <!-- STEP 3 VIEW -->
+                <div id="step-3-view" class="hidden space-y-4">
+                    <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm flex flex-wrap items-center gap-6 text-[10px] font-bold uppercase">
+                        <div class="flex items-center gap-4 flex-1">
+                            <span class="text-slate-500">Débit :</span>
+                            <input type="range" id="wpm-slider" min="100" max="250" value="150" class="flex-1" style="accent-color: var(--accent-color);" oninput="updateWpmDisplay(this.value); process();">
+                            <span id="wpm-value" class="w-12 text-right" style="color: var(--accent-color);">150</span>
                         </div>
-                        <div class="flex gap-6 border-l border-slate-700 pl-8">
-                            <div class="flex items-center gap-3"><span>Tics</span><label class="switch"><input type="checkbox" id="toggle-parasites" checked onchange="process()"><span class="slider"></span></label></div>
-                            <div class="flex items-center gap-3"><span>Répé.</span><label class="switch"><input type="checkbox" id="toggle-repeats" checked onchange="process()"><span class="slider"></span></label></div>
-                            <div class="flex items-center gap-3"><span>Mont.</span><label class="switch"><input type="checkbox" id="toggle-montage" checked onchange="process()"><span class="slider"></span></label></div>
+                        <div class="flex gap-4 border-l border-slate-700 pl-6">
+                            <div class="flex items-center gap-2"><span>Tics</span><label class="switch"><input type="checkbox" id="toggle-parasites" checked onchange="process()"><span class="slider"></span></label></div>
+                            <div class="flex items-center gap-2"><span>Répé.</span><label class="switch"><input type="checkbox" id="toggle-repeats" checked onchange="process()"><span class="slider"></span></label></div>
+                            <div class="flex items-center gap-2"><span>Mont.</span><label class="switch"><input type="checkbox" id="toggle-montage" checked onchange="process()"><span class="slider"></span></label></div>
                         </div>
                     </div>
 
-                    <!-- Main Editor Surface -->
-                    <div id="editor-wrapper" class="editor-container show-parasites show-repeats show-montage">
+                    <div id="editor-wrapper" class="editor-container shadow-sm overflow-hidden show-parasites show-repeats show-montage">
                         <div id="highlight-layer" class="sync-text editor-font"></div>
-                        <textarea id="textarea" class="sync-text editor-font" placeholder="Rédigez ici le script final, les analyses apparaîtront en temps réel..." spellcheck="false"></textarea>
+                        <textarea id="textarea" class="sync-text editor-font" placeholder="Rédigez votre script final ici..." spellcheck="false"></textarea>
                     </div>
                     
-                    <!-- Actions -->
-                    <div class="flex flex-wrap gap-4">
-                        <button onclick="copyText()" class="text-white px-10 py-4 rounded-2xl font-black shadow-2xl uppercase text-xs tracking-widest hover:brightness-110 transition-all transform hover:-translate-y-1" style="background-color: var(--accent-color);">Copier le script</button>
-                        <button onclick="downloadText()" class="bg-slate-800 text-white px-10 py-4 rounded-2xl font-black shadow-xl uppercase text-xs tracking-widest hover:bg-slate-700 transition-all border border-slate-700">Exporter en .txt</button>
+                    <div class="flex gap-4">
+                        <button onclick="copyText()" class="text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition" style="background-color: var(--accent-color);">Copier le texte</button>
+                        <button onclick="downloadText()" class="bg-slate-700 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest transition">Exporter .txt</button>
                     </div>
                 </div>
-            </section>
+            </div>
 
-            <!-- ASIDE ANALYSIS PANEL -->
-            <aside id="analysis-column" class="lg:col-span-4 hidden space-y-8 animate-fadeIn">
-                <div class="bg-slate-900/80 backdrop-blur-xl text-white p-8 rounded-[2.5rem] shadow-2xl space-y-10 border border-slate-800 sticky top-10" id="analysis-card">
-                    
-                    <div>
-                        <h2 class="text-[10px] font-black uppercase text-slate-600 mb-5 tracking-[0.2em]">Fréquence des tics</h2>
-                        <ul id="word-list" class="space-y-2 max-h-48 overflow-y-auto pr-3 scroll-custom"></ul>
-                    </div>
-                    
-                    <div>
-                        <h2 class="text-[10px] font-black uppercase text-slate-600 mb-5 tracking-[0.2em]">Répétitions proches</h2>
-                        <ul id="repeat-list" class="space-y-2 max-h-48 overflow-y-auto pr-3 scroll-custom"></ul>
-                    </div>
-                    
-                    <div id="ignored-section" class="hidden">
-                        <h2 class="text-[10px] font-black uppercase text-red-500/60 mb-5 tracking-[0.2em]">Mots ignorés</h2>
-                        <ul id="ignored-list" class="flex flex-wrap gap-2"></ul>
-                    </div>
-
-                    <div id="collaborators-section" class="hidden border-t border-slate-800 pt-8">
-                        <h2 class="text-[10px] font-black uppercase text-indigo-400 mb-5 tracking-[0.2em]">Équipe de travail</h2>
-                        <ul id="collaborators-list" class="space-y-3"></ul>
-                    </div>
-
-                    <div id="shared-scripts-container" class="hidden border-t border-slate-800 pt-8">
-                        <h2 class="text-[10px] font-black uppercase text-slate-600 mb-5 tracking-[0.2em]">Scripts partagés</h2>
-                        <ul id="shared-list" class="space-y-3"></ul>
-                    </div>
+            <!-- ASIDE ANALYSE -->
+            <div id="analysis-column" class="lg:col-span-4 hidden space-y-6">
+                <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8 border border-slate-800" id="analysis-card">
+                    <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Tics de langage</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px] scroll-custom"></ul></div>
+                    <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Répétitions proches</h2><ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px] scroll-custom"></ul></div>
+                    <div id="ignored-section" class="hidden"><h2 class="text-[9px] font-bold uppercase text-red-400 mb-4">Ignorés</h2><ul id="ignored-list" class="flex flex-wrap gap-2 text-[10px]"></ul></div>
+                    <div id="collaborators-section" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-indigo-400 mb-4">Collaborateurs</h2><ul id="collaborators-list" class="space-y-2 text-[11px]"></ul></div>
+                    <div id="shared-scripts-container" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Partagés avec moi</h2><ul id="shared-list" class="space-y-2 text-[11px]"></ul></div>
                 </div>
-            </aside>
-        </main>
+            </div>
+        </div>
     </div>
 
     <script>
-        /**
-         * INITIALISATION FIREBASE & CONFIGURATION
-         */
         const firebaseConfig = { 
             apiKey: "AIzaSyCPI5JRtaODgMbhpvmb5jJ9pGaEOFms8sI", 
             authDomain: "script-p-6c6df.firebaseapp.com", 
@@ -433,17 +346,11 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        /**
-         * DICTIONNAIRES & RÉFÉRENTIELS
-         */
-        const parasiteDictionary = ["du coup", "en fait", "voilà", "un petit peu", "euh", "globalement", "concrètement", "effectivement", "donc", "c'est-à-dire", "au final", "disons que", "typiquement", "clairement", "tout simplement", "en gros", "pour le coup", "un peu", "voilà quoi", "tu vois", "franchement", "honnêtement", "en réalité", "pour ainsi dire", "alors", "en quelque sorte", "justement", "au niveau de", "quelque part", "on va dire", "fondablement", "véritablement", "pour ma part", "en soi", "entre guillemets", "si vous voulez", "de base", "sur la fin", "genre"];
+        const parasiteDictionary = ["du coup", "en fait", "voilà", "un petit peu", "euh", "globalement", "concrètement", "effectivement", "donc", "c'est-à-dire", "au final", "disons que", "typiquement", "clairement", "tout simplement", "en gros", "pour le coup", "un peu", "voilà quoi", "tu vois", "franchement", "honnêtement", "en réalité", "pour ainsi dire", "alors", "en quelque sorte", "justement", "au niveau de", "quelque part", "on va dire", "fondablement", "véritablement", "pour ma part", "en soi", "entre guillemets", "si vous voulez", "de base", "sur la fin"];
         const stopWords = ["je", "me", "moi", "tu", "te", "toi", "il", "elle", "on", "nous", "vous", "ils", "elles", "le", "la", "les", "un", "une", "des", "du", "de", "ce", "cet", "cette", "ces", "se", "soi", "lui", "leur", "y", "en", "mon", "ton", "son", "ma", "ta", "sa", "mes", "tes", "ses", "notre", "votre", "nos", "vos", "leurs", "qui", "que", "quoi", "dont", "où", "quel", "quels", "quelle", "quelles", "et", "ou", "mais", "est", "sont", "pour", "dans", "par", "avec", "pas", "ne", "si", "ici", "là", "ont", "aux", "très"];
         
         const bubblePalette = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#10b981', '#06b6d4', '#2563eb', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e'];
 
-        /**
-         * ÉTAT GLOBAL DE L'APPLICATION
-         */
         let activeFocusWord = null; 
         let currentUser = null; 
         let currentScriptId = null; 
@@ -452,6 +359,7 @@
         let scriptListener = null; 
         let currentStep = 1;
         let bubbles = []; 
+        let isRemoteUpdate = false;
 
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
@@ -460,119 +368,64 @@
         const timeline = document.getElementById('timeline-container');
         const bubbleInput = document.getElementById('bubble-input');
 
-        /**
-         * FONCTIONS UTILITAIRES UI
-         */
         function updateWpmDisplay(v) { document.getElementById('wpm-value').innerText = v; }
-        
-        function showToast(msg, type = 'info') {
-            const toast = document.getElementById('status-toast');
-            const icon = document.getElementById('toast-icon');
-            const label = document.getElementById('toast-message');
-            label.innerText = msg;
-            icon.className = `w-2 h-2 rounded-full ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
-            toast.classList.add('visible');
-            setTimeout(() => toast.classList.remove('visible'), 3000);
-        }
+        function handleAuth() { if (currentUser) auth.signOut(); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
-        /**
-         * AUTHENTIFICATION & GESTION DES LIENS D'INVITATION
-         */
-        function handleAuth() {
-            if (currentUser) {
-                auth.signOut().then(() => location.reload());
-            } else {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                auth.signInWithPopup(provider);
-            }
-        }
-
-        auth.onAuthStateChanged(async (user) => {
-            currentUser = user;
-            if (user) {
-                document.getElementById('auth-btn-text').innerText = "Déconnexion";
-                document.getElementById('user-display').innerText = user.displayName;
-                document.getElementById('user-avatar').src = user.photoURL;
-                document.getElementById('user-info').classList.remove('hidden');
-                document.getElementById('share-btn').style.display = 'flex';
-                document.getElementById('shared-scripts-container').classList.remove('hidden');
-                document.getElementById('projects-nav').classList.remove('hidden');
-                
-                // --- RÉPARATION DU SYSTÈME DE PARTAGE ---
-                const urlParams = new URLSearchParams(window.location.search);
-                const inviteToken = urlParams.get('invite');
-                if (inviteToken) {
-                    await consumeInvite(inviteToken);
-                    // On nettoie l'URL pour éviter de re-consommer au refresh
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                }
-
-                switchProject(1);
-                listenToSharedScripts();
-            } else {
-                currentScriptId = null;
-                document.getElementById('auth-btn-text').innerText = "Se connecter";
-                document.getElementById('user-info').classList.add('hidden');
-                textarea.value = localStorage.getItem('purge-content') || "";
-                bubbles = JSON.parse(localStorage.getItem('purge-bubbles')) || [];
-                setStep(1);
+        window.addEventListener('click', (e) => {
+            if (!e.target.closest('.color-picker-trigger') && !e.target.closest('.color-menu')) {
+                document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
             }
         });
 
-        /**
-         * GESTION DU WORKFLOW (ÉTAPES 1, 2, 3)
-         */
         function setStep(step) {
             currentStep = step;
             document.querySelectorAll('.wf-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(`wf-tab-${step}`).classList.add('active');
             
-            const views = [
-                document.getElementById('step-1-view'),
-                document.getElementById('step-2-view'),
-                document.getElementById('step-3-view')
-            ];
+            const s1 = document.getElementById('step-1-view');
+            const s2 = document.getElementById('step-2-view');
+            const s3 = document.getElementById('step-3-view');
             const mainCol = document.getElementById('main-column');
             const analysisCol = document.getElementById('analysis-column');
             const statsRow = document.getElementById('stats-row');
 
-            views.forEach(el => el.classList.add('hidden'));
+            [s1, s2, s3].forEach(el => el.classList.add('hidden'));
 
             if (step === 1) {
-                views[0].classList.remove('hidden');
-                mainCol.className = 'lg:col-span-12 space-y-6';
+                s1.classList.remove('hidden');
+                mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12');
                 analysisCol.classList.add('hidden');
                 statsRow.classList.add('hidden');
                 renderDraft();
             } else if (step === 2) {
-                views[1].classList.remove('hidden');
-                mainCol.className = 'lg:col-span-12 space-y-6';
+                s2.classList.remove('hidden');
+                mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12');
                 analysisCol.classList.add('hidden');
                 statsRow.classList.add('hidden');
                 renderTimeline();
             } else if (step === 3) {
-                views[2].classList.remove('hidden');
-                mainCol.className = 'lg:col-span-8 space-y-6';
+                s3.classList.remove('hidden');
+                mainCol.classList.replace('lg:col-span-12', 'lg:col-span-8');
                 analysisCol.classList.remove('hidden');
                 statsRow.classList.remove('hidden');
                 process();
             }
         }
 
-        /**
-         * LOGIQUE DES BULLES (STEP 1 & 2)
-         */
+        // --- GESTION DES BULLES ---
+
         bubbleInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') createBubbleFromInput(); });
 
         function createBubbleFromInput() {
+            if (userRole === 'viewer') return;
             const text = bubbleInput.value.trim();
             if (!text) return;
-            const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim();
+            const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#ef4444';
             const newBubble = {
                 id: "b_" + Date.now(),
                 text: text,
-                x: 50 + Math.random() * (canvas.clientWidth - 300),
-                y: 50 + Math.random() * (canvas.clientHeight - 150),
+                x: 50 + Math.random() * 300,
+                y: 50 + Math.random() * 300,
                 order: bubbles.length,
                 color: accent
             };
@@ -596,32 +449,45 @@
                     `<div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor('${b.id}', '${c}')"></div>`
                 ).join('');
 
+                const isReadonly = userRole === 'viewer' ? 'readonly' : '';
+
                 el.innerHTML = `
                     <div class="mb-3">
-                        <textarea class="bubble-input-field" oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea>
+                        <textarea class="bubble-input-field" ${isReadonly} oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea>
                     </div>
-                    <div class="flex items-center justify-between border-t border-slate-700/50 pt-3">
+                    <div class="flex items-center justify-between border-t border-slate-700/50 pt-2 ${userRole === 'viewer' ? 'hidden' : ''}">
                         <div class="relative">
                             <div class="color-picker-trigger" onclick="toggleColorMenu(event, '${b.id}_menu')">
-                                <div class="w-3 h-3 rounded-full" style="background:${b.color}"></div>
+                                <svg class="w-3.5 h-3.5 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M14.06,9L15,9.94L5.92,19H5V18.08L14.06,9M17.66,3C17.41,3 17.15,3.1 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18.17,3.09 17.92,3 17.66,3M14.06,6.19L3,17.25V21H6.75L17.81,9.94L14.06,6.19Z"/></svg>
                             </div>
                             <div id="${b.id}_menu" class="color-menu">${paletteHtml}</div>
                         </div>
-                        <button onclick="deleteBubble('${b.id}')" class="text-slate-500 hover:text-red-400 p-1">
-                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        <button onclick="deleteBubble('${b.id}')" class="text-slate-500 hover:text-red-400">
+                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                     </div>
                 `;
 
-                el.addEventListener('mousedown', (e) => {
-                    if (e.target.closest('button') || e.target.closest('.color-picker-trigger') || e.target.closest('.color-menu') || e.target.closest('textarea')) return;
-                    initDrag(e, b.id, el);
-                });
+                if (userRole !== 'viewer') {
+                    el.addEventListener('mousedown', (e) => {
+                        if (e.target.closest('button') || e.target.closest('.color-picker-trigger') || e.target.closest('.color-menu') || e.target.closest('textarea')) return;
+                        initDrag(e, b.id, el);
+                    });
+                }
                 canvas.appendChild(el);
             });
         }
 
+        function toggleColorMenu(e, menuId) {
+            e.stopPropagation();
+            const menu = document.getElementById(menuId);
+            const isOpen = menu.classList.contains('active');
+            document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
+            if (!isOpen) menu.classList.add('active');
+        }
+
         function initDrag(e, id, el) {
+            const rect = canvas.getBoundingClientRect();
             let startX = e.clientX - el.offsetLeft;
             let startY = e.clientY - el.offsetTop;
 
@@ -633,7 +499,7 @@
                 el.style.left = x + "px";
                 el.style.top = y + "px";
                 const b = bubbles.find(b => b.id === id);
-                if (b) { b.x = x; b.y = y; }
+                if(b) { b.x = x; b.y = y; }
             }
 
             function stopDrag() {
@@ -652,7 +518,7 @@
             sorted.forEach((b) => {
                 const block = document.createElement('div');
                 block.className = 'timeline-block';
-                block.draggable = true;
+                block.draggable = userRole !== 'viewer';
                 block.dataset.id = b.id;
                 block.style.borderColor = b.color;
 
@@ -660,42 +526,48 @@
                     `<div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor('${b.id}', '${c}')"></div>`
                 ).join('');
 
+                const isReadonly = userRole === 'viewer' ? 'readonly' : '';
+
                 block.innerHTML = `
-                    <div class="drag-handle">
+                    <div class="drag-handle ${userRole === 'viewer' ? 'hidden' : ''}">
                         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 9h8v2H8zm0 4h8v2H8z"></path></svg>
                     </div>
-                    <div class="relative">
+                    <div class="relative ${userRole === 'viewer' ? 'hidden' : ''}">
                         <div class="color-picker-trigger" onclick="toggleColorMenu(event, '${b.id}_tl_menu')">
                              <div class="w-3.5 h-3.5 rounded-full" style="background-color: ${b.color}"></div>
                         </div>
                         <div id="${b.id}_tl_menu" class="color-menu">${paletteHtml}</div>
                     </div>
                     <div class="flex-1 h-full py-3">
-                        <textarea class="sync-input editor-font" oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea>
+                        <textarea class="sync-input editor-font" ${isReadonly} oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea>
                     </div>
-                    <button onclick="deleteBubble('${b.id}')" class="text-slate-500 hover:text-red-400 ml-4">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    <button onclick="deleteBubble('${b.id}')" class="text-slate-500 hover:text-red-400 ml-2 ${userRole === 'viewer' ? 'hidden' : ''}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     </button>
                 `;
 
-                block.addEventListener('dragstart', () => block.classList.add('dragging'));
-                block.addEventListener('dragend', () => {
-                    block.classList.remove('dragging');
-                    reorderTimeline();
-                });
+                if (userRole !== 'viewer') {
+                    block.addEventListener('dragstart', () => block.classList.add('dragging'));
+                    block.addEventListener('dragend', () => {
+                        block.classList.remove('dragging');
+                        reorderTimeline();
+                    });
+                }
 
                 timeline.appendChild(block);
             });
 
-            timeline.addEventListener('dragover', e => {
-                e.preventDefault();
-                const afterElement = getDragAfterElement(timeline, e.clientY);
-                const dragging = document.querySelector('.dragging');
-                if (dragging) {
-                    if (afterElement == null) timeline.appendChild(dragging);
-                    else timeline.insertBefore(dragging, afterElement);
-                }
-            });
+            if (userRole !== 'viewer') {
+                timeline.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    const afterElement = getDragAfterElement(timeline, e.clientY);
+                    const dragging = document.querySelector('.dragging');
+                    if (dragging) {
+                        if (afterElement == null) timeline.appendChild(dragging);
+                        else timeline.insertBefore(dragging, afterElement);
+                    }
+                });
+            }
         }
 
         function getDragAfterElement(container, y) {
@@ -737,20 +609,41 @@
             autoSave();
         }
 
-        function toggleColorMenu(e, menuId) {
-            e.stopPropagation();
-            const menu = document.getElementById(menuId);
-            const isOpen = menu.classList.contains('active');
-            document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
-            if (!isOpen) menu.classList.add('active');
-        }
+        // --- FIREBASE & COLLABORATION CORE ---
 
-        /**
-         * LOGIQUE FIREBASE DES PROJETS & PARTAGE
-         */
+        auth.onAuthStateChanged(async (user) => {
+            currentUser = user;
+            if (user) {
+                document.getElementById('auth-btn-text').innerText = "Déconnexion";
+                document.getElementById('user-display').innerText = user.displayName;
+                document.getElementById('share-btn').style.display = 'flex';
+                document.getElementById('shared-scripts-container').classList.remove('hidden');
+                document.getElementById('projects-nav').classList.remove('hidden');
+                
+                const urlParams = new URLSearchParams(window.location.search);
+                const inviteToken = urlParams.get('invite');
+                if (inviteToken) { 
+                    await consumeInvite(inviteToken); 
+                    window.history.replaceState({}, document.title, window.location.pathname); 
+                }
+                switchProject(1);
+                listenToSharedScripts();
+            } else {
+                currentScriptId = null;
+                document.getElementById('auth-btn-text').innerText = "Se connecter";
+                document.getElementById('user-display').innerText = "Mode Local";
+                textarea.value = localStorage.getItem('purge-content') || "";
+                bubbles = JSON.parse(localStorage.getItem('purge-bubbles')) || [];
+                setStep(1);
+            }
+        });
+
         async function switchProject(index) {
             if (!currentUser) return;
-            document.querySelectorAll('.project-tab').forEach(t => { t.classList.remove('active'); t.style.backgroundColor = "transparent"; });
+            document.querySelectorAll('.project-tab').forEach(t => { 
+                t.classList.remove('active'); 
+                t.style.backgroundColor = "transparent"; 
+            });
             const activeTab = document.getElementById(`p-tab-${index}`);
             if(activeTab) { 
                 activeTab.classList.add('active'); 
@@ -766,43 +659,54 @@
                 if (!doc.exists) {
                     if (id.startsWith(currentUser.uid)) { 
                         db.collection('scripts').doc(id).set({ 
-                            content: "", bubbles: [], title: `Projet ${id.split('_')[1]}`, 
-                            owner: currentUser.uid, ownerEmail: currentUser.email, 
-                            editors: [], viewers: [], ignoredWords: [], 
+                            content: "", 
+                            bubbles: [], 
+                            title: `Projet ${id.split('_')[1]}`, 
+                            owner: currentUser.uid, 
+                            ownerEmail: currentUser.email, 
+                            editors: [], 
+                            viewers: [], 
+                            ignoredWords: [], 
                             lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
                         }); 
                     }
                     return;
                 }
                 const data = doc.data();
+
+                // Calcul du rôle
+                userRole = data.owner === currentUser.uid ? 'owner' : (data.editors?.includes(currentUser.email) ? 'editor' : 'viewer');
                 
-                // Sync du contenu avec protection du curseur
+                // Sync du texte sans perte de focus
                 if (data.content !== textarea.value) {
+                    isRemoteUpdate = true;
                     const start = textarea.selectionStart;
                     const end = textarea.selectionEnd;
                     textarea.value = data.content || "";
                     if (document.activeElement === textarea) {
                         textarea.setSelectionRange(start, end);
                     }
+                    process();
+                    isRemoteUpdate = false;
                 }
 
                 // Sync des bulles
                 if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) {
                     bubbles = data.bubbles || [];
-                    if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
+                    if(currentStep === 1) renderDraft(); 
+                    else if(currentStep === 2) renderTimeline();
                 }
 
-                userRole = data.owner === currentUser.uid ? 'owner' : (data.editors?.includes(currentUser.email) ? 'editor' : 'viewer');
                 textarea.readOnly = (userRole === 'viewer');
                 
-                // Update UI Title
+                // Update UI Navigation
                 const slotMatch = id.match(/_([1-4])$/); 
                 if (slotMatch && userRole === 'owner') {
                     const tab = document.getElementById(`p-tab-${slotMatch[1]}`);
                     if (tab) tab.innerText = data.title;
                 }
-                
                 if (userRole === 'owner') updateCollaboratorsUI(data);
+                
                 ignoredRepeats = new Set(data.ignoredWords || []);
                 process();
             });
@@ -816,17 +720,23 @@
         function syncSharedTabs(snap) {
             const tabsContainer = document.getElementById('tabs-container');
             const sharedList = document.getElementById('shared-list');
-            sharedList.innerHTML = "";
+            
+            // On ne vide pas tout pour éviter de supprimer les onglets 1-4
             snap.forEach(doc => {
                 const data = doc.data();
                 const tabId = `p-tab-shared-${doc.id}`;
                 
-                const li = document.createElement('li');
-                li.className = `p-3 bg-slate-800/50 border border-slate-700 rounded-xl cursor-pointer hover:bg-indigo-900/40 transition flex justify-between items-center mb-2`;
-                li.innerHTML = `<span class="truncate text-[10px] font-bold uppercase">🤝 ${data.title}</span>`;
-                li.onclick = () => openSharedProject(doc.id);
-                sharedList.appendChild(li);
+                // Mise à jour de la liste latérale
+                if (!document.querySelector(`[data-shared-id="${doc.id}"]`)) {
+                    const li = document.createElement('li');
+                    li.setAttribute('data-shared-id', doc.id);
+                    li.className = `p-3 bg-slate-800/50 border border-slate-700 rounded-xl cursor-pointer hover:bg-indigo-900/40 transition flex justify-between items-center mb-2`;
+                    li.innerHTML = `<span class="truncate text-[10px] font-bold uppercase">${data.title}</span>`;
+                    li.onclick = () => openSharedProject(doc.id);
+                    sharedList.appendChild(li);
+                }
 
+                // Ajout bouton navigation si absent
                 if (!document.getElementById(tabId)) {
                     const btn = document.createElement('button');
                     btn.id = tabId;
@@ -839,22 +749,25 @@
         }
 
         function openSharedProject(id) {
-            document.querySelectorAll('.project-tab').forEach(t => { t.classList.remove('active'); t.style.backgroundColor = "transparent"; });
+            document.querySelectorAll('.project-tab').forEach(t => { 
+                t.classList.remove('active'); 
+                t.style.backgroundColor = "transparent"; 
+            });
             const tab = document.getElementById(`p-tab-shared-${id}`);
-            if (tab) { tab.classList.add('active'); tab.style.backgroundColor = "var(--accent-color)"; }
+            if (tab) { 
+                tab.classList.add('active'); 
+                tab.style.backgroundColor = "var(--accent-color)"; 
+            }
             loadScript(id);
         }
 
-        /**
-         * ANALYSEUR DE SCRIPT (ÉTAPE 3)
-         */
+        // --- ÉTAPE 3: ANALYSEUR ---
+
         function process() {
-            if (currentStep !== 3) return;
             const text = textarea.value;
             const showP = document.getElementById('toggle-parasites').checked;
             const showR = document.getElementById('toggle-repeats').checked;
             const showM = document.getElementById('toggle-montage').checked;
-            
             editorWrapper.classList.toggle('show-parasites', showP);
             editorWrapper.classList.toggle('show-repeats', showR);
             editorWrapper.classList.toggle('show-montage', showM);
@@ -862,41 +775,26 @@
             let montageIndices = new Set();
             if (showM) {
                 const montageRegex = /\[.*?\]/g;
-                let mMatch; while ((mMatch = montageRegex.exec(text)) !== null) { 
-                    for (let i = 0; i < mMatch[0].length; i++) montageIndices.add(mMatch.index + i); 
-                }
+                let mMatch; while ((mMatch = montageRegex.exec(text)) !== null) { for (let i = 0; i < mMatch[0].length; i++) montageIndices.add(mMatch.index + i); }
             }
 
-            let parasiteIndices = new Set(); 
-            let parasiteCounts = {}; 
-            let totalParasites = 0;
-
+            let parasiteIndices = new Set(); let parasiteCounts = {}; let totalParasites = 0;
             parasiteDictionary.forEach(word => {
                 const regex = new RegExp(`\\b(${word})\\b`, 'gi');
                 let match; while ((match = regex.exec(text)) !== null) {
                     if (montageIndices.has(match.index)) continue;
-                    totalParasites++; 
-                    parasiteCounts[word.toLowerCase()] = (parasiteCounts[word.toLowerCase()] || 0) + 1;
+                    totalParasites++; parasiteCounts[word.toLowerCase()] = (parasiteCounts[word.toLowerCase()] || 0) + 1;
                     for (let i = 0; i < match[0].length; i++) parasiteIndices.add(match.index + i);
                 }
             });
 
             const wordRegex = /[a-zA-ZàâäéèêëîïôöûüùçÀÂÄÉÈÊËÎÏÔÖÛÜÙÇ]{3,}/g;
-            let lastSeenAt = {}; 
-            let badRepeatIndices = new Set(); 
-            let repeatCounts = {}; 
-            let wordCounter = 0; 
-            let match;
-
+            let lastSeenAt = {}; let badRepeatIndices = new Set(); let repeatCounts = {}; let wordCounter = 0; let match;
             while ((match = wordRegex.exec(text)) !== null) {
-                wordCounter++; 
-                const word = match[0].toLowerCase();
+                wordCounter++; const word = match[0].toLowerCase();
                 if (!stopWords.includes(word) && !parasiteIndices.has(match.index) && !montageIndices.has(match.index) && !ignoredRepeats.has(word)) {
                     if (lastSeenAt[word] && (wordCounter - lastSeenAt[word].count <= 70)) {
-                        for (let i = 0; i < word.length; i++) { 
-                            badRepeatIndices.add(match.index + i); 
-                            badRepeatIndices.add(lastSeenAt[word].pos + i); 
-                        }
+                        for (let i = 0; i < word.length; i++) { badRepeatIndices.add(match.index + i); badRepeatIndices.add(lastSeenAt[word].pos + i); }
                         repeatCounts[word] = (repeatCounts[word] || 0) + 1;
                     }
                     lastSeenAt[word] = { count: wordCounter, pos: match.index };
@@ -912,13 +810,10 @@
             if (activeFocusWord) {
                 const escaped = activeFocusWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 const fRegex = new RegExp(`\\b(${escaped})\\b`, 'gi');
-                let fMatch; while ((fMatch = fRegex.exec(text)) !== null) { 
-                    for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i); 
-                }
+                let fMatch; while ((fMatch = fRegex.exec(text)) !== null) { for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i); }
             }
 
-            let finalHtml = ""; 
-            let i = 0;
+            let finalHtml = ""; let i = 0;
             while (i < text.length) {
                 let className = "";
                 if (montageIndices.has(i)) className = "montage";
@@ -932,20 +827,16 @@
                         finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++;
                     }
                     finalHtml += `</mark>`;
-                } else { 
-                    finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); 
-                    i++; 
-                }
+                } else { finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++; }
             }
             highlightLayer.innerHTML = finalHtml + (text.endsWith('\n') ? '\n ' : '');
-            
             document.getElementById('total-parasites').innerText = totalParasites;
             document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
             document.getElementById('total-words').innerText = wordCount;
             document.getElementById('focus-display').innerText = activeFocusWord || "Aucun";
-            
             updateSidebars(parasiteCounts, repeatCounts);
-            autoSave();
+            
+            if (!isRemoteUpdate) autoSave();
         }
 
         let saveTimeout;
@@ -959,10 +850,10 @@
                         content: textarea.value, 
                         ignoredWords: Array.from(ignoredRepeats), 
                         lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
-                    }).then(() => { 
-                        document.getElementById('save-status').innerText = "Synchronisé"; 
-                    });
-                }, 800);
+                    })
+                    .then(() => { const s = document.getElementById('save-status'); s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 1000); })
+                    .catch(e => console.error("Save error:", e));
+                }, 1000);
             } else { 
                 localStorage.setItem('purge-content', textarea.value); 
                 localStorage.setItem('purge-bubbles', JSON.stringify(bubbles)); 
@@ -970,44 +861,14 @@
         }
 
         function updateSidebars(pCounts, rCounts) {
-            const pList = document.getElementById('word-list'); 
-            const rList = document.getElementById('repeat-list');
-            
-            pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`
-                <li onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="sidebar-item flex justify-between uppercase font-bold p-3 bg-slate-800/40 rounded-xl mb-1 border border-slate-700/50">
-                    <span class="text-slate-300">${w}</span>
-                    <span style="color: var(--accent-color);">${c}</span>
-                </li>
-            `).join('') || '<p class="text-[10px] text-slate-500 font-bold uppercase text-center py-4">Aucun tic détecté</p>';
-            
-            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`
-                <li class="sidebar-item flex justify-between items-center uppercase font-bold p-3 bg-slate-800/40 rounded-xl mb-1 border border-slate-700/50">
-                    <span onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="flex-1 truncate text-slate-300">${w}</span>
-                    <div class="flex items-center gap-3">
-                        <span class="text-amber-500">${c+1}x</span>
-                        <button onclick="ignoreWord('${w}')" class="hover:text-red-500 transition-colors">✕</button>
-                    </div>
-                </li>
-            `).join('') || '<p class="text-[10px] text-slate-500 font-bold uppercase text-center py-4">Analyse propre</p>';
-            
-            if (ignoredRepeats.size > 0) { 
-                document.getElementById('ignored-section').classList.remove('hidden'); 
-                document.getElementById('ignored-list').innerHTML = Array.from(ignoredRepeats).map(w => `
-                    <li onclick="unignoreWord('${w}')" class="bg-red-500/10 text-red-500 border border-red-500/20 px-3 py-1 rounded-lg cursor-pointer text-[10px] font-bold uppercase hover:bg-red-500/20 transition">#${w}</li>
-                `).join(''); 
-            } else {
-                document.getElementById('ignored-section').classList.add('hidden');
-            }
+            const pList = document.getElementById('word-list'); const rList = document.getElementById('repeat-list');
+            pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="sidebar-item flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span>${w}</span><span style="color: var(--accent-color);">${c}</span></li>`).join('') || 'RAS';
+            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li class="sidebar-item flex justify-between items-center uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="flex-1 truncate">${w}</span><div class="flex items-center gap-2"><span class="text-amber-500">${c+1}x</span><button onclick="ignoreWord('${w}')" class="ignore-btn ${userRole === 'viewer' ? 'hidden' : ''}">✕</button></div></li>`).join('') || 'RAS';
+            if (ignoredRepeats.size > 0) { document.getElementById('ignored-section').classList.remove('hidden'); document.getElementById('ignored-list').innerHTML = Array.from(ignoredRepeats).map(w => `<li onclick="unignoreWord('${w}')" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer">#${w}</li>`).join(''); } else document.getElementById('ignored-section').classList.add('hidden');
         }
 
-        /**
-         * LOGIQUE D'INVITATION (RÉPARÉE)
-         */
         async function generateInviteLink() {
-            if (!currentUser || !currentScriptId) {
-                showToast("Action impossible en mode local", "error");
-                return;
-            }
+            if (!currentUser || !currentScriptId) return;
             const role = document.getElementById('share-role').value;
             try {
                 const inviteRef = await db.collection('invites').add({ 
@@ -1019,161 +880,92 @@
                 });
                 const inviteURL = `${window.location.origin}${window.location.pathname}?invite=${inviteRef.id}`;
                 await navigator.clipboard.writeText(inviteURL);
-                showToast("Lien copié dans le presse-papier !");
+                alert("Lien d'invitation copié !");
                 toggleShareModal();
-            } catch (e) { 
-                showToast("Erreur lors de la génération", "error"); 
-            }
+            } catch (e) { alert("Erreur lors de la création de l'invitation."); }
         }
 
         async function consumeInvite(tokenId) {
             try {
-                const inviteDoc = await db.collection('invites').doc(tokenId).get();
-                if (!inviteDoc.exists) {
-                    showToast("Invitation invalide", "error");
+                const doc = await db.collection('invites').doc(tokenId).get();
+                if (!doc.exists) return;
+                const data = doc.data();
+                if (data.used === true) {
+                    alert("Ce lien d'invitation a déjà été utilisé.");
                     return;
                 }
-                const data = inviteDoc.data();
-                if (data.used) {
-                    showToast("Lien déjà utilisé", "error");
+                if (data.createdBy === currentUser.email) {
+                    alert("Vous êtes déjà le propriétaire de ce script.");
                     return;
-                }
-
-                // Vérifier si l'utilisateur est déjà dans la liste
-                const scriptDoc = await db.collection('scripts').doc(data.scriptId).get();
-                const scriptData = scriptDoc.data();
-                const alreadyCollaborator = (scriptData.editors || []).includes(currentUser.email) || (scriptData.viewers || []).includes(currentUser.email);
-
-                if (!alreadyCollaborator) {
-                    await db.collection('scripts').doc(data.scriptId).update({ 
-                        [data.role]: firebase.firestore.FieldValue.arrayUnion(currentUser.email) 
-                    });
                 }
                 
+                await db.collection('scripts').doc(data.scriptId).update({ 
+                    [data.role]: firebase.firestore.FieldValue.arrayUnion(currentUser.email) 
+                });
                 await db.collection('invites').doc(tokenId).update({ 
                     used: true, 
                     usedBy: currentUser.email 
                 });
-                showToast("Accès accordé au projet !");
+                alert("Accès accordé au projet partagé !");
                 openSharedProject(data.scriptId);
             } catch (e) {
                 console.error(e);
-                showToast("Échec de l'invitation", "error");
+                alert("Erreur lors de la validation de l'invitation.");
             }
         }
 
-        /**
-         * ACTIONS & INTERFACES SECONDAIRES
-         */
         function toggleFocus(w) { activeFocusWord = (activeFocusWord === w) ? null : w; process(); }
-        function ignoreWord(w) { ignoredRepeats.add(w.toLowerCase()); autoSave(); process(); }
-        function unignoreWord(w) { ignoredRepeats.delete(w); autoSave(); process(); }
-        
-        function copyText() { 
-            navigator.clipboard.writeText(textarea.value); 
-            showToast("Script copié !"); 
-        }
-        
-        function downloadText() { 
-            const blob = new Blob([textarea.value], { type: 'text/plain' }); 
-            const a = document.createElement('a'); 
-            a.href = URL.createObjectURL(blob); 
-            a.download = `script_purge.txt`; 
-            a.click(); 
-        }
-
+        function ignoreWord(w) { if(userRole === 'viewer') return; ignoredRepeats.add(w.toLowerCase()); autoSave(); process(); }
+        function unignoreWord(w) { if(userRole === 'viewer') return; ignoredRepeats.delete(w); autoSave(); process(); }
+        function copyText() { navigator.clipboard.writeText(textarea.value); alert("Copié !"); }
+        function downloadText() { const blob = new Blob([textarea.value], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `script.txt`; a.click(); }
         function toggleShareModal() { 
-            const modal = document.getElementById('share-modal');
-            modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex'; 
+            if (userRole !== 'owner') {
+                alert("Seul le propriétaire peut inviter des collaborateurs.");
+                return;
+            }
+            document.getElementById('share-modal').style.display = (document.getElementById('share-modal').style.display === 'flex') ? 'none' : 'flex'; 
         }
         
         function updateCollaboratorsUI(data) {
-            const list = document.getElementById('collaborators-list'); 
-            list.innerHTML = ""; 
-            const ed = data.editors || []; 
-            const vi = data.viewers || [];
-            
-            if (ed.length === 0 && vi.length === 0) { 
-                document.getElementById('collaborators-section').classList.add('hidden'); 
-                return; 
-            }
-            
+            const list = document.getElementById('collaborators-list'); list.innerHTML = ""; const ed = data.editors || []; const vi = data.viewers || [];
+            if (ed.length === 0 && vi.length === 0) { document.getElementById('collaborators-section').classList.add('hidden'); return; }
             document.getElementById('collaborators-section').classList.remove('hidden');
             [...ed.map(e=>({e,r:'editors',l:'Éditeur'})), ...vi.map(e=>({e,r:'viewers',l:'Lecteur'}))].forEach(o => {
-                const li = document.createElement('li'); 
-                li.className = "flex justify-between items-center bg-slate-800/60 p-3 rounded-xl border border-slate-700/50";
-                li.innerHTML = `
-                    <div class="flex flex-col">
-                        <span class="font-bold truncate max-w-[120px] text-[10px] uppercase text-slate-200">${o.e.split('@')[0]}</span>
-                        <span class="text-[8px] text-slate-500 uppercase font-black tracking-tighter">${o.l}</span>
-                    </div>
-                    <button onclick="removeCollaborator('${o.e}', '${o.r}')" class="text-slate-500 hover:text-red-500 p-2 transition">✕</button>
-                `;
+                const li = document.createElement('li'); li.className = "flex justify-between items-center bg-slate-800/40 p-2 rounded-lg border border-slate-700";
+                li.innerHTML = `<div class="flex flex-col"><span class="font-bold truncate max-w-[100px] text-[10px]">${o.e.split('@')[0]}</span><span class="text-[8px] text-slate-500 uppercase">${o.l}</span></div><button onclick="removeCollaborator('${o.e}', '${o.r}')" class="text-slate-500 hover:text-red-500 px-2">✕</button>`;
                 list.appendChild(li);
             });
         }
+        async function removeCollaborator(e, r) { if (confirm(`Retirer ${e} ?`)) await db.collection('scripts').doc(currentScriptId).update({ [r]: firebase.firestore.FieldValue.arrayRemove(e) }); }
+        async function renameCurrentProject() { if(userRole !== 'owner') return; const n = prompt("Nouveau nom du projet :"); if(n) await db.collection('scripts').doc(currentScriptId).update({ title: n }); }
 
-        async function removeCollaborator(e, r) { 
-            if (confirm(`Retirer l'accès à ${e} ?`)) {
-                await db.collection('scripts').doc(currentScriptId).update({ 
-                    [r]: firebase.firestore.FieldValue.arrayRemove(e) 
-                }); 
-            }
-        }
+        // --- THEME MANAGEMENT ---
 
-        async function renameCurrentProject() { 
-            const n = prompt("Nom du projet :"); 
-            if(n) await db.collection('scripts').doc(currentScriptId).update({ title: n }); 
-        }
-
-        /**
-         * SYSTÈME DE THÈME PERSISTANT
-         */
         function applyTheme(color) {
             document.documentElement.style.setProperty('--accent-color', color); 
             document.documentElement.style.setProperty('--accent-soft', color + '26');
-            localStorage.setItem('purge-script-theme', color);
-            
-            // Re-render pour appliquer aux bulles existantes si nécessaire
-            if(currentStep === 1) renderDraft(); 
-            else if(currentStep === 2) renderTimeline();
-            process();
+            localStorage.setItem('purge-theme', color);
+            process(); 
+            if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
         }
 
         window.onload = () => {
-            // Création des boutons de thème
             bubblePalette.forEach(color => {
                 const b = document.createElement('button'); 
-                b.className = 'w-5 h-5 rounded-full border border-white/10 hover:scale-125 transition-transform shadow-inner'; 
+                b.className = 'w-4 h-4 rounded-full border border-white/20 hover:scale-125 transition'; 
                 b.style.backgroundColor = color;
                 b.onclick = () => applyTheme(color);
                 document.getElementById('theme-picker').appendChild(b);
             });
 
-            // Restauration du thème
-            const savedTheme = localStorage.getItem('purge-script-theme');
+            const savedTheme = localStorage.getItem('purge-theme');
             if (savedTheme) applyTheme(savedTheme);
-            else applyTheme('#ef4444');
 
-            // Écouteurs d'événements texte
-            textarea.addEventListener('input', () => {
-                document.getElementById('save-status').innerText = "En cours...";
-                process();
-            });
-            textarea.addEventListener('scroll', () => {
-                highlightLayer.scrollTop = textarea.scrollTop;
-            });
-
-            // Start Step
+            textarea.addEventListener('input', process);
+            textarea.addEventListener('scroll', () => highlightLayer.scrollTop = textarea.scrollTop);
             setStep(1);
         };
-
-        // Fermeture automatique des menus contextuels
-        window.addEventListener('click', (e) => {
-            if (!e.target.closest('.color-picker-trigger') && !e.target.closest('.color-menu')) {
-                document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
-            }
-        });
     </script>
 </body>
 </html>
