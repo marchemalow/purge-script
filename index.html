@@ -31,46 +31,70 @@
         h1, h1 span { color: #ffffff !important; }
         .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.6; }
         
-        /* Step 1: Canvas Styles */
+        /* Canvas & Bubbles Styles */
         #canvas-container {
             position: relative;
             width: 100%;
-            height: 600px;
+            height: 700px;
             background-color: #0f172a;
-            background-image: radial-gradient(#1e293b 1px, transparent 1px);
-            background-size: 30px 30px;
+            background-image: 
+                radial-gradient(circle at 2px 2px, #1e293b 1px, transparent 0);
+            background-size: 40px 40px;
             overflow: hidden;
             border-radius: 2rem;
             border: 1px solid #334155;
+            touch-action: none;
+        }
+
+        #connection-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
         }
 
         .bubble {
             position: absolute;
-            min-width: 180px;
-            max-width: 300px;
-            padding: 1rem;
+            min-width: 160px;
+            max-width: 280px;
+            padding: 1.25rem;
             background: #1e293b;
             border: 2px solid #334155;
-            border-radius: 1.25rem;
+            border-radius: 1.5rem;
             cursor: grab;
             user-select: none;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-            transition: border-color 0.2s, transform 0.1s;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
             z-index: 10;
+            transition: transform 0.1s, box-shadow 0.2s, border-color 0.3s;
         }
 
         .bubble:active { cursor: grabbing; transform: scale(1.02); }
-        .bubble.nested { border-color: var(--accent-color); margin-left: 20px; margin-top: 10px; position: relative !important; top: 0 !important; left: 0 !important; box-shadow: none; }
-        .bubble-group {
+        .bubble.linking { border-color: #facc15 !important; box-shadow: 0 0 15px #facc15; }
+        
+        .bubble-color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .nested-indicator {
             position: absolute;
-            padding: 10px;
-            background: rgba(99, 102, 241, 0.05);
-            border: 1px dashed #475569;
-            border-radius: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 5;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent-color);
+            color: white;
+            font-size: 8px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
         }
 
         .editor-container { 
@@ -118,7 +142,7 @@
         input:checked + .slider { background-color: var(--accent-color); }
         input:checked + .slider:before { transform: translateX(14px); }
 
-        #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 50; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
         .modal-content { background: #1e293b; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 400px; color: white; border: 1px solid #334155; }
         .project-tab.active { color: white; background-color: var(--accent-color) !important; }
 
@@ -128,7 +152,19 @@
         .wf-step-num { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid currentColor; margin-right: 8px; font-size: 10px; }
         .wf-tab.active .wf-step-num { background: var(--accent-color); border-color: var(--accent-color); color: white; }
 
-        .timeline-block { border-left-width: 16px !important; transition: border-color 0.3s; }
+        .bubble-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid #334155;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .bubble:hover .bubble-controls { opacity: 1; }
+        
+        .color-dot-btn { width: 14px; height: 14px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); transition: transform 0.1s; }
+        .color-dot-btn:hover { transform: scale(1.3); }
     </style>
 </head>
 <body class="antialiased">
@@ -212,36 +248,25 @@
                     </button>
                 </div>
 
-                <!-- NEW STEP 1 VIEW -->
-                <div id="step-1-view" class="space-y-4 relative">
+                <!-- STEP 1 & 2 SHARED CANVAS AREA -->
+                <div id="canvas-view" class="space-y-4 relative">
                     <div id="canvas-container" class="shadow-2xl">
-                        <!-- Les bulles apparaîtront ici -->
+                        <svg id="connection-layer"></svg>
+                        <!-- Bulles injectées ici -->
                     </div>
                     
-                    <div class="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-xl px-4">
+                    <div class="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-xl px-4 z-50">
                         <div class="bg-slate-800/90 backdrop-blur-md p-2 rounded-3xl border border-slate-700 shadow-2xl flex gap-3 items-center">
                             <input type="text" id="bubble-input" class="flex-1 bg-transparent border-none outline-none px-6 py-3 text-white placeholder-slate-500 font-medium" placeholder="Écrivez une idée et tapez Entrée...">
                             <button onclick="createBubbleFromInput()" class="bg-indigo-500 text-white p-3 rounded-2xl hover:bg-indigo-600 transition" style="background-color: var(--accent-color);">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                             </button>
                         </div>
-                    </div>
-
-                    <button onclick="syncBubblesToTimeline()" class="absolute top-6 right-6 bg-slate-800 text-[10px] font-bold uppercase tracking-widest text-slate-300 px-4 py-2 rounded-xl border border-slate-700 hover:bg-slate-700 transition">
-                        Synchroniser Chrono →
-                    </button>
-                </div>
-
-                <div id="step-2-view" class="hidden space-y-4">
-                    <div class="bg-card p-8 rounded-[2rem] shadow-lg">
-                        <div class="flex justify-between items-center mb-8">
-                            <h2 class="text-xl font-bold flex items-center gap-2"><span style="color: var(--accent-color);">#</span> Structure Chronologique</h2>
-                            <button onclick="addTimelineStep()" class="text-white px-4 py-2 rounded-xl text-xs font-bold transition" style="background-color: var(--accent-color);">+ Ajouter un bloc</button>
-                        </div>
-                        <div id="timeline-container" class="space-y-3"></div>
+                        <p class="text-center text-[9px] uppercase font-bold text-slate-500 mt-3 tracking-widest">Glissez une bulle sur une autre pour les grouper • Shift+Clic pour lier</p>
                     </div>
                 </div>
 
+                <!-- STEP 3 VIEW (RÉDACTION) -->
                 <div id="step-3-view" class="hidden space-y-4">
                     <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm flex flex-wrap items-center gap-6 text-[10px] font-bold uppercase">
                         <div class="flex items-center gap-4 flex-1">
@@ -293,17 +318,20 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        const parasiteDictionary = ["du coup", "en fait", "voilà", "un petit peu", "euh", "globalement", "concrètement", "effectivement", "donc", "c'est-à-dire", "au final", "disons que", "typiquement", "clairement", "tout simplement", "en gros", "pour le coup", "un peu", "voilà quoi", "tu vois", "franchement", "honnêtement", "en réalité", "pour ainsi dire", "alors", "en quelque sorte", "justement", "au niveau de", "quelque part", "on va dire", "fondamentalement", "véritablement", "pour ma part", "en soi", "entre guillemets", "si vous voulez", "de base", "sur la fin"];
+        const parasiteDictionary = ["du coup", "en fait", "voilà", "un petit peu", "euh", "globalement", "concrètement", "effectivement", "donc", "c'est-à-dire", "au final", "disons que", "typiquement", "clairement", "tout simplement", "en gros", "pour le coup", "un peu", "voilà quoi", "tu vois", "franchement", "honnêtement", "en réalité", "pour ainsi dire", "alors", "en quelque sorte", "justement", "au niveau de", "quelque part", "on va dire", "fondablement", "véritablement", "pour ma part", "en soi", "entre guillemets", "si vous voulez", "de base", "sur la fin"];
         const stopWords = ["je", "me", "moi", "tu", "te", "toi", "il", "elle", "on", "nous", "vous", "ils", "elles", "le", "la", "les", "un", "une", "des", "du", "de", "ce", "cet", "cette", "ces", "se", "soi", "lui", "leur", "y", "en", "mon", "ton", "son", "ma", "ta", "sa", "mes", "tes", "ses", "notre", "votre", "nos", "vos", "leurs", "qui", "que", "quoi", "dont", "où", "quel", "quels", "quelle", "quelles", "et", "ou", "mais", "est", "sont", "pour", "dans", "par", "avec", "pas", "ne", "si", "ici", "là", "ont", "aux", "très"];
+        const bubblePalette = ['#6366f1', '#f43f5e', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899'];
 
         let activeFocusWord = null; let currentUser = null; let currentScriptId = null; let userRole = 'owner'; 
-        let ignoredRepeats = new Set(); let scriptListener = null; let currentStep = 1; let timelineSteps = [];
-        let bubbles = []; // Array of { id, text, x, y, parentId }
+        let ignoredRepeats = new Set(); let scriptListener = null; let currentStep = 1;
+        let bubbles = []; // { id, text, x, y, parentId, color, links: [] }
+        let linkingFromId = null;
 
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
         const editorWrapper = document.getElementById('editor-wrapper');
         const canvas = document.getElementById('canvas-container');
+        const svgLayer = document.getElementById('connection-layer');
         const bubbleInput = document.getElementById('bubble-input');
 
         function updateWpmDisplay(v) { document.getElementById('wpm-value').innerText = v; }
@@ -313,34 +341,46 @@
             currentStep = step;
             document.querySelectorAll('.wf-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(`wf-tab-${step}`).classList.add('active');
-            document.getElementById('step-1-view').classList.toggle('hidden', step !== 1);
-            document.getElementById('step-2-view').classList.toggle('hidden', step !== 2);
-            document.getElementById('step-3-view').classList.toggle('hidden', step !== 3);
+            
+            const canvasView = document.getElementById('canvas-view');
+            const step3View = document.getElementById('step-3-view');
             const mainCol = document.getElementById('main-column');
             const analysisCol = document.getElementById('analysis-column');
             const statsRow = document.getElementById('stats-row');
-            if (step === 3) { mainCol.classList.replace('lg:col-span-12', 'lg:col-span-8'); analysisCol.classList.remove('hidden'); statsRow.classList.remove('hidden'); process(); }
-            else { mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12'); analysisCol.classList.add('hidden'); statsRow.classList.add('hidden'); }
+
+            if (step === 3) {
+                canvasView.classList.add('hidden');
+                step3View.classList.remove('hidden');
+                mainCol.classList.replace('lg:col-span-12', 'lg:col-span-8');
+                analysisCol.classList.remove('hidden');
+                statsRow.classList.remove('hidden');
+                process();
+            } else {
+                canvasView.classList.remove('hidden');
+                step3View.classList.add('hidden');
+                mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12');
+                analysisCol.classList.add('hidden');
+                statsRow.classList.add('hidden');
+                renderBubbles(); // Refresh canvas on step 1/2
+            }
         }
 
-        // --- BUBBLE SYSTEM LOGIC ---
+        // --- CORE BUBBLE SYSTEM ---
 
-        bubbleInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') createBubbleFromInput();
-        });
+        bubbleInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') createBubbleFromInput(); });
 
         function createBubbleFromInput() {
             const text = bubbleInput.value.trim();
             if (!text) return;
-            
             const newBubble = {
-                id: Date.now().toString(),
+                id: "b_" + Date.now(),
                 text: text,
-                x: Math.random() * (canvas.clientWidth - 200) + 50,
-                y: Math.random() * (canvas.clientHeight - 100) + 50,
-                parentId: null
+                x: 100 + Math.random() * 200,
+                y: 100 + Math.random() * 200,
+                parentId: null,
+                color: 'var(--accent-color)',
+                links: []
             };
-            
             bubbles.push(newBubble);
             bubbleInput.value = "";
             renderBubbles();
@@ -348,143 +388,154 @@
         }
 
         function renderBubbles() {
-            canvas.innerHTML = "";
+            // Clear existing but keep SVG
+            const existingBubbles = canvas.querySelectorAll('.bubble');
+            existingBubbles.forEach(b => b.remove());
             
-            // Create groups first
-            const parents = bubbles.filter(b => !b.parentId);
-            
-            parents.forEach(p => {
-                const groupDiv = document.createElement('div');
-                groupDiv.className = "bubble-group";
-                groupDiv.style.left = p.x + "px";
-                groupDiv.style.top = p.y + "px";
-                groupDiv.dataset.id = p.id;
+            bubbles.forEach(b => {
+                const el = document.createElement('div');
+                el.className = `bubble`;
+                el.id = b.id;
+                el.style.left = b.x + "px";
+                el.style.top = b.y + "px";
+                el.style.borderColor = b.color;
+                if (linkingFromId === b.id) el.classList.add('linking');
 
-                // Render parent
-                const pEl = createBubbleElement(p);
-                groupDiv.appendChild(pEl);
+                const colorOptions = bubblePalette.map(c => 
+                    `<div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor('${b.id}', '${c}')"></div>`
+                ).join('');
 
-                // Render children
-                const children = bubbles.filter(b => b.parentId === p.id);
-                children.forEach(c => {
-                    const cEl = createBubbleElement(c, true);
-                    groupDiv.appendChild(cEl);
+                el.innerHTML = `
+                    <div class="flex items-center mb-1">
+                        <span class="bubble-color-dot" style="background:${b.color}"></span>
+                        <div class="text-[11px] font-bold text-slate-200 break-words flex-1">${b.text}</div>
+                    </div>
+                    ${b.parentId ? '<div class="nested-indicator">Groupe</div>' : ''}
+                    <div class="bubble-controls">
+                        ${colorOptions}
+                        <button onclick="deleteBubble('${b.id}')" class="ml-auto text-slate-500 hover:text-red-400">✕</button>
+                    </div>
+                `;
+
+                el.addEventListener('mousedown', (e) => {
+                    if (e.shiftKey) {
+                        startLinking(b.id);
+                    } else {
+                        initDrag(e, b.id, el);
+                    }
                 });
 
-                canvas.appendChild(groupDiv);
-                makeDraggable(groupDiv, p.id);
+                canvas.appendChild(el);
+            });
+            drawConnections();
+        }
+
+        function initDrag(e, id, el) {
+            if (e.target.closest('button') || e.target.closest('.color-dot-btn')) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            let startX = e.clientX - el.offsetLeft;
+            let startY = e.clientY - el.offsetTop;
+
+            function doDrag(e) {
+                let x = e.clientX - startX;
+                let y = e.clientY - startY;
+
+                // Bounds
+                x = Math.max(0, Math.min(x, canvas.clientWidth - el.offsetWidth));
+                y = Math.max(0, Math.min(y, canvas.clientHeight - el.offsetHeight));
+
+                el.style.left = x + "px";
+                el.style.top = y + "px";
+                
+                // Live update data for lines
+                const b = bubbles.find(b => b.id === id);
+                b.x = x; b.y = y;
+                drawConnections();
+            }
+
+            function stopDrag() {
+                document.removeEventListener('mousemove', doDrag);
+                document.removeEventListener('mouseup', stopDrag);
+                checkNesting(id, el);
+                autoSave();
+            }
+
+            document.addEventListener('mousemove', doDrag);
+            document.addEventListener('mouseup', stopDrag);
+        }
+
+        function checkNesting(draggedId, el) {
+            const rect1 = el.getBoundingClientRect();
+            let foundParent = null;
+
+            bubbles.forEach(other => {
+                if (other.id === draggedId) return;
+                const otherEl = document.getElementById(other.id);
+                if (!otherEl) return;
+                const rect2 = otherEl.getBoundingClientRect();
+
+                const overlap = !(rect1.right < rect2.left || rect1.left > rect2.right || rect1.bottom < rect2.top || rect1.top > rect2.bottom);
+                if (overlap) foundParent = other.id;
+            });
+
+            const b = bubbles.find(b => b.id === draggedId);
+            b.parentId = foundParent;
+            renderBubbles();
+        }
+
+        function startLinking(id) {
+            if (linkingFromId && linkingFromId !== id) {
+                const b = bubbles.find(b => b.id === linkingFromId);
+                if (!b.links) b.links = [];
+                if (!b.links.includes(id)) b.links.push(id);
+                linkingFromId = null;
+                renderBubbles();
+                autoSave();
+            } else {
+                linkingFromId = id;
+                renderBubbles();
+            }
+        }
+
+        function drawConnections() {
+            svgLayer.innerHTML = "";
+            bubbles.forEach(b => {
+                if (b.links) {
+                    b.links.forEach(targetId => {
+                        const target = bubbles.find(t => t.id === targetId);
+                        if (target) {
+                            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                            line.setAttribute("x1", b.x + 80);
+                            line.setAttribute("y1", b.y + 30);
+                            line.setAttribute("x2", target.x + 80);
+                            line.setAttribute("y2", target.y + 30);
+                            line.setAttribute("stroke", b.color);
+                            line.setAttribute("stroke-width", "2");
+                            line.setAttribute("stroke-dasharray", "5,5");
+                            line.setAttribute("opacity", "0.4");
+                            svgLayer.appendChild(line);
+                        }
+                    });
+                }
             });
         }
 
-        function createBubbleElement(b, isNested = false) {
-            const el = document.createElement('div');
-            el.className = `bubble ${isNested ? 'nested' : ''}`;
-            el.innerHTML = `
-                <div class="text-xs font-bold text-slate-300 break-words">${b.text}</div>
-                <button onclick="deleteBubble('${b.id}')" class="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full text-[10px] hidden group-hover:flex items-center justify-center">✕</button>
-            `;
-            el.classList.add('group');
-            return el;
-        }
-
-        function deleteBubble(id) {
-            bubbles = bubbles.filter(b => b.id !== id && b.parentId !== id);
+        function setBubbleColor(id, color) {
+            const b = bubbles.find(b => b.id === id);
+            b.color = color;
             renderBubbles();
             autoSave();
         }
 
-        function makeDraggable(el, bubbleId) {
-            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-            el.onmousedown = dragMouseDown;
-
-            function dragMouseDown(e) {
-                if (e.target.tagName === 'BUTTON') return;
-                e.preventDefault();
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                document.onmouseup = closeDragElement;
-                document.onmousemove = elementDrag;
-                el.style.zIndex = 1000;
-            }
-
-            function elementDrag(e) {
-                e.preventDefault();
-                pos1 = pos3 - e.clientX;
-                pos2 = pos4 - e.clientY;
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                
-                const newY = el.offsetTop - pos2;
-                const newX = el.offsetLeft - pos1;
-                
-                el.style.top = newY + "px";
-                el.style.left = newX + "px";
-            }
-
-            function closeDragElement() {
-                document.onmouseup = null;
-                document.onmousemove = null;
-                el.style.zIndex = 5;
-
-                // Update data
-                const bIdx = bubbles.findIndex(b => b.id === bubbleId);
-                if (bIdx > -1) {
-                    bubbles[bIdx].x = parseInt(el.style.left);
-                    bubbles[bIdx].y = parseInt(el.style.top);
-                }
-
-                // Collision Check for nesting
-                checkCollisions(el, bubbleId);
-                autoSave();
-            }
-        }
-
-        function checkCollisions(draggedEl, draggedId) {
-            const rect1 = draggedEl.getBoundingClientRect();
-            const groups = document.querySelectorAll('.bubble-group');
-            
-            groups.forEach(targetGroup => {
-                const targetId = targetGroup.dataset.id;
-                if (targetId === draggedId) return;
-
-                const rect2 = targetGroup.getBoundingClientRect();
-                const overlap = !(rect1.right < rect2.left || rect1.left > rect2.right || rect1.bottom < rect2.top || rect1.top > rect2.bottom);
-
-                if (overlap) {
-                    // Nest dragged bubble into target bubble
-                    const bIdx = bubbles.findIndex(b => b.id === draggedId);
-                    bubbles[bIdx].parentId = targetId;
-                    
-                    // Also move all children of the dragged one to the new parent
-                    bubbles.forEach(b => {
-                        if (b.parentId === draggedId) b.parentId = targetId;
-                    });
-                    
-                    renderBubbles();
-                }
-            });
-        }
-
-        function syncBubblesToTimeline() {
-            // Logic: Order groups by Y position, then children inside
-            const parents = bubbles.filter(b => !b.parentId).sort((a,b) => a.y - b.y);
-            const newTimeline = [];
-
-            parents.forEach(p => {
-                newTimeline.push({ text: p.text, color: "" });
-                const children = bubbles.filter(b => b.parentId === p.id);
-                children.forEach(c => {
-                    newTimeline.push({ text: c.text, color: "" });
-                });
-            });
-
-            timelineSteps = newTimeline;
-            renderTimeline();
-            setStep(2);
+        function deleteBubble(id) {
+            bubbles = bubbles.filter(b => b.id !== id);
+            bubbles.forEach(b => { if(b.links) b.links = b.links.filter(l => l !== id); });
+            renderBubbles();
             autoSave();
         }
 
-        // --- END BUBBLE LOGIC ---
+        // --- END BUBBLE SYSTEM ---
 
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
@@ -524,18 +575,19 @@
             scriptListener = db.collection('scripts').doc(id).onSnapshot(doc => {
                 if (!doc.exists) {
                     if (id.startsWith(currentUser.uid)) { 
-                        db.collection('scripts').doc(id).set({ content: "", bubbles: [], timeline: [], title: `Projet ${id.split('_')[1]}`, owner: currentUser.uid, ownerEmail: currentUser.email, editors: [], viewers: [], ignoredWords: [], lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }); 
+                        db.collection('scripts').doc(id).set({ content: "", bubbles: [], title: `Projet ${id.split('_')[1]}`, owner: currentUser.uid, ownerEmail: currentUser.email, editors: [], viewers: [], ignoredWords: [], lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }); 
                     }
                     return;
                 }
                 const data = doc.data();
+                if (data.content !== textarea.value && document.activeElement !== textarea) textarea.value = data.content || "";
+                
+                // Sync bubbles only if different to avoid jitter
                 if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) {
                     bubbles = data.bubbles || [];
                     renderBubbles();
                 }
-                if (data.content !== textarea.value && document.activeElement !== textarea) textarea.value = data.content || "";
-                timelineSteps = data.timeline || [];
-                renderTimeline();
+
                 userRole = data.owner === currentUser.uid ? 'owner' : (data.editors?.includes(currentUser.email) ? 'editor' : 'viewer');
                 textarea.readOnly = (userRole === 'viewer');
                 document.getElementById('rename-btn').style.display = (userRole === 'owner') ? 'block' : 'none';
@@ -546,7 +598,7 @@
                     if (tab) tab.innerText = data.title;
                 }
 
-                if (userRole === 'owner') { updateCollaboratorsUI(data); }
+                if (userRole === 'owner') updateCollaboratorsUI(data);
                 ignoredRepeats = new Set(data.ignoredWords || []);
                 process();
             });
@@ -576,8 +628,6 @@
                     btn.innerText = `🤝 ${data.title}`;
                     btn.onclick = () => openSharedProject(doc.id);
                     tabsContainer.appendChild(btn);
-                } else {
-                    document.getElementById(tabId).innerText = `🤝 ${data.title}`;
                 }
             });
         }
@@ -589,81 +639,6 @@
             loadScript(id);
         }
 
-        function addTimelineStep() {
-            if (userRole === 'viewer') return;
-            timelineSteps.push({ text: "", color: "" });
-            renderTimeline();
-            autoSave();
-        }
-
-        function removeTimelineStep(index) {
-            if (userRole === 'viewer') return;
-            timelineSteps.splice(index, 1);
-            renderTimeline();
-            autoSave();
-        }
-
-        function showBlockColorMenu(index) {
-            document.querySelectorAll('.timeline-color-menu').forEach(m => m.classList.add('hidden'));
-            document.getElementById(`color-menu-${index}`).classList.remove('hidden');
-        }
-
-        function setBlockColor(index, color) {
-            if (userRole === 'viewer') return;
-            timelineSteps[index].color = color;
-            document.getElementById(`color-menu-${index}`).classList.add('hidden');
-            renderTimeline();
-            autoSave();
-        }
-
-        function moveTimelineStep(index, dir) {
-            if (userRole === 'viewer') return;
-            const newIndex = index + dir;
-            if (newIndex < 0 || newIndex >= timelineSteps.length) return;
-            const temp = timelineSteps[index];
-            timelineSteps[index] = timelineSteps[newIndex];
-            timelineSteps[newIndex] = temp;
-            renderTimeline();
-            autoSave();
-        }
-
-        function updateTimelineText(index, text) {
-            timelineSteps[index].text = text;
-            autoSave();
-        }
-
-        function renderTimeline() {
-            const container = document.getElementById('timeline-container');
-            container.innerHTML = "";
-            const themes = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#10b981', '#06b6d4', '#2563eb', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e'];
-            
-            timelineSteps.forEach((step, i) => {
-                const colorOptions = themes.map(c => `<button onclick="setBlockColor(${i}, '${c}')" class="w-4 h-4 rounded-full border border-white/20 hover:scale-125 transition shrink-0" style="background-color: ${c}"></button>`).join('');
-                
-                const div = document.createElement('div');
-                const blockColor = step.color || 'var(--accent-color)';
-                div.className = "flex gap-3 bg-slate-800/50 p-3 rounded-2xl border border-slate-700 items-start group timeline-block relative";
-                div.style.borderLeftColor = blockColor;
-                div.innerHTML = `
-                    <div class="flex flex-col gap-1">
-                        <button onclick="moveTimelineStep(${i}, -1)" class="p-1 hover:text-indigo-400 transition text-slate-600 ${i===0?'invisible':''}"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"/></svg></button>
-                        <button onclick="moveTimelineStep(${i}, 1)" class="p-1 hover:text-indigo-400 transition text-slate-600 ${i===timelineSteps.length-1?'invisible':''}"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg></button>
-                    </div>
-                    <textarea oninput="updateTimelineText(${i}, this.value)" class="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 py-1 resize-none" rows="1" placeholder="Action ou séquence...">${step.text}</textarea>
-                    <div class="flex gap-2 items-center">
-                        <div class="relative">
-                            <button onmouseenter="showBlockColorMenu(${i})" class="p-2 text-slate-500 hover:text-white transition">🎨</button>
-                            <div id="color-menu-${i}" class="timeline-color-menu absolute right-full top-1/2 -translate-y-1/2 mr-3 bg-slate-900 border border-slate-700 p-3 rounded-2xl shadow-2xl flex flex-wrap gap-1.5 w-[160px] hidden z-20">
-                                ${colorOptions}
-                            </div>
-                        </div>
-                        <button onclick="removeTimelineStep(${i})" class="p-2 text-slate-600 hover:text-red-500 transition">✕</button>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
         function process() {
             if (currentStep !== 3) return;
             const text = textarea.value;
@@ -673,11 +648,13 @@
             editorWrapper.classList.toggle('show-parasites', showP);
             editorWrapper.classList.toggle('show-repeats', showR);
             editorWrapper.classList.toggle('show-montage', showM);
+            
             let montageIndices = new Set();
             if (showM) {
                 const montageRegex = /\[.*?\]/g;
                 let mMatch; while ((mMatch = montageRegex.exec(text)) !== null) { for (let i = 0; i < mMatch[0].length; i++) montageIndices.add(mMatch.index + i); }
             }
+
             let parasiteIndices = new Set(); let parasiteCounts = {}; let totalParasites = 0;
             parasiteDictionary.forEach(word => {
                 const regex = new RegExp(`\\b(${word})\\b`, 'gi');
@@ -687,6 +664,7 @@
                     for (let i = 0; i < match[0].length; i++) parasiteIndices.add(match.index + i);
                 }
             });
+
             const wordRegex = /[a-zA-ZàâäéèêëîïôöûüùçÀÂÄÉÈÊËÎÏÔÖÛÜÙÇ]{3,}/g;
             let lastSeenAt = {}; let badRepeatIndices = new Set(); let repeatCounts = {}; let wordCounter = 0; let match;
             while ((match = wordRegex.exec(text)) !== null) {
@@ -699,16 +677,19 @@
                     lastSeenAt[word] = { count: wordCounter, pos: match.index };
                 }
             }
+
             const wpm = parseInt(document.getElementById('wpm-slider').value) || 150;
             const wordCount = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
             const totalSeconds = Math.round((wordCount / wpm) * 60);
             document.getElementById('duration-display').innerText = `${Math.floor(totalSeconds / 60)}m ${totalSeconds % 60}s`;
+
             let focusIndices = new Set();
             if (activeFocusWord) {
                 const escaped = activeFocusWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 const fRegex = new RegExp(`\\b(${escaped})\\b`, 'gi');
                 let fMatch; while ((fMatch = fRegex.exec(text)) !== null) { for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i); }
             }
+
             let finalHtml = ""; let i = 0;
             while (i < text.length) {
                 let className = "";
@@ -716,6 +697,7 @@
                 else if (focusIndices.has(i)) className = "focus-active";
                 else if (parasiteIndices.has(i)) className = "parasite";
                 else if (badRepeatIndices.has(i)) className = "repeat";
+                
                 if (className) {
                     finalHtml += `<mark class="${className}">`;
                     while (i < text.length && ((className === "montage" && montageIndices.has(i)) || (className === "focus-active" && focusIndices.has(i)) || (className === "parasite" && parasiteIndices.has(i)) || (className === "repeat" && badRepeatIndices.has(i)))) {
@@ -740,8 +722,7 @@
                 clearTimeout(saveTimeout);
                 saveTimeout = setTimeout(() => {
                     db.collection('scripts').doc(currentScriptId).update({ 
-                        bubbles: bubbles, 
-                        timeline: timelineSteps, 
+                        bubbles: bubbles,
                         content: textarea.value, 
                         ignoredWords: Array.from(ignoredRepeats), 
                         lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
@@ -811,9 +792,7 @@
                 b.onclick = () => { 
                     document.documentElement.style.setProperty('--accent-color', t); 
                     document.documentElement.style.setProperty('--accent-soft', t + '26');
-                    renderTimeline(); 
                     process(); 
-                    renderBubbles();
                 };
                 document.getElementById('theme-picker').appendChild(b);
             });
