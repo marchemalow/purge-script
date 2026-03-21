@@ -205,7 +205,7 @@
                 <option value="viewers">Lecteur (Lecture seule)</option>
             </select>
             <div class="flex flex-col gap-3">
-                <button onclick="generateInviteLink()" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-4 rounded-2xl font-bold text-sm transition" style="background-color: var(--accent-color);">Générer et copier le lien</button>
+                <button id="confirm-share-btn" onclick="generateInviteLink()" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-4 rounded-2xl font-bold text-sm transition" style="background-color: var(--accent-color);">Générer et copier le lien</button>
                 <button onclick="toggleShareModal()" class="w-full bg-slate-800 py-4 rounded-2xl font-bold text-sm text-slate-400">Annuler</button>
             </div>
         </div>
@@ -721,12 +721,10 @@
             const tabsContainer = document.getElementById('tabs-container');
             const sharedList = document.getElementById('shared-list');
             
-            // On ne vide pas tout pour éviter de supprimer les onglets 1-4
             snap.forEach(doc => {
                 const data = doc.data();
                 const tabId = `p-tab-shared-${doc.id}`;
                 
-                // Mise à jour de la liste latérale
                 if (!document.querySelector(`[data-shared-id="${doc.id}"]`)) {
                     const li = document.createElement('li');
                     li.setAttribute('data-shared-id', doc.id);
@@ -736,7 +734,6 @@
                     sharedList.appendChild(li);
                 }
 
-                // Ajout bouton navigation si absent
                 if (!document.getElementById(tabId)) {
                     const btn = document.createElement('button');
                     btn.id = tabId;
@@ -870,6 +867,10 @@
         async function generateInviteLink() {
             if (!currentUser || !currentScriptId) return;
             const role = document.getElementById('share-role').value;
+            const btn = document.getElementById('confirm-share-btn');
+            btn.innerText = "Génération...";
+            btn.disabled = true;
+            
             try {
                 const inviteRef = await db.collection('invites').add({ 
                     scriptId: currentScriptId, 
@@ -880,9 +881,15 @@
                 });
                 const inviteURL = `${window.location.origin}${window.location.pathname}?invite=${inviteRef.id}`;
                 await navigator.clipboard.writeText(inviteURL);
-                alert("Lien d'invitation copié !");
+                alert("Lien d'invitation copié dans le presse-papier !");
                 toggleShareModal();
-            } catch (e) { alert("Erreur lors de la création de l'invitation."); }
+            } catch (e) { 
+                console.error(e);
+                alert("Erreur lors de la création de l'invitation."); 
+            } finally {
+                btn.innerText = "Générer et copier le lien";
+                btn.disabled = false;
+            }
         }
 
         async function consumeInvite(tokenId) {
@@ -890,14 +897,8 @@
                 const doc = await db.collection('invites').doc(tokenId).get();
                 if (!doc.exists) return;
                 const data = doc.data();
-                if (data.used === true) {
-                    alert("Ce lien d'invitation a déjà été utilisé.");
-                    return;
-                }
-                if (data.createdBy === currentUser.email) {
-                    alert("Vous êtes déjà le propriétaire de ce script.");
-                    return;
-                }
+                if (data.used === true) return;
+                if (data.createdBy === currentUser.email) return;
                 
                 await db.collection('scripts').doc(data.scriptId).update({ 
                     [data.role]: firebase.firestore.FieldValue.arrayUnion(currentUser.email) 
@@ -906,12 +907,9 @@
                     used: true, 
                     usedBy: currentUser.email 
                 });
-                alert("Accès accordé au projet partagé !");
+                alert("Nouveau projet partagé ajouté à votre liste !");
                 openSharedProject(data.scriptId);
-            } catch (e) {
-                console.error(e);
-                alert("Erreur lors de la validation de l'invitation.");
-            }
+            } catch (e) { console.error(e); }
         }
 
         function toggleFocus(w) { activeFocusWord = (activeFocusWord === w) ? null : w; process(); }
@@ -919,12 +917,16 @@
         function unignoreWord(w) { if(userRole === 'viewer') return; ignoredRepeats.delete(w); autoSave(); process(); }
         function copyText() { navigator.clipboard.writeText(textarea.value); alert("Copié !"); }
         function downloadText() { const blob = new Blob([textarea.value], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `script.txt`; a.click(); }
+        
         function toggleShareModal() { 
-            if (userRole !== 'owner') {
+            // Fix: Autoriser l'ouverture si on est propriétaire (ID commence par l'UID) ou si Firestore confirme le rôle owner
+            const isOwner = currentScriptId && currentScriptId.startsWith(currentUser.uid);
+            if (!isOwner && userRole !== 'owner') {
                 alert("Seul le propriétaire peut inviter des collaborateurs.");
                 return;
             }
-            document.getElementById('share-modal').style.display = (document.getElementById('share-modal').style.display === 'flex') ? 'none' : 'flex'; 
+            const modal = document.getElementById('share-modal');
+            modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex'; 
         }
         
         function updateCollaboratorsUI(data) {
@@ -939,8 +941,6 @@
         }
         async function removeCollaborator(e, r) { if (confirm(`Retirer ${e} ?`)) await db.collection('scripts').doc(currentScriptId).update({ [r]: firebase.firestore.FieldValue.arrayRemove(e) }); }
         async function renameCurrentProject() { if(userRole !== 'owner') return; const n = prompt("Nouveau nom du projet :"); if(n) await db.collection('scripts').doc(currentScriptId).update({ title: n }); }
-
-        // --- THEME MANAGEMENT ---
 
         function applyTheme(color) {
             document.documentElement.style.setProperty('--accent-color', color); 
@@ -958,10 +958,8 @@
                 b.onclick = () => applyTheme(color);
                 document.getElementById('theme-picker').appendChild(b);
             });
-
             const savedTheme = localStorage.getItem('purge-theme');
             if (savedTheme) applyTheme(savedTheme);
-
             textarea.addEventListener('input', process);
             textarea.addEventListener('scroll', () => highlightLayer.scrollTop = textarea.scrollTop);
             setStep(1);
