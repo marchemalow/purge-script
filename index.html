@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Purge-Script Pro | Workflow Collaboratif Senior</title>
+    <title>Purge-Script Pro | Workflow Collaboratif</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
     
@@ -32,7 +32,7 @@
         h1, h1 span { color: #ffffff !important; }
         .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.6; }
         
-        /* Layout & Navigation */
+        /* Layout Canvas */
         #canvas-container {
             position: relative;
             width: 100%;
@@ -90,7 +90,7 @@
         }
         .timeline-block.dragging { opacity: 0.5; transform: scale(0.98); }
 
-        /* Color Picker Component */
+        /* Color Picker */
         .color-picker-trigger {
             width: 28px;
             height: 28px;
@@ -99,6 +99,7 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            transition: background 0.2s;
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
         }
@@ -116,122 +117,67 @@
             margin-top: 8px;
         }
         .color-menu.active { display: grid; }
-        .color-dot-btn { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); }
+        .color-dot-btn { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); transition: transform 0.1s; }
         .color-dot-btn:hover { transform: scale(1.3); }
 
-        /* Editor Contextual Suggestion */
-        .editor-container { 
-            position: relative; 
-            min-height: 600px; 
-            border-radius: 1.5rem; 
-            background-color: #1e293b; 
-            border: 1px solid #334155;
-            overflow: hidden;
-        }
-        .sync-text { 
-            position: absolute; 
-            top: 0; left: 0; width: 100%; height: 100%; 
-            padding: 30px; 
-            white-space: pre-wrap; 
-            word-wrap: break-word; 
-            border: none; 
-            margin: 0; 
-            background: transparent; 
-            overflow-y: auto;
-            box-sizing: border-box;
-        }
-        #textarea { 
-            color: transparent; 
-            caret-color: #ffffff; 
-            z-index: 2; 
-            resize: none; 
-            outline: none; 
-        }
-        #highlight-layer { 
-            z-index: 1; 
-            pointer-events: none; 
-            color: #e2e8f0; 
-        }
-
-        /* Comments & Floating Button */
-        #suggest-btn-context {
-            display: none;
-            position: absolute;
-            z-index: 50;
-            background: var(--comment-color);
-            color: #000;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            font-weight: 900;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            transition: transform 0.1s;
-        }
-        #suggest-btn-context:hover { transform: scale(1.2); }
-
-        .comment-dot {
-            display: inline-flex;
-            width: 14px;
-            height: 14px;
-            background-color: var(--comment-color);
-            border-radius: 50%;
-            margin: 0 2px;
-            cursor: pointer;
-            pointer-events: auto; /* Permet le clic à travers le layer highlight */
-            box-shadow: 0 0 8px var(--comment-color);
-            vertical-align: middle;
-            border: 2px solid #1e293b;
-        }
-
-        #comment-popup {
-            display: none;
-            position: fixed;
-            z-index: 9999;
-            background: #1e293b;
-            border: 1px solid var(--comment-color);
-            padding: 16px;
-            border-radius: 16px;
-            width: 280px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.8);
-        }
-
-        #suggestion-input-modal {
-            display: none;
-            position: fixed;
-            z-index: 10000;
-            background: #1e293b;
-            padding: 20px;
-            border-radius: 20px;
-            border: 1px solid #334155;
-            width: 320px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.9);
-        }
-
-        /* Mirrors & Helpers */
-        #textarea-mirror {
-            position: absolute;
-            visibility: hidden;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            padding: 30px;
-            box-sizing: border-box;
-            font-family: 'IBM Plex Sans', sans-serif;
-            font-size: 1.05rem;
-            line-height: 1.6;
-        }
-
+        /* Editor & Highlights */
+        .editor-container { position: relative; min-height: 600px; border-radius: 1.5rem; background-color: #1e293b; border: 1px solid #334155; }
+        .sync-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 30px; white-space: pre-wrap; word-wrap: break-word; overflow-y: auto; border: none; margin: 0; background: transparent; }
+        #textarea { color: transparent; caret-color: #ffffff; z-index: 2; resize: none; outline: none; }
+        #highlight-layer { z-index: 1; pointer-events: none; color: #e2e8f0 !important; }
+        
         mark { background: none; color: inherit; position: relative; }
         .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); border-radius: 2px; }
         .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; border-radius: 2px; }
         mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; font-weight: 600; }
         .show-montage mark.montage { background-color: var(--montage-color) !important; color: #0369a1 !important; font-weight: 700; }
+        
+        /* Comments System */
+        .comment-dot {
+            display: inline-flex;
+            width: 12px;
+            height: 12px;
+            background-color: var(--comment-color);
+            border-radius: 50%;
+            margin: 0 2px;
+            cursor: pointer;
+            pointer-events: auto; /* Permet le clic dans le layer highlight */
+            box-shadow: 0 0 5px var(--comment-color);
+            vertical-align: middle;
+            transition: transform 0.2s;
+        }
+        .comment-dot:hover { transform: scale(1.4); }
 
+        #comment-tooltip {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            background: #1e293b;
+            border: 1px solid #facc15;
+            padding: 12px;
+            border-radius: 12px;
+            width: 250px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        #comment-btn-floating {
+            display: none;
+            position: fixed;
+            z-index: 50;
+            background: var(--comment-color);
+            color: #000;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        /* UI Styles */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        #textarea::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb { background: var(--accent-color); border-radius: 10px; }
+        #textarea::-webkit-scrollbar-thumb, .scroll-custom::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb { background: var(--accent-color); border-radius: 10px; }
         .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 34px; }
@@ -250,47 +196,30 @@
 </head>
 <body class="antialiased">
 
-    <!-- Miroir Invisible pour calcul caret -->
-    <div id="textarea-mirror"></div>
-
-    <!-- Modals Suggestions -->
-    <div id="suggestion-input-modal" class="shadow-2xl">
-        <h4 class="text-xs font-bold uppercase text-yellow-500 mb-3 tracking-widest">Nouvelle suggestion</h4>
-        <textarea id="suggestion-text-field" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white mb-4 outline-none focus:border-yellow-500" placeholder="Écrivez votre remarque..." rows="3"></textarea>
-        <div class="flex gap-2">
-            <button onclick="submitSuggestion()" class="flex-1 bg-yellow-500 text-black font-bold py-2 rounded-lg text-xs uppercase">Valider</button>
-            <button onclick="closeSuggestionModal()" class="flex-1 bg-slate-700 text-white font-bold py-2 rounded-lg text-xs uppercase">Annuler</button>
-        </div>
+    <!-- Tooltip Commentaire -->
+    <div id="comment-tooltip">
+        <p id="comment-author" class="text-[10px] font-bold text-yellow-500 uppercase mb-1"></p>
+        <p id="comment-text" class="text-xs text-slate-200 mb-3 italic"></p>
+        <button id="comment-delete-btn" class="text-[9px] uppercase font-extrabold text-red-400 hover:text-red-300">Supprimer</button>
     </div>
 
-    <!-- Popup Visualisation Suggestion -->
-    <div id="comment-popup">
-        <div class="flex items-center justify-between mb-2">
-            <p id="comment-author" class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest"></p>
-        </div>
-        <p id="comment-text" class="text-xs text-slate-200 mb-4 leading-relaxed italic"></p>
-        <div class="flex justify-end border-t border-slate-700/50 pt-2">
-            <button id="comment-delete-btn" class="text-[9px] uppercase font-extrabold text-red-500 hover:text-red-400">Supprimer suggestion ✕</button>
-        </div>
-    </div>
-
-    <!-- Bouton Contextuel Flottant -->
-    <div id="suggest-btn-context" onclick="openSuggestionModal()">+</div>
+    <!-- Bouton flottant commentaire -->
+    <div id="comment-btn-floating" onclick="openCommentPrompt()">+ Commenter</div>
 
     <!-- Modal de Partage -->
     <div id="share-modal">
         <div class="modal-content shadow-2xl">
-            <h3 class="text-xl font-extrabold mb-2">Collaborer</h3>
-            <p class="text-xs text-slate-400 mb-6">Assignez un rôle pour ce projet.</p>
-            <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Privilèges</label>
+            <h3 class="text-xl font-extrabold mb-2">Inviter un collaborateur</h3>
+            <p class="text-xs text-slate-400 mb-6">Définissez le rôle avant de générer le lien.</p>
+            <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Rôle de l'invité</label>
             <select id="share-role" class="w-full p-4 rounded-xl border bg-slate-900 border-slate-700 outline-none text-white mb-8">
-                <option value="editors">Éditeur (Complet)</option>
-                <option value="commenters">Commentateur (Suggestions)</option>
+                <option value="editors">Éditeur (Modifications)</option>
+                <option value="commenters">Commentateur (Suggestions uniquement)</option>
                 <option value="viewers">Lecteur (Lecture seule)</option>
             </select>
             <div class="flex flex-col gap-3">
-                <button onclick="generateInviteLink()" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-4 rounded-2xl font-bold text-sm transition" style="background-color: var(--accent-color);">Générer lien unique</button>
-                <button onclick="toggleShareModal()" class="w-full bg-slate-800 py-4 rounded-2xl font-bold text-sm text-slate-400">Fermer</button>
+                <button onclick="generateInviteLink()" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-4 rounded-2xl font-bold text-sm transition" style="background-color: var(--accent-color);">Générer et copier le lien</button>
+                <button onclick="toggleShareModal()" class="w-full bg-slate-800 py-4 rounded-2xl font-bold text-sm text-slate-400">Annuler</button>
             </div>
         </div>
     </div>
@@ -306,15 +235,15 @@
                 <p class="text-slate-500 text-sm font-medium italic mt-1"><span id="user-display">Mode Local</span> • <span id="role-display" class="uppercase font-bold text-[10px]">Propriétaire</span></p>
             </div>
             <div class="flex flex-wrap items-center gap-4">
-                <button id="share-btn" onclick="toggleShareModal()" class="hidden items-center gap-2 px-5 py-2.5 text-white rounded-xl text-xs font-bold hover:scale-105 transition shadow-lg" style="background-color: var(--accent-color);">Partager</button>
-                <button id="auth-btn" onclick="handleAuth()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold shadow-sm transition"><span id="auth-btn-text">Connexion</span></button>
+                <button id="share-btn" onclick="toggleShareModal()" class="hidden items-center gap-2 px-5 py-2.5 text-white rounded-xl text-xs font-bold hover:scale-105 transition shadow-lg" style="background-color: var(--accent-color);">Inviter</button>
+                <button id="auth-btn" onclick="handleAuth()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold shadow-sm transition"><span id="auth-btn-text">Se connecter</span></button>
                 <div class="bg-slate-800 p-3 rounded-2xl shadow-sm border border-slate-700 flex items-center gap-4">
                     <div class="flex flex-wrap gap-1.5 max-w-[130px]" id="theme-picker"></div>
                 </div>
             </div>
         </header>
 
-        <!-- PROJECT BAR (TOP) -->
+        <!-- NAVIGATION PROJETS -->
         <div id="projects-nav" class="hidden flex items-center justify-between bg-slate-800/50 p-2 rounded-2xl border border-slate-700 mb-6 shadow-sm">
             <div class="flex gap-2" id="tabs-container">
                 <button onclick="switchProject(1)" id="p-tab-1" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 1</button>
@@ -377,7 +306,7 @@
                         </div>
                     </div>
 
-                    <div id="editor-wrapper" class="editor-container shadow-sm show-parasites show-repeats show-montage">
+                    <div id="editor-wrapper" class="editor-container shadow-sm overflow-hidden show-parasites show-repeats show-montage">
                         <div id="highlight-layer" class="sync-text editor-font"></div>
                         <textarea id="textarea" class="sync-text editor-font" placeholder="Rédigez ici..." spellcheck="false"></textarea>
                     </div>
@@ -390,11 +319,12 @@
             </div>
 
             <div id="analysis-column" class="lg:col-span-4 hidden space-y-6">
-                <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl border border-slate-800">
-                    <div class="mb-8"><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Tics</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
-                    <div class="mb-8"><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Répétitions</h2><ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
+                <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8 border border-slate-800">
+                    <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Tics</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px] scroll-custom"></ul></div>
+                    <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Répétitions</h2><ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px] scroll-custom"></ul></div>
                     <div id="ignored-section" class="hidden"><h2 class="text-[9px] font-bold uppercase text-red-400 mb-4">Ignorés</h2><ul id="ignored-list" class="flex flex-wrap gap-2 text-[10px]"></ul></div>
-                    <div id="collaborators-section" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-indigo-400 mb-4">Membres</h2><ul id="collaborators-list" class="space-y-2 text-[11px]"></ul></div>
+                    <div id="collaborators-section" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-indigo-400 mb-4">Collaborateurs</h2><ul id="collaborators-list" class="space-y-2 text-[11px]"></ul></div>
+                    <div id="shared-scripts-container" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Partagés</h2><ul id="shared-list" class="space-y-2 text-[11px]"></ul></div>
                 </div>
             </div>
         </div>
@@ -417,102 +347,83 @@
         const stopWords = ["je", "me", "moi", "tu", "te", "toi", "il", "elle", "on", "nous", "vous", "ils", "elles", "le", "la", "les", "un", "une", "des", "du", "de", "ce", "cet", "cette", "ces", "se", "soi", "lui", "leur", "y", "en", "mon", "ton", "son", "ma", "ta", "sa", "mes", "tes", "ses", "notre", "votre", "nos", "vos", "leurs", "qui", "que", "quoi", "dont", "où", "quel", "quels", "quelle", "quelles", "et", "ou", "mais", "est", "sont", "pour", "dans", "par", "avec", "pas", "ne", "si", "ici", "là", "ont", "aux", "très"];
         const bubblePalette = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#10b981', '#06b6d4', '#2563eb', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e'];
 
-        let activeFocusWord = null; let currentUser = null; let currentScriptId = null; 
-        let userRole = 'owner'; let ignoredRepeats = new Set(); let scriptListener = null; 
-        let currentStep = 1; let bubbles = []; let comments = []; 
-        let suggestTimer = null; let currentCaretIndex = 0;
+        let activeFocusWord = null; 
+        let currentUser = null; 
+        let currentScriptId = null; 
+        let userRole = 'owner'; 
+        let ignoredRepeats = new Set(); 
+        let scriptListener = null; 
+        let currentStep = 1;
+        let bubbles = []; 
+        let comments = []; // [{id, index, text, author, authorName}]
 
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
-        const mirror = document.getElementById('textarea-mirror');
-        const suggestBtn = document.getElementById('suggest-btn-context');
+        const editorWrapper = document.getElementById('editor-wrapper');
+        const canvas = document.getElementById('canvas-container');
+        const timeline = document.getElementById('timeline-container');
         const bubbleInput = document.getElementById('bubble-input');
 
-        // --- CARET TRACKING DE PRÉCISION ---
+        function updateWpmDisplay(v) { document.getElementById('wpm-value').innerText = v; }
+        function handleAuth() { if (currentUser) auth.signOut(); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
-        function getCaretCoordinates() {
-            const index = textarea.selectionStart;
-            const textBefore = textarea.value.substring(0, index);
-            
-            // Sync styles with mirror
-            const style = getComputedStyle(textarea);
-            mirror.style.width = style.width;
-            mirror.style.padding = style.padding;
-            mirror.style.lineHeight = style.lineHeight;
-            mirror.style.fontSize = style.fontSize;
-            mirror.style.fontFamily = style.fontFamily;
-            
-            mirror.textContent = textBefore;
-            const span = document.createElement('span');
-            span.textContent = textarea.value.substring(index, index + 1) || '.';
-            mirror.appendChild(span);
+        // --- GESTION DES RÔLES ET LOCK ---
 
-            const rect = textarea.getBoundingClientRect();
-            const spanRect = span.getBoundingClientRect();
+        function applyRoleSecurity() {
+            const isReadOnly = (userRole === 'viewers');
+            const isRestricted = (userRole === 'commenters' || userRole === 'viewers');
+
+            textarea.readOnly = isRestricted;
+            bubbleInput.disabled = isRestricted;
+            document.getElementById('add-bubble-btn').disabled = isRestricted;
+            document.getElementById('rename-btn').style.display = (userRole === 'owner') ? 'block' : 'none';
+            document.getElementById('role-display').innerText = userRole === 'owner' ? 'Propriétaire' : (userRole === 'editors' ? 'Éditeur' : (userRole === 'commenters' ? 'Commentateur' : 'Lecteur'));
             
-            return {
-                x: spanRect.left - rect.left,
-                y: spanRect.top - rect.top - textarea.scrollTop
-            };
+            // Masquer boutons de suppression pour les lecteurs
+            const style = document.createElement('style');
+            if (isRestricted) {
+                style.innerHTML = `.bubble-controls, .timeline-block button, .delete-comment-btn { display: none !important; }`;
+            }
+            document.head.appendChild(style);
         }
 
-        textarea.addEventListener('click', handleContextSuggest);
-        textarea.addEventListener('keyup', handleContextSuggest);
-        textarea.addEventListener('scroll', () => {
-            highlightLayer.scrollTop = textarea.scrollTop;
-            suggestBtn.style.display = 'none';
-        });
+        // --- SYSTÈME DE COMMENTAIRES ---
 
-        function handleContextSuggest() {
+        textarea.addEventListener('mouseup', handleTextSelection);
+        textarea.addEventListener('keyup', handleTextSelection);
+
+        function handleTextSelection() {
             if (userRole === 'viewers') return;
-            suggestBtn.style.display = 'none';
-            clearTimeout(suggestTimer);
-            currentCaretIndex = textarea.selectionStart;
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const btn = document.getElementById('comment-btn-floating');
 
-            suggestTimer = setTimeout(() => {
-                const coords = getCaretCoordinates();
-                // Check bounds to avoid floating out of editor
-                if (coords.y > 0 && coords.y < textarea.clientHeight) {
-                    suggestBtn.style.display = 'flex';
-                    suggestBtn.style.top = (coords.y + textarea.offsetTop - 30) + "px";
-                    suggestBtn.style.left = (coords.x + textarea.offsetLeft) + "px";
-                }
-            }, 3000);
+            if (start !== end) {
+                const rect = textarea.getBoundingClientRect();
+                // Approximation de la position du curseur
+                btn.style.display = 'block';
+                btn.style.top = (rect.top - 40) + "px";
+                btn.style.left = (rect.left + 50) + "px";
+            } else {
+                btn.style.display = 'none';
+            }
         }
 
-        // --- GESTION SUGGESTIONS ---
-
-        function openSuggestionModal() {
-            if (userRole === 'viewers') return;
-            const modal = document.getElementById('suggestion-input-modal');
-            const coords = getCaretCoordinates();
-            modal.style.display = 'block';
-            modal.style.top = (coords.y + textarea.offsetTop + 20) + "px";
-            modal.style.left = (coords.x + textarea.offsetLeft) + "px";
-            document.getElementById('suggestion-text-field').focus();
-            suggestBtn.style.display = 'none';
-        }
-
-        function closeSuggestionModal() {
-            document.getElementById('suggestion-input-modal').style.display = 'none';
-            document.getElementById('suggestion-text-field').value = "";
-        }
-
-        function submitSuggestion() {
-            const val = document.getElementById('suggestion-text-field').value.trim();
-            if (val) {
-                const com = {
+        function openCommentPrompt() {
+            const suggestion = prompt("Votre suggestion / commentaire :");
+            if (suggestion) {
+                const newComment = {
                     id: "c_" + Date.now(),
-                    index: currentCaretIndex,
-                    text: val,
+                    index: textarea.selectionStart,
+                    text: suggestion,
                     author: currentUser.uid,
                     authorName: currentUser.displayName || currentUser.email
                 };
-                comments.push(com);
+                comments.push(newComment);
+                document.getElementById('comment-btn-floating').style.display = 'none';
                 autoSave();
                 process();
             }
-            closeSuggestionModal();
         }
 
         function showComment(id, event) {
@@ -520,19 +431,21 @@
             const com = comments.find(c => c.id === id);
             if (!com) return;
 
-            const popup = document.getElementById('comment-popup');
+            const tooltip = document.getElementById('comment-tooltip');
             document.getElementById('comment-author').innerText = com.authorName;
             document.getElementById('comment-text').innerText = com.text;
             
             const delBtn = document.getElementById('comment-delete-btn');
             if (userRole === 'owner' || com.author === currentUser.uid) {
                 delBtn.style.display = 'block';
-                delBtn.onclick = () => { deleteComment(id); popup.style.display = 'none'; };
-            } else { delBtn.style.display = 'none'; }
+                delBtn.onclick = () => { deleteComment(id); tooltip.style.display = 'none'; };
+            } else {
+                delBtn.style.display = 'none';
+            }
 
-            popup.style.display = 'block';
-            popup.style.top = (event.clientY - 140) + "px";
-            popup.style.left = (event.clientX - 140) + "px";
+            tooltip.style.display = 'block';
+            tooltip.style.top = (event.clientY + 10) + "px";
+            tooltip.style.left = (event.clientX + 10) + "px";
         }
 
         function deleteComment(id) {
@@ -541,12 +454,18 @@
             process();
         }
 
-        // --- BROUILLON & CHRONOLOGIE (SYNCHRO) ---
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.comment-dot') && !e.target.closest('#comment-tooltip')) {
+                document.getElementById('comment-tooltip').style.display = 'none';
+            }
+        });
+
+        // --- SYNCHRONISATION WORKFLOW (ÉTAPE 1 & 2) ---
 
         function createBubbleFromInput() {
             const text = bubbleInput.value.trim();
             if (!text || userRole === 'viewers' || userRole === 'commenters') return;
-            const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim();
+            const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#ef4444';
             const newBubble = {
                 id: "b_" + Date.now(),
                 text: text,
@@ -567,7 +486,8 @@
                 const el = document.createElement('div');
                 el.className = `bubble`;
                 el.id = b.id;
-                el.style.left = b.x + "px"; el.style.top = b.y + "px";
+                el.style.left = b.x + "px";
+                el.style.top = b.y + "px";
                 el.style.borderColor = b.color;
                 const paletteHtml = bubblePalette.map(c => `<div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor('${b.id}', '${c}')"></div>`).join('');
                 el.innerHTML = `
@@ -593,10 +513,11 @@
             let startX = e.clientX - el.offsetLeft;
             let startY = e.clientY - el.offsetTop;
             function doDrag(e) {
-                let x = e.clientX - startX; let y = e.clientY - startY;
+                let x = e.clientX - startX;
+                let y = e.clientY - startY;
                 el.style.left = x + "px"; el.style.top = y + "px";
                 const b = bubbles.find(b => b.id === id);
-                if (b) { b.x = x; b.y = y; }
+                b.x = x; b.y = y;
             }
             function stopDrag() { document.removeEventListener('mousemove', doDrag); document.removeEventListener('mouseup', stopDrag); autoSave(); }
             document.addEventListener('mousemove', doDrag); document.addEventListener('mouseup', stopDrag);
@@ -679,7 +600,19 @@
             if (!isOpen) menu.classList.add('active');
         }
 
-        // --- CORE ENGINE ---
+        function setStep(step) {
+            currentStep = step;
+            document.querySelectorAll('.wf-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`wf-tab-${step}`).classList.add('active');
+            const s1 = document.getElementById('step-1-view'), s2 = document.getElementById('step-2-view'), s3 = document.getElementById('step-3-view');
+            const mainCol = document.getElementById('main-column'), analysisCol = document.getElementById('analysis-column'), statsRow = document.getElementById('stats-row');
+            [s1, s2, s3].forEach(el => el.classList.add('hidden'));
+            if (step === 1) { s1.classList.remove('hidden'); mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12'); analysisCol.classList.add('hidden'); statsRow.classList.add('hidden'); renderDraft(); }
+            else if (step === 2) { s2.classList.remove('hidden'); mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12'); analysisCol.classList.add('hidden'); statsRow.classList.add('hidden'); renderTimeline(); }
+            else if (step === 3) { s3.classList.remove('hidden'); mainCol.classList.replace('lg:col-span-12', 'lg:col-span-8'); analysisCol.classList.remove('hidden'); statsRow.classList.remove('hidden'); process(); }
+        }
+
+        // --- ÉTAPE 3: ANALYSEUR ET RENDU ---
 
         function process() {
             if (currentStep !== 3) return;
@@ -687,11 +620,10 @@
             const showP = document.getElementById('toggle-parasites').checked;
             const showR = document.getElementById('toggle-repeats').checked;
             const showM = document.getElementById('toggle-montage').checked;
+            editorWrapper.classList.toggle('show-parasites', showP);
+            editorWrapper.classList.toggle('show-repeats', showR);
+            editorWrapper.classList.toggle('show-montage', showM);
             
-            highlightLayer.classList.toggle('show-parasites', showP);
-            highlightLayer.classList.toggle('show-repeats', showR);
-            highlightLayer.classList.toggle('show-montage', showM);
-
             let montageIndices = new Set();
             if (showM) {
                 const montageRegex = /\[.*?\]/g;
@@ -721,8 +653,8 @@
                 }
             }
 
-            const wordCount = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
             const wpm = parseInt(document.getElementById('wpm-slider').value) || 150;
+            const wordCount = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
             const totalSeconds = Math.round((wordCount / wpm) * 60);
             document.getElementById('duration-display').innerText = `${Math.floor(totalSeconds / 60)}m ${totalSeconds % 60}s`;
 
@@ -733,7 +665,7 @@
                 let fMatch; while ((fMatch = fRegex.exec(text)) !== null) { for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i); }
             }
 
-            // Map suggestions
+            // Gestion des commentaires pour le rendu
             let commentMap = {};
             comments.forEach(c => { if(!commentMap[c.index]) commentMap[c.index] = []; commentMap[c.index].push(c); });
 
@@ -756,13 +688,12 @@
                     finalHtml += `<mark class="${className}">`;
                     while (i < text.length && ((className === "montage" && montageIndices.has(i)) || (className === "focus-active" && focusIndices.has(i)) || (className === "parasite" && parasiteIndices.has(i)) || (className === "repeat" && badRepeatIndices.has(i)))) {
                         finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++;
-                        if (commentMap[i]) break; 
+                        if (commentMap[i]) break; // Sortir pour injecter le point si un com est à cet index
                     }
                     finalHtml += `</mark>`;
                 } else { finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++; }
             }
             highlightLayer.innerHTML = finalHtml + (text.endsWith('\n') ? '\n ' : '');
-            
             document.getElementById('total-parasites').innerText = totalParasites;
             document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
             document.getElementById('total-words').innerText = wordCount;
@@ -771,19 +702,32 @@
             autoSave();
         }
 
-        function setStep(step) {
-            currentStep = step;
-            document.querySelectorAll('.wf-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(`wf-tab-${step}`).classList.add('active');
-            const s1 = document.getElementById('step-1-view'), s2 = document.getElementById('step-2-view'), s3 = document.getElementById('step-3-view');
-            const mainCol = document.getElementById('main-column'), analysisCol = document.getElementById('analysis-column'), statsRow = document.getElementById('stats-row');
-            [s1, s2, s3].forEach(el => el.classList.add('hidden'));
-            if (step === 1) { s1.classList.remove('hidden'); mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12'); analysisCol.classList.add('hidden'); statsRow.classList.add('hidden'); renderDraft(); }
-            else if (step === 2) { s2.classList.remove('hidden'); mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12'); analysisCol.classList.add('hidden'); statsRow.classList.add('hidden'); renderTimeline(); }
-            else if (step === 3) { s3.classList.remove('hidden'); mainCol.classList.replace('lg:col-span-12', 'lg:col-span-8'); analysisCol.classList.remove('hidden'); statsRow.classList.remove('hidden'); process(); }
+        let saveTimeout;
+        function autoSave() {
+            if (userRole === 'viewers' || userRole === 'commenters') return;
+            if (currentUser && currentScriptId) {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    db.collection('scripts').doc(currentScriptId).update({ 
+                        bubbles: bubbles,
+                        content: textarea.value, 
+                        comments: comments,
+                        ignoredWords: Array.from(ignoredRepeats), 
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
+                    })
+                    .then(() => { const s = document.getElementById('save-status'); s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 1000); });
+                }, 800);
+            }
         }
 
-        // --- FIREBASE SYNC ---
+        function updateSidebars(pCounts, rCounts) {
+            const pList = document.getElementById('word-list'); const rList = document.getElementById('repeat-list');
+            pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="sidebar-item flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span>${w}</span><span style="color: var(--accent-color);">${c}</span></li>`).join('') || 'RAS';
+            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li class="sidebar-item flex justify-between items-center uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="flex-1 truncate">${w}</span><div class="flex items-center gap-2"><span class="text-amber-500">${c+1}x</span><button onclick="ignoreWord('${w}')" class="ignore-btn">✕</button></div></li>`).join('') || 'RAS';
+            if (ignoredRepeats.size > 0) { document.getElementById('ignored-section').classList.remove('hidden'); document.getElementById('ignored-list').innerHTML = Array.from(ignoredRepeats).map(w => `<li onclick="unignoreWord('${w}')" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer">#${w}</li>`).join(''); } else document.getElementById('ignored-section').classList.add('hidden');
+        }
+
+        // --- FIREBASE SYNC & AUTH ---
 
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
@@ -791,6 +735,7 @@
                 document.getElementById('auth-btn-text').innerText = "Déconnexion";
                 document.getElementById('user-display').innerText = user.displayName || user.email;
                 document.getElementById('share-btn').style.display = 'flex';
+                document.getElementById('shared-scripts-container').classList.remove('hidden');
                 document.getElementById('projects-nav').classList.remove('hidden');
                 const urlParams = new URLSearchParams(window.location.search);
                 const inviteToken = urlParams.get('invite');
@@ -799,7 +744,7 @@
                 listenToSharedScripts();
             } else {
                 currentScriptId = null;
-                document.getElementById('auth-btn-text').innerText = "Connexion";
+                document.getElementById('auth-btn-text').innerText = "Se connecter";
                 document.getElementById('user-display').innerText = "Mode Local";
                 setStep(1);
             }
@@ -827,6 +772,7 @@
                 if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) { bubbles = data.bubbles || []; currentStep === 1 ? renderDraft() : renderTimeline(); }
                 comments = data.comments || [];
                 
+                // Calcul du rôle
                 if (data.owner === currentUser.uid) userRole = 'owner';
                 else if (data.editors?.includes(currentUser.email)) userRole = 'editors';
                 else if (data.commenters?.includes(currentUser.email)) userRole = 'commenters';
@@ -841,14 +787,6 @@
             });
         }
 
-        function applyRoleSecurity() {
-            const isRestricted = (userRole === 'viewers' || userRole === 'commenters');
-            textarea.readOnly = isRestricted;
-            bubbleInput.disabled = isRestricted;
-            document.getElementById('add-bubble-btn').disabled = isRestricted;
-            document.getElementById('role-display').innerText = userRole === 'owner' ? 'Propriétaire' : (userRole === 'editors' ? 'Éditeur' : (userRole === 'commenters' ? 'Commentateur' : 'Lecteur'));
-        }
-
         function listenToSharedScripts() {
             const email = currentUser.email;
             db.collection('scripts').where('editors', 'array-contains', email).onSnapshot(syncSharedTabs);
@@ -858,6 +796,7 @@
 
         function syncSharedTabs(snap) {
             const tabsContainer = document.getElementById('tabs-container');
+            const sharedList = document.getElementById('shared-list');
             snap.forEach(doc => {
                 const data = doc.data();
                 const tabId = `p-tab-shared-${doc.id}`;
@@ -875,29 +814,11 @@
             loadScript(id);
         }
 
-        let saveTimeout;
-        function autoSave() {
-            if (userRole === 'viewers' || userRole === 'commenters') return;
-            if (currentUser && currentScriptId) {
-                clearTimeout(saveTimeout);
-                saveTimeout = setTimeout(() => {
-                    db.collection('scripts').doc(currentScriptId).update({ 
-                        bubbles: bubbles,
-                        content: textarea.value, 
-                        comments: comments,
-                        ignoredWords: Array.from(ignoredRepeats), 
-                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
-                    })
-                    .then(() => { const s = document.getElementById('save-status'); s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 1000); });
-                }, 800);
-            }
-        }
-
         async function generateInviteLink() {
             const role = document.getElementById('share-role').value;
             const inviteRef = await db.collection('invites').add({ scriptId: currentScriptId, role: role, createdBy: currentUser.email, used: false, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
             const inviteURL = `${window.location.origin}${window.location.pathname}?invite=${inviteRef.id}`;
-            await navigator.clipboard.writeText(inviteURL); alert("Lien copié !"); toggleShareModal();
+            await navigator.clipboard.writeText(inviteURL); alert("Lien d'invitation copié !"); toggleShareModal();
         }
 
         async function consumeInvite(tokenId) {
@@ -906,15 +827,8 @@
                 const data = doc.data();
                 await db.collection('scripts').doc(data.scriptId).update({ [data.role]: firebase.firestore.FieldValue.arrayUnion(currentUser.email) });
                 await db.collection('invites').doc(tokenId).update({ used: true, usedBy: currentUser.email });
-                alert("Accès autorisé !");
+                alert("Accès accordé !");
             }
-        }
-
-        function updateSidebars(pCounts, rCounts) {
-            const pList = document.getElementById('word-list'); const rList = document.getElementById('repeat-list');
-            pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="sidebar-item flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span>${w}</span><span style="color: var(--accent-color);">${c}</span></li>`).join('') || 'RAS';
-            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li class="sidebar-item flex justify-between items-center uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="flex-1 truncate">${w}</span><div class="flex items-center gap-2"><span class="text-amber-500">${c+1}x</span><button onclick="ignoreWord('${w}')" class="ignore-btn">✕</button></div></li>`).join('') || 'RAS';
-            if (ignoredRepeats.size > 0) { document.getElementById('ignored-section').classList.remove('hidden'); document.getElementById('ignored-list').innerHTML = Array.from(ignoredRepeats).map(w => `<li onclick="unignoreWord('${w}')" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer">#${w}</li>`).join(''); } else document.getElementById('ignored-section').classList.add('hidden');
         }
 
         function updateCollaboratorsUI(data) {
@@ -949,6 +863,7 @@
                 document.getElementById('theme-picker').appendChild(b);
             });
             textarea.addEventListener('input', process);
+            textarea.addEventListener('scroll', () => highlightLayer.scrollTop = textarea.scrollTop);
             setStep(1);
         };
     </script>
