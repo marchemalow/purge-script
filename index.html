@@ -25,11 +25,54 @@
             background-color: #0f172a; 
             color: #f1f5f9; 
             margin: 0;
+            overflow-x: hidden;
         } 
         
         h1, h1 span { color: #ffffff !important; }
         .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.6; }
         
+        /* Step 1: Canvas Styles */
+        #canvas-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            background-color: #0f172a;
+            background-image: radial-gradient(#1e293b 1px, transparent 1px);
+            background-size: 30px 30px;
+            overflow: hidden;
+            border-radius: 2rem;
+            border: 1px solid #334155;
+        }
+
+        .bubble {
+            position: absolute;
+            min-width: 180px;
+            max-width: 300px;
+            padding: 1rem;
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 1.25rem;
+            cursor: grab;
+            user-select: none;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            transition: border-color 0.2s, transform 0.1s;
+            z-index: 10;
+        }
+
+        .bubble:active { cursor: grabbing; transform: scale(1.02); }
+        .bubble.nested { border-color: var(--accent-color); margin-left: 20px; margin-top: 10px; position: relative !important; top: 0 !important; left: 0 !important; box-shadow: none; }
+        .bubble-group {
+            position: absolute;
+            padding: 10px;
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px dashed #475569;
+            border-radius: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 5;
+        }
+
         .editor-container { 
             position: relative; 
             min-height: 500px; 
@@ -169,11 +212,24 @@
                     </button>
                 </div>
 
-                <div id="step-1-view" class="space-y-4">
-                    <div class="bg-card p-8 rounded-[2rem] shadow-lg">
-                        <h2 class="text-xl font-bold mb-4 flex items-center gap-2"><span style="color: var(--accent-color);">#</span> Brouillon & Idées</h2>
-                        <textarea id="draft-area" class="w-full h-[500px] bg-slate-900/50 border border-slate-700 rounded-2xl p-6 editor-font outline-none focus:border-indigo-500 transition text-slate-300" placeholder="Jetez vos idées ici..."></textarea>
+                <!-- NEW STEP 1 VIEW -->
+                <div id="step-1-view" class="space-y-4 relative">
+                    <div id="canvas-container" class="shadow-2xl">
+                        <!-- Les bulles apparaîtront ici -->
                     </div>
+                    
+                    <div class="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-xl px-4">
+                        <div class="bg-slate-800/90 backdrop-blur-md p-2 rounded-3xl border border-slate-700 shadow-2xl flex gap-3 items-center">
+                            <input type="text" id="bubble-input" class="flex-1 bg-transparent border-none outline-none px-6 py-3 text-white placeholder-slate-500 font-medium" placeholder="Écrivez une idée et tapez Entrée...">
+                            <button onclick="createBubbleFromInput()" class="bg-indigo-500 text-white p-3 rounded-2xl hover:bg-indigo-600 transition" style="background-color: var(--accent-color);">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button onclick="syncBubblesToTimeline()" class="absolute top-6 right-6 bg-slate-800 text-[10px] font-bold uppercase tracking-widest text-slate-300 px-4 py-2 rounded-xl border border-slate-700 hover:bg-slate-700 transition">
+                        Synchroniser Chrono →
+                    </button>
                 </div>
 
                 <div id="step-2-view" class="hidden space-y-4">
@@ -242,11 +298,13 @@
 
         let activeFocusWord = null; let currentUser = null; let currentScriptId = null; let userRole = 'owner'; 
         let ignoredRepeats = new Set(); let scriptListener = null; let currentStep = 1; let timelineSteps = [];
+        let bubbles = []; // Array of { id, text, x, y, parentId }
 
         const textarea = document.getElementById('textarea');
-        const draftArea = document.getElementById('draft-area');
         const highlightLayer = document.getElementById('highlight-layer');
         const editorWrapper = document.getElementById('editor-wrapper');
+        const canvas = document.getElementById('canvas-container');
+        const bubbleInput = document.getElementById('bubble-input');
 
         function updateWpmDisplay(v) { document.getElementById('wpm-value').innerText = v; }
         function handleAuth() { if (currentUser) auth.signOut(); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
@@ -264,6 +322,169 @@
             if (step === 3) { mainCol.classList.replace('lg:col-span-12', 'lg:col-span-8'); analysisCol.classList.remove('hidden'); statsRow.classList.remove('hidden'); process(); }
             else { mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12'); analysisCol.classList.add('hidden'); statsRow.classList.add('hidden'); }
         }
+
+        // --- BUBBLE SYSTEM LOGIC ---
+
+        bubbleInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') createBubbleFromInput();
+        });
+
+        function createBubbleFromInput() {
+            const text = bubbleInput.value.trim();
+            if (!text) return;
+            
+            const newBubble = {
+                id: Date.now().toString(),
+                text: text,
+                x: Math.random() * (canvas.clientWidth - 200) + 50,
+                y: Math.random() * (canvas.clientHeight - 100) + 50,
+                parentId: null
+            };
+            
+            bubbles.push(newBubble);
+            bubbleInput.value = "";
+            renderBubbles();
+            autoSave();
+        }
+
+        function renderBubbles() {
+            canvas.innerHTML = "";
+            
+            // Create groups first
+            const parents = bubbles.filter(b => !b.parentId);
+            
+            parents.forEach(p => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = "bubble-group";
+                groupDiv.style.left = p.x + "px";
+                groupDiv.style.top = p.y + "px";
+                groupDiv.dataset.id = p.id;
+
+                // Render parent
+                const pEl = createBubbleElement(p);
+                groupDiv.appendChild(pEl);
+
+                // Render children
+                const children = bubbles.filter(b => b.parentId === p.id);
+                children.forEach(c => {
+                    const cEl = createBubbleElement(c, true);
+                    groupDiv.appendChild(cEl);
+                });
+
+                canvas.appendChild(groupDiv);
+                makeDraggable(groupDiv, p.id);
+            });
+        }
+
+        function createBubbleElement(b, isNested = false) {
+            const el = document.createElement('div');
+            el.className = `bubble ${isNested ? 'nested' : ''}`;
+            el.innerHTML = `
+                <div class="text-xs font-bold text-slate-300 break-words">${b.text}</div>
+                <button onclick="deleteBubble('${b.id}')" class="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full text-[10px] hidden group-hover:flex items-center justify-center">✕</button>
+            `;
+            el.classList.add('group');
+            return el;
+        }
+
+        function deleteBubble(id) {
+            bubbles = bubbles.filter(b => b.id !== id && b.parentId !== id);
+            renderBubbles();
+            autoSave();
+        }
+
+        function makeDraggable(el, bubbleId) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            el.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                if (e.target.tagName === 'BUTTON') return;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+                el.style.zIndex = 1000;
+            }
+
+            function elementDrag(e) {
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                
+                const newY = el.offsetTop - pos2;
+                const newX = el.offsetLeft - pos1;
+                
+                el.style.top = newY + "px";
+                el.style.left = newX + "px";
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+                el.style.zIndex = 5;
+
+                // Update data
+                const bIdx = bubbles.findIndex(b => b.id === bubbleId);
+                if (bIdx > -1) {
+                    bubbles[bIdx].x = parseInt(el.style.left);
+                    bubbles[bIdx].y = parseInt(el.style.top);
+                }
+
+                // Collision Check for nesting
+                checkCollisions(el, bubbleId);
+                autoSave();
+            }
+        }
+
+        function checkCollisions(draggedEl, draggedId) {
+            const rect1 = draggedEl.getBoundingClientRect();
+            const groups = document.querySelectorAll('.bubble-group');
+            
+            groups.forEach(targetGroup => {
+                const targetId = targetGroup.dataset.id;
+                if (targetId === draggedId) return;
+
+                const rect2 = targetGroup.getBoundingClientRect();
+                const overlap = !(rect1.right < rect2.left || rect1.left > rect2.right || rect1.bottom < rect2.top || rect1.top > rect2.bottom);
+
+                if (overlap) {
+                    // Nest dragged bubble into target bubble
+                    const bIdx = bubbles.findIndex(b => b.id === draggedId);
+                    bubbles[bIdx].parentId = targetId;
+                    
+                    // Also move all children of the dragged one to the new parent
+                    bubbles.forEach(b => {
+                        if (b.parentId === draggedId) b.parentId = targetId;
+                    });
+                    
+                    renderBubbles();
+                }
+            });
+        }
+
+        function syncBubblesToTimeline() {
+            // Logic: Order groups by Y position, then children inside
+            const parents = bubbles.filter(b => !b.parentId).sort((a,b) => a.y - b.y);
+            const newTimeline = [];
+
+            parents.forEach(p => {
+                newTimeline.push({ text: p.text, color: "" });
+                const children = bubbles.filter(b => b.parentId === p.id);
+                children.forEach(c => {
+                    newTimeline.push({ text: c.text, color: "" });
+                });
+            });
+
+            timelineSteps = newTimeline;
+            renderTimeline();
+            setStep(2);
+            autoSave();
+        }
+
+        // --- END BUBBLE LOGIC ---
 
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
@@ -284,7 +505,8 @@
                 document.getElementById('user-display').innerText = "Mode Local";
                 document.getElementById('share-btn').style.display = 'none';
                 textarea.value = localStorage.getItem('purge-content') || "";
-                draftArea.value = localStorage.getItem('purge-draft') || "";
+                bubbles = JSON.parse(localStorage.getItem('purge-bubbles')) || [];
+                renderBubbles();
                 process();
             }
         });
@@ -302,18 +524,20 @@
             scriptListener = db.collection('scripts').doc(id).onSnapshot(doc => {
                 if (!doc.exists) {
                     if (id.startsWith(currentUser.uid)) { 
-                        db.collection('scripts').doc(id).set({ content: "", draftContent: "", timeline: [], title: `Projet ${id.split('_')[1]}`, owner: currentUser.uid, ownerEmail: currentUser.email, editors: [], viewers: [], ignoredWords: [], lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }); 
+                        db.collection('scripts').doc(id).set({ content: "", bubbles: [], timeline: [], title: `Projet ${id.split('_')[1]}`, owner: currentUser.uid, ownerEmail: currentUser.email, editors: [], viewers: [], ignoredWords: [], lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }); 
                     }
                     return;
                 }
                 const data = doc.data();
-                if (data.draftContent !== draftArea.value && document.activeElement !== draftArea) draftArea.value = data.draftContent || "";
+                if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) {
+                    bubbles = data.bubbles || [];
+                    renderBubbles();
+                }
                 if (data.content !== textarea.value && document.activeElement !== textarea) textarea.value = data.content || "";
                 timelineSteps = data.timeline || [];
                 renderTimeline();
                 userRole = data.owner === currentUser.uid ? 'owner' : (data.editors?.includes(currentUser.email) ? 'editor' : 'viewer');
                 textarea.readOnly = (userRole === 'viewer');
-                draftArea.readOnly = (userRole === 'viewer');
                 document.getElementById('rename-btn').style.display = (userRole === 'owner') ? 'block' : 'none';
                 
                 const slotMatch = id.match(/_([1-4])$/); 
@@ -515,10 +739,19 @@
             if (currentUser && currentScriptId) {
                 clearTimeout(saveTimeout);
                 saveTimeout = setTimeout(() => {
-                    db.collection('scripts').doc(currentScriptId).update({ draftContent: draftArea.value, timeline: timelineSteps, content: textarea.value, ignoredWords: Array.from(ignoredRepeats), lastUpdated: firebase.firestore.FieldValue.serverTimestamp() })
+                    db.collection('scripts').doc(currentScriptId).update({ 
+                        bubbles: bubbles, 
+                        timeline: timelineSteps, 
+                        content: textarea.value, 
+                        ignoredWords: Array.from(ignoredRepeats), 
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
+                    })
                     .then(() => { const s = document.getElementById('save-status'); s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 1000); });
                 }, 800);
-            } else { localStorage.setItem('purge-content', textarea.value); localStorage.setItem('purge-draft', draftArea.value); }
+            } else { 
+                localStorage.setItem('purge-content', textarea.value); 
+                localStorage.setItem('purge-bubbles', JSON.stringify(bubbles)); 
+            }
         }
 
         function updateSidebars(pCounts, rCounts) {
@@ -580,14 +813,14 @@
                     document.documentElement.style.setProperty('--accent-soft', t + '26');
                     renderTimeline(); 
                     process(); 
+                    renderBubbles();
                 };
                 document.getElementById('theme-picker').appendChild(b);
             });
             textarea.addEventListener('input', process);
-            draftArea.addEventListener('input', autoSave);
             textarea.addEventListener('scroll', () => highlightLayer.scrollTop = textarea.scrollTop);
             setStep(1);
         };
     </script>
 </body>
-</html>```
+</html>
