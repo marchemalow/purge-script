@@ -215,8 +215,8 @@
                         <option value="editors">Éditeur (Peut modifier)</option>
                         <option value="viewers">Lecteur (Lecture seule)</option>
                     </select>
-                    <button id="gen-link-btn" onclick="generateInviteLink()" class="w-full py-4 rounded-2xl font-bold text-sm transition text-white shadow-lg" style="background-color: var(--accent-color);">
-                        Générer et copier le lien
+                    <button id="gen-link-btn" onclick="generateInviteLink()" class="w-full py-4 rounded-2xl font-bold text-sm transition text-white shadow-lg flex items-center justify-center gap-2" style="background-color: var(--accent-color);">
+                        <span id="gen-btn-text">Générer et copier le lien</span>
                     </button>
                 </div>
             </div>
@@ -759,18 +759,58 @@
         async function generateInviteLink() {
             if (!currentUser) return alert("Connectez-vous pour générer un lien d'invitation.");
             if (!currentScriptId) return alert("Aucun projet sélectionné.");
+            
             const btn = document.getElementById('gen-link-btn');
+            const btnText = document.getElementById('gen-btn-text');
             const role = document.getElementById('share-role').value;
+            
             try {
-                const inviteRef = await db.collection('invites').add({ scriptId: currentScriptId, role: role, createdBy: currentUser.email, used: false, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-                const inviteURL = `${window.location.origin}${window.location.pathname}?invite=${inviteRef.id}`;
-                await navigator.clipboard.writeText(inviteURL);
+                const inviteRef = await db.collection('invites').add({ 
+                    scriptId: currentScriptId, 
+                    role: role, 
+                    createdBy: currentUser.email, 
+                    used: false, 
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp() 
+                });
                 
-                const oldText = btn.innerText;
-                btn.innerText = "Lien copié !";
-                btn.style.backgroundColor = "#22c55e"; 
-                setTimeout(() => { btn.innerText = oldText; btn.style.backgroundColor = "var(--accent-color)"; }, 2000);
-            } catch (e) { alert("Erreur de génération."); }
+                const inviteURL = `${window.location.origin}${window.location.pathname}?invite=${inviteRef.id}`;
+                
+                // --- Robust Copy to Clipboard ---
+                let copySuccess = false;
+                try {
+                    await navigator.clipboard.writeText(inviteURL);
+                    copySuccess = true;
+                } catch (err) {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = inviteURL;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        copySuccess = true;
+                    } catch (e) {}
+                    document.body.removeChild(textArea);
+                }
+
+                if (copySuccess) {
+                    const oldText = btnText.innerText;
+                    const oldBg = btn.style.backgroundColor;
+                    
+                    btnText.innerText = "Lien copié ! ✓";
+                    btn.style.backgroundColor = "#22c55e"; // Vert
+                    
+                    setTimeout(() => { 
+                        btnText.innerText = oldText; 
+                        btn.style.backgroundColor = oldBg || "var(--accent-color)"; 
+                    }, 2500);
+                } else {
+                    alert("Lien généré mais la copie automatique a échoué : " + inviteURL);
+                }
+
+            } catch (e) { 
+                alert("Erreur de génération."); 
+                console.error(e);
+            }
         }
 
         async function consumeInvite(tokenId) {
