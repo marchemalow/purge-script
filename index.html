@@ -62,7 +62,8 @@
         .sidebar-item { cursor: pointer; transition: all 0.2s; }
         .sidebar-item:hover { background-color: rgba(255,255,255,0.05); }
         
-        .bg-card { background-color: #1e293b; border: 1px solid #334155; border-left: 4px solid var(--accent-color); }
+        /* Blocs avec bande épaisse (Draft, Editor settings, etc.) */
+        .bg-card { background-color: #1e293b; border: 1px solid #334155; border-left: 10px solid var(--accent-color); }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -85,7 +86,7 @@
         .wf-step-num { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid currentColor; margin-right: 8px; font-size: 10px; }
         .wf-tab.active .wf-step-num { background: var(--accent-color); border-color: var(--accent-color); color: white; }
 
-        .timeline-block { border-left-width: 4px; transition: border-color 0.3s; }
+        .timeline-block { border-left-width: 10px; transition: border-color 0.3s; }
     </style>
 </head>
 <body class="antialiased">
@@ -133,24 +134,25 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
+            <!-- ETAPE 3 STATS : Bordures retirées -->
             <div id="stats-row" class="lg:col-span-12 hidden grid grid-cols-5 gap-3">
-                <div class="bg-card p-4 rounded-2xl border shadow-sm">
+                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
                     <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Tics</p>
                     <p id="total-parasites" class="text-lg font-extrabold" style="color: var(--accent-color);">0</p>
                 </div>
-                <div class="bg-card p-4 rounded-2xl border shadow-sm">
+                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
                     <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Répétitions</p>
                     <p id="total-repeats" class="text-lg font-extrabold text-amber-500">0</p>
                 </div>
-                <div class="bg-card p-4 rounded-2xl border shadow-sm">
+                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
                     <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Mots</p>
                     <p id="total-words" class="text-lg font-extrabold">0</p>
                 </div>
-                <div class="bg-card p-4 rounded-2xl border shadow-sm">
+                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
                     <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Durée</p>
                     <p id="duration-display" class="text-lg font-extrabold" style="color: var(--accent-color);">0s</p>
                 </div>
-                <div class="bg-card p-4 rounded-2xl border shadow-sm overflow-hidden">
+                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm overflow-hidden">
                     <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Focus</p>
                     <p id="focus-display" class="text-sm font-extrabold text-slate-400 truncate">Aucun</p>
                 </div>
@@ -169,6 +171,7 @@
                     </button>
                 </div>
 
+                <!-- ETAPE 1 -->
                 <div id="step-1-view" class="space-y-4">
                     <div class="bg-card p-8 rounded-[2rem] shadow-lg">
                         <h2 class="text-xl font-bold mb-4 flex items-center gap-2"><span style="color: var(--accent-color);">#</span> Brouillon & Idées</h2>
@@ -176,6 +179,7 @@
                     </div>
                 </div>
 
+                <!-- ETAPE 2 -->
                 <div id="step-2-view" class="hidden space-y-4">
                     <div class="bg-card p-8 rounded-[2rem] shadow-lg">
                         <div class="flex justify-between items-center mb-8">
@@ -186,6 +190,7 @@
                     </div>
                 </div>
 
+                <!-- ETAPE 3 -->
                 <div id="step-3-view" class="hidden space-y-4">
                     <div class="bg-card p-4 rounded-2xl border flex flex-wrap items-center gap-6 text-[10px] font-bold uppercase">
                         <div class="flex items-center gap-4 flex-1">
@@ -291,17 +296,9 @@
 
         async function switchProject(index) {
             if (!currentUser) return;
-            // On désactive tous les onglets (locaux + dynamiques partagés)
-            document.querySelectorAll('.project-tab').forEach(t => { 
-                t.classList.remove('active'); 
-                t.style.backgroundColor = "transparent"; 
-            });
+            document.querySelectorAll('.project-tab').forEach(t => { t.classList.remove('active'); t.style.backgroundColor = "transparent"; });
             const activeTab = document.getElementById(`p-tab-${index}`);
-            if(activeTab) { 
-                activeTab.classList.add('active'); 
-                activeTab.style.backgroundColor = "var(--accent-color)"; 
-                loadScript(`${currentUser.uid}_${index}`); 
-            }
+            if(activeTab) { activeTab.classList.add('active'); activeTab.style.backgroundColor = "var(--accent-color)"; loadScript(`${currentUser.uid}_${index}`); }
         }
 
         function loadScript(id) {
@@ -324,7 +321,6 @@
                 draftArea.readOnly = (userRole === 'viewer');
                 document.getElementById('rename-btn').style.display = (userRole === 'owner') ? 'block' : 'none';
                 
-                // Update Tab Title if local
                 const slotMatch = id.match(/_([1-4])$/); 
                 if (slotMatch && userRole === 'owner') {
                     const tab = document.getElementById(`p-tab-${slotMatch[1]}`);
@@ -345,20 +341,15 @@
         function syncSharedTabs(snap) {
             const tabsContainer = document.getElementById('tabs-container');
             const sharedList = document.getElementById('shared-list');
-            sharedList.innerHTML = ""; // Update sidebar hidden list too
-
+            sharedList.innerHTML = "";
             snap.forEach(doc => {
                 const data = doc.data();
                 const tabId = `p-tab-shared-${doc.id}`;
-                
-                // Add to sidebar
                 const li = document.createElement('li');
                 li.className = `p-3 bg-slate-800/50 border border-slate-700 rounded-xl cursor-pointer hover:bg-indigo-900/40 transition flex justify-between items-center mb-2`;
                 li.innerHTML = `<span class="truncate text-[10px] font-bold uppercase">${data.title}</span>`;
                 li.onclick = () => openSharedProject(doc.id);
                 sharedList.appendChild(li);
-
-                // Check if tab already exists in main nav
                 if (!document.getElementById(tabId)) {
                     const btn = document.createElement('button');
                     btn.id = tabId;
@@ -373,15 +364,9 @@
         }
 
         function openSharedProject(id) {
-            document.querySelectorAll('.project-tab').forEach(t => { 
-                t.classList.remove('active'); 
-                t.style.backgroundColor = "transparent"; 
-            });
+            document.querySelectorAll('.project-tab').forEach(t => { t.classList.remove('active'); t.style.backgroundColor = "transparent"; });
             const tab = document.getElementById(`p-tab-shared-${id}`);
-            if (tab) {
-                tab.classList.add('active');
-                tab.style.backgroundColor = "var(--accent-color)";
-            }
+            if (tab) { tab.classList.add('active'); tab.style.backgroundColor = "var(--accent-color)"; }
             loadScript(id);
         }
 
