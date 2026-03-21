@@ -173,7 +173,7 @@
 
                 <div id="step-1-view" class="space-y-4">
                     <div class="bg-card p-8 rounded-[2rem] shadow-lg">
-                        <h2 class="text-xl font-bold mb-4 flex items-center gap-2"><span style="color: var(--accent-color);">#</span> Brouillon & Idées</h2>
+                        <h2 class="textxl font-bold mb-4 flex items-center gap-2"><span style="color: var(--accent-color);">#</span> Brouillon & Idées</h2>
                         <textarea id="draft-area" class="w-full h-[500px] bg-slate-900/50 border border-slate-700 rounded-2xl p-6 editor-font outline-none focus:border-indigo-500 transition text-slate-300" placeholder="Jetez vos idées ici..."></textarea>
                     </div>
                 </div>
@@ -381,6 +381,14 @@
             autoSave();
         }
 
+        function toggleBlockColorMenu(index) {
+            const menu = document.getElementById(`color-menu-${index}`);
+            const isHidden = menu.classList.contains('hidden');
+            // On ferme tous les autres menus d'abord
+            document.querySelectorAll('.timeline-color-menu').forEach(m => m.classList.add('hidden'));
+            if(isHidden) menu.classList.remove('hidden');
+        }
+
         function setBlockColor(index, color) {
             if (userRole === 'viewer') return;
             timelineSteps[index].color = color;
@@ -407,14 +415,14 @@
         function renderTimeline() {
             const container = document.getElementById('timeline-container');
             container.innerHTML = "";
-            const colors = ["", "#ef4444", "#f97316", "#eab308", "#84cc16", "#22c55e", "#10b981", "#06b6d4", "#3b82f6", "#6366f1", "#8b5cf6", "#d946ef", "#ec4899", "#f43f5e", "#94a3b8"];
+            const themes = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#10b981', '#06b6d4', '#2563eb', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e'];
             
             timelineSteps.forEach((step, i) => {
-                const colorOptions = colors.map(c => `<button onclick="setBlockColor(${i}, '${c}')" class="w-3.5 h-3.5 rounded-full border border-white/10 hover:scale-125 transition" style="background-color: ${c || '#334155'}"></button>`).join('');
+                const colorOptions = themes.map(c => `<button onclick="setBlockColor(${i}, '${c}')" class="w-4 h-4 rounded-full border border-white/20 hover:scale-125 transition shrink-0" style="background-color: ${c}"></button>`).join('');
                 
                 const div = document.createElement('div');
                 const blockColor = step.color || 'var(--accent-color)';
-                div.className = "flex gap-3 bg-slate-800/50 p-3 rounded-2xl border border-slate-700 items-start group timeline-block";
+                div.className = "flex gap-3 bg-slate-800/50 p-3 rounded-2xl border border-slate-700 items-start group timeline-block relative";
                 div.style.borderLeftColor = blockColor;
                 div.innerHTML = `
                     <div class="flex flex-col gap-1">
@@ -423,9 +431,9 @@
                     </div>
                     <textarea oninput="updateTimelineText(${i}, this.value)" class="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 py-1 resize-none" rows="1" placeholder="Action ou séquence...">${step.text}</textarea>
                     <div class="flex gap-2 items-center">
-                        <div class="relative group/color">
-                            <button class="p-2 text-slate-500 hover:text-white transition">🎨</button>
-                            <div class="absolute bottom-full right-0 mb-2 bg-slate-900 border border-slate-700 p-2 rounded-xl grid grid-cols-5 gap-1.5 shadow-2xl scale-0 group-hover/color:scale-100 origin-bottom-right transition-all duration-200 z-10">
+                        <div class="relative">
+                            <button onclick="toggleBlockColorMenu(${i})" class="p-2 text-slate-500 hover:text-white transition">🎨</button>
+                            <div id="color-menu-${i}" class="timeline-color-menu absolute right-full top-1/2 -translate-y-1/2 mr-3 bg-slate-900 border border-slate-700 p-3 rounded-2xl shadow-2xl flex flex-wrap gap-1.5 max-w-[130px] hidden z-20">
                                 ${colorOptions}
                             </div>
                         </div>
@@ -586,4 +594,4 @@
         };
     </script>
 </body>
-</html>```
+</html>
