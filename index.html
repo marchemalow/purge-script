@@ -31,50 +31,70 @@
         h1, h1 span { color: #ffffff !important; }
         .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.6; }
         
+        /* Canvas & Bubbles Styles */
         #canvas-container {
             position: relative;
             width: 100%;
             height: 700px;
             background-color: #0f172a;
-            background-image: radial-gradient(#1e293b 1px, transparent 1px);
-            background-size: 30px 30px;
+            background-image: 
+                radial-gradient(circle at 2px 2px, #1e293b 1px, transparent 0);
+            background-size: 40px 40px;
             overflow: hidden;
             border-radius: 2rem;
             border: 1px solid #334155;
+            touch-action: none;
+        }
+
+        #connection-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
         }
 
         .bubble {
             position: absolute;
             min-width: 160px;
-            max-width: 250px;
-            padding: 0.8rem;
+            max-width: 280px;
+            padding: 1.25rem;
             background: #1e293b;
             border: 2px solid #334155;
-            border-radius: 1rem;
+            border-radius: 1.5rem;
             cursor: grab;
             user-select: none;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
             z-index: 10;
+            transition: transform 0.1s, box-shadow 0.2s, border-color 0.3s;
         }
 
-        .bubble:active { cursor: grabbing; }
+        .bubble:active { cursor: grabbing; transform: scale(1.02); }
+        .bubble.linking { border-color: #facc15 !important; box-shadow: 0 0 15px #facc15; }
         
-        .bubble-group {
-            position: absolute;
-            min-width: 220px;
-            min-height: 150px;
-            background: rgba(30, 41, 59, 0.5);
-            border: 2px dashed #475569;
-            border-radius: 1.5rem;
-            z-index: 5;
-        }
-
-        .color-dot {
+        .bubble-color-dot {
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            cursor: pointer;
+            display: inline-block;
+            margin-right: 8px;
             border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .nested-indicator {
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent-color);
+            color: white;
+            font-size: 8px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
         }
 
         .editor-container { 
@@ -122,23 +142,39 @@
         input:checked + .slider { background-color: var(--accent-color); }
         input:checked + .slider:before { transform: translateX(14px); }
 
-        #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 50; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
         .modal-content { background: #1e293b; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 400px; color: white; border: 1px solid #334155; }
+        .project-tab.active { color: white; background-color: var(--accent-color) !important; }
 
         .wf-tab { position: relative; padding: 1rem 1.5rem; cursor: pointer; color: #64748b; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; transition: all 0.3s; }
         .wf-tab.active { color: white; }
         .wf-tab.active::after { content: ""; position: absolute; bottom: 0; left: 25%; width: 50%; height: 3px; background: var(--accent-color); border-radius: 10px 10px 0 0; }
         .wf-step-num { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid currentColor; margin-right: 8px; font-size: 10px; }
+        .wf-tab.active .wf-step-num { background: var(--accent-color); border-color: var(--accent-color); color: white; }
+
+        .bubble-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid #334155;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .bubble:hover .bubble-controls { opacity: 1; }
         
-        .timeline-block { border-left-width: 16px !important; transition: border-color 0.3s; }
+        .color-dot-btn { width: 14px; height: 14px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); transition: transform 0.1s; }
+        .color-dot-btn:hover { transform: scale(1.3); }
     </style>
 </head>
 <body class="antialiased">
 
+    <!-- Modal de Partage -->
     <div id="share-modal">
         <div class="modal-content shadow-2xl">
             <h3 class="text-xl font-extrabold mb-2">Lien d'invitation</h3>
-            <p class="text-xs text-slate-400 mb-6">Générez un lien unique pour un collaborateur.</p>
+            <p class="text-xs text-slate-400 mb-6">Générez un lien unique à usage unique pour un collaborateur.</p>
+            <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Permission du lien</label>
             <select id="share-role" class="w-full p-4 rounded-xl border bg-slate-900 border-slate-700 outline-none text-white mb-8">
                 <option value="editors">Éditeur (Peut modifier)</option>
                 <option value="viewers">Lecteur (Lecture seule)</option>
@@ -175,15 +211,31 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
             <div id="stats-row" class="lg:col-span-12 hidden grid grid-cols-5 gap-3">
-                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm"><p class="text-slate-500 text-[8px] font-bold uppercase mb-1">Tics</p><p id="total-parasites" class="text-lg font-extrabold" style="color: var(--accent-color);">0</p></div>
-                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm"><p class="text-slate-500 text-[8px] font-bold uppercase mb-1">Répétitions</p><p id="total-repeats" class="text-lg font-extrabold text-amber-500">0</p></div>
-                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm"><p class="text-slate-500 text-[8px] font-bold uppercase mb-1">Mots</p><p id="total-words" class="text-lg font-extrabold">0</p></div>
-                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm"><p class="text-slate-500 text-[8px] font-bold uppercase mb-1">Durée</p><p id="duration-display" class="text-lg font-extrabold" style="color: var(--accent-color);">0s</p></div>
-                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm"><p class="text-slate-500 text-[8px] font-bold uppercase mb-1">Focus</p><p id="focus-display" class="text-sm font-extrabold text-slate-400 truncate">Aucun</p></div>
+                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
+                    <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Tics</p>
+                    <p id="total-parasites" class="text-lg font-extrabold" style="color: var(--accent-color);">0</p>
+                </div>
+                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
+                    <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Répétitions</p>
+                    <p id="total-repeats" class="text-lg font-extrabold text-amber-500">0</p>
+                </div>
+                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
+                    <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Mots</p>
+                    <p id="total-words" class="text-lg font-extrabold">0</p>
+                </div>
+                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
+                    <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Durée</p>
+                    <p id="duration-display" class="text-lg font-extrabold" style="color: var(--accent-color);">0s</p>
+                </div>
+                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm overflow-hidden">
+                    <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Focus</p>
+                    <p id="focus-display" class="text-sm font-extrabold text-slate-400 truncate">Aucun</p>
+                </div>
             </div>
 
-            <div id="main-column" class="lg:col-span-12 space-y-4">
+            <div id="main-column" class="lg:col-span-12 space-y-4 transition-all duration-500">
                 <div id="projects-nav" class="hidden flex items-center justify-between bg-card p-2 rounded-2xl border shadow-sm">
                     <div class="flex gap-2" id="tabs-container">
                         <button onclick="switchProject(1)" id="p-tab-1" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 1</button>
@@ -191,38 +243,32 @@
                         <button onclick="switchProject(3)" id="p-tab-3" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 3</button>
                         <button onclick="switchProject(4)" id="p-tab-4" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 4</button>
                     </div>
+                    <button id="rename-btn" onclick="renameCurrentProject()" class="p-2 text-slate-500 hover:text-indigo-400 transition ml-4">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    </button>
                 </div>
 
-                <!-- STEP 1: BRAINSTORMING CANVAS -->
-                <div id="step-1-view" class="space-y-4 relative">
-                    <div id="canvas-container" class="shadow-2xl"></div>
-                    <div class="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-xl px-4">
+                <!-- STEP 1 & 2 SHARED CANVAS AREA -->
+                <div id="canvas-view" class="space-y-4 relative">
+                    <div id="canvas-container" class="shadow-2xl">
+                        <svg id="connection-layer"></svg>
+                        <!-- Bulles injectées ici -->
+                    </div>
+                    
+                    <div class="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-xl px-4 z-50">
                         <div class="bg-slate-800/90 backdrop-blur-md p-2 rounded-3xl border border-slate-700 shadow-2xl flex gap-3 items-center">
-                            <input type="text" id="bubble-input" class="flex-1 bg-transparent border-none outline-none px-6 py-3 text-white placeholder-slate-500 font-medium" placeholder="Une idée ? Tapez Entrée...">
+                            <input type="text" id="bubble-input" class="flex-1 bg-transparent border-none outline-none px-6 py-3 text-white placeholder-slate-500 font-medium" placeholder="Écrivez une idée et tapez Entrée...">
                             <button onclick="createBubbleFromInput()" class="bg-indigo-500 text-white p-3 rounded-2xl hover:bg-indigo-600 transition" style="background-color: var(--accent-color);">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                             </button>
                         </div>
-                    </div>
-                    <button onclick="syncBubblesToTimeline()" class="absolute top-6 right-6 bg-indigo-500/10 text-[10px] font-bold uppercase tracking-widest text-indigo-400 px-4 py-2 rounded-xl border border-indigo-500/30 hover:bg-indigo-500 hover:text-white transition">
-                        Synchroniser Chrono →
-                    </button>
-                </div>
-
-                <!-- STEP 2: TIMELINE -->
-                <div id="step-2-view" class="hidden space-y-4">
-                    <div class="bg-card p-8 rounded-[2rem] shadow-lg">
-                        <div class="flex justify-between items-center mb-8">
-                            <h2 class="text-xl font-bold">Structure Chronologique</h2>
-                            <button onclick="addTimelineStep()" class="text-white px-4 py-2 rounded-xl text-xs font-bold transition" style="background-color: var(--accent-color);">+ Ajouter un bloc</button>
-                        </div>
-                        <div id="timeline-container" class="space-y-3"></div>
+                        <p class="text-center text-[9px] uppercase font-bold text-slate-500 mt-3 tracking-widest">Glissez une bulle sur une autre pour les grouper • Shift+Clic pour lier</p>
                     </div>
                 </div>
 
-                <!-- STEP 3: WRITING -->
+                <!-- STEP 3 VIEW (RÉDACTION) -->
                 <div id="step-3-view" class="hidden space-y-4">
-                    <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 flex flex-wrap items-center gap-6 text-[10px] font-bold uppercase">
+                    <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm flex flex-wrap items-center gap-6 text-[10px] font-bold uppercase">
                         <div class="flex items-center gap-4 flex-1">
                             <span class="text-slate-500">Débit :</span>
                             <input type="range" id="wpm-slider" min="100" max="250" value="150" class="flex-1" style="accent-color: var(--accent-color);" oninput="updateWpmDisplay(this.value); process();">
@@ -234,20 +280,26 @@
                             <div class="flex items-center gap-2"><span>Mont.</span><label class="switch"><input type="checkbox" id="toggle-montage" checked onchange="process()"><span class="slider"></span></label></div>
                         </div>
                     </div>
+
                     <div id="editor-wrapper" class="editor-container shadow-sm overflow-hidden show-parasites show-repeats show-montage">
                         <div id="highlight-layer" class="sync-text editor-font"></div>
                         <textarea id="textarea" class="sync-text editor-font" placeholder="Écrivez votre script final..." spellcheck="false"></textarea>
                     </div>
+                    
                     <div class="flex gap-4">
                         <button onclick="copyText()" class="text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition" style="background-color: var(--accent-color);">Copier</button>
+                        <button onclick="downloadText()" class="bg-slate-700 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest transition">Exporter</button>
                     </div>
                 </div>
             </div>
 
             <div id="analysis-column" class="lg:col-span-4 hidden space-y-6">
-                <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8 border border-slate-800">
+                <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8 border border-slate-800" id="analysis-card">
                     <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Tics</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px] scroll-custom"></ul></div>
                     <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Répétitions</h2><ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px] scroll-custom"></ul></div>
+                    <div id="ignored-section" class="hidden"><h2 class="text-[9px] font-bold uppercase text-red-400 mb-4">Ignorés</h2><ul id="ignored-list" class="flex flex-wrap gap-2 text-[10px]"></ul></div>
+                    <div id="collaborators-section" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-indigo-400 mb-4">Collaborateurs</h2><ul id="collaborators-list" class="space-y-2 text-[11px]"></ul></div>
+                    <div id="shared-scripts-container" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Partagés</h2><ul id="shared-list" class="space-y-2 text-[11px]"></ul></div>
                 </div>
             </div>
         </div>
@@ -266,18 +318,20 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        const parasiteDictionary = ["du coup", "en fait", "voilà", "un petit peu", "euh", "globalement", "concrètement", "effectivement", "donc", "c'est-à-dire", "au final", "disons que", "typiquement", "clairement", "tout simplement", "en gros", "pour le coup", "un peu", "voilà quoi", "tu vois", "franchement", "honnêtement", "en réalité", "pour ainsi dire", "alors", "en quelque sorte", "justement", "au niveau de", "quelque part", "on va dire", "fondamentalement", "véritablement", "pour ma part", "en soi", "entre guillemets", "si vous voulez", "de base", "sur la fin"];
+        const parasiteDictionary = ["du coup", "en fait", "voilà", "un petit peu", "euh", "globalement", "concrètement", "effectivement", "donc", "c'est-à-dire", "au final", "disons que", "typiquement", "clairement", "tout simplement", "en gros", "pour le coup", "un peu", "voilà quoi", "tu vois", "franchement", "honnêtement", "en réalité", "pour ainsi dire", "alors", "en quelque sorte", "justement", "au niveau de", "quelque part", "on va dire", "fondablement", "véritablement", "pour ma part", "en soi", "entre guillemets", "si vous voulez", "de base", "sur la fin"];
         const stopWords = ["je", "me", "moi", "tu", "te", "toi", "il", "elle", "on", "nous", "vous", "ils", "elles", "le", "la", "les", "un", "une", "des", "du", "de", "ce", "cet", "cette", "ces", "se", "soi", "lui", "leur", "y", "en", "mon", "ton", "son", "ma", "ta", "sa", "mes", "tes", "ses", "notre", "votre", "nos", "vos", "leurs", "qui", "que", "quoi", "dont", "où", "quel", "quels", "quelle", "quelles", "et", "ou", "mais", "est", "sont", "pour", "dans", "par", "avec", "pas", "ne", "si", "ici", "là", "ont", "aux", "très"];
-        const THEME_COLORS = ['#6366f1', '#ef4444', '#f97316', '#eab308', '#84cc16', '#10b981', '#06b6d4', '#2563eb', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e'];
+        const bubblePalette = ['#6366f1', '#f43f5e', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899'];
 
         let activeFocusWord = null; let currentUser = null; let currentScriptId = null; let userRole = 'owner'; 
-        let ignoredRepeats = new Set(); let scriptListener = null; let currentStep = 1; let timelineSteps = [];
-        let bubbles = []; // { id, text, x, y, parentId, color }
+        let ignoredRepeats = new Set(); let scriptListener = null; let currentStep = 1;
+        let bubbles = []; // { id, text, x, y, parentId, color, links: [] }
+        let linkingFromId = null;
 
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
         const editorWrapper = document.getElementById('editor-wrapper');
         const canvas = document.getElementById('canvas-container');
+        const svgLayer = document.getElementById('connection-layer');
         const bubbleInput = document.getElementById('bubble-input');
 
         function updateWpmDisplay(v) { document.getElementById('wpm-value').innerText = v; }
@@ -287,17 +341,31 @@
             currentStep = step;
             document.querySelectorAll('.wf-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(`wf-tab-${step}`).classList.add('active');
-            document.getElementById('step-1-view').classList.toggle('hidden', step !== 1);
-            document.getElementById('step-2-view').classList.toggle('hidden', step !== 2);
-            document.getElementById('step-3-view').classList.toggle('hidden', step !== 3);
+            
+            const canvasView = document.getElementById('canvas-view');
+            const step3View = document.getElementById('step-3-view');
             const mainCol = document.getElementById('main-column');
             const analysisCol = document.getElementById('analysis-column');
             const statsRow = document.getElementById('stats-row');
-            if (step === 3) { mainCol.classList.replace('lg:col-span-12', 'lg:col-span-8'); analysisCol.classList.remove('hidden'); statsRow.classList.remove('hidden'); process(); }
-            else { mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12'); analysisCol.classList.add('hidden'); statsRow.classList.add('hidden'); }
+
+            if (step === 3) {
+                canvasView.classList.add('hidden');
+                step3View.classList.remove('hidden');
+                mainCol.classList.replace('lg:col-span-12', 'lg:col-span-8');
+                analysisCol.classList.remove('hidden');
+                statsRow.classList.remove('hidden');
+                process();
+            } else {
+                canvasView.classList.remove('hidden');
+                step3View.classList.add('hidden');
+                mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12');
+                analysisCol.classList.add('hidden');
+                statsRow.classList.add('hidden');
+                renderBubbles(); // Refresh canvas on step 1/2
+            }
         }
 
-        // --- BUBBLE SYSTEM ---
+        // --- CORE BUBBLE SYSTEM ---
 
         bubbleInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') createBubbleFromInput(); });
 
@@ -307,10 +375,11 @@
             const newBubble = {
                 id: "b_" + Date.now(),
                 text: text,
-                x: Math.random() * (canvas.clientWidth - 200) + 50,
-                y: Math.random() * (canvas.clientHeight - 350) + 50, // SPAWN LIMIT TO AVOID INPUT AREA
+                x: 100 + Math.random() * 200,
+                y: 100 + Math.random() * 200,
                 parentId: null,
-                color: '#6366f1'
+                color: 'var(--accent-color)',
+                links: []
             };
             bubbles.push(newBubble);
             bubbleInput.value = "";
@@ -319,161 +388,154 @@
         }
 
         function renderBubbles() {
-            canvas.innerHTML = "";
-            const parents = bubbles.filter(b => !b.parentId);
+            // Clear existing but keep SVG
+            const existingBubbles = canvas.querySelectorAll('.bubble');
+            existingBubbles.forEach(b => b.remove());
             
-            parents.forEach(p => {
-                const groupDiv = document.createElement('div');
-                groupDiv.className = "bubble-group";
-                groupDiv.style.left = p.x + "px";
-                groupDiv.style.top = p.y + "px";
-                groupDiv.style.borderColor = p.color;
-                groupDiv.dataset.id = p.id;
-
-                const pEl = createBubbleUI(p);
-                groupDiv.appendChild(pEl);
-
-                const children = bubbles.filter(b => b.parentId === p.id);
-                children.forEach(c => {
-                    const cEl = createBubbleUI(c, true);
-                    groupDiv.appendChild(cEl);
-                });
-
-                canvas.appendChild(groupDiv);
-                makeDraggable(groupDiv, p.id, true);
-            });
-        }
-
-        function createBubbleUI(b, isNested = false) {
-            const el = document.createElement('div');
-            el.className = `bubble group`;
-            if (isNested) {
+            bubbles.forEach(b => {
+                const el = document.createElement('div');
+                el.className = `bubble`;
+                el.id = b.id;
                 el.style.left = b.x + "px";
                 el.style.top = b.y + "px";
-                el.style.position = "absolute";
-            }
-            
-            let colorPicker = "";
-            if (!isNested) {
-                colorPicker = `<div class="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition">
-                    ${THEME_COLORS.slice(0, 6).map(c => `<div class="color-dot" style="background:${c}" onclick="setBubbleColor('${b.id}', '${c}')"></div>`).join('')}
-                </div>`;
-            }
+                el.style.borderColor = b.color;
+                if (linkingFromId === b.id) el.classList.add('linking');
 
-            el.innerHTML = `
-                <div class="text-xs font-bold text-slate-200 break-words">${b.text}</div>
-                ${colorPicker}
-                <div class="absolute -top-2 -right-2 flex gap-1">
-                    ${isNested ? `<button onclick="detachBubble('${b.id}')" class="bg-amber-500 text-white w-6 h-6 rounded-full text-[10px] flex items-center justify-center shadow-lg" title="Détacher">🔗</button>` : ''}
-                    <button onclick="deleteBubble('${b.id}')" class="bg-red-500 text-white w-6 h-6 rounded-full text-[10px] flex items-center justify-center shadow-lg">✕</button>
-                </div>
-            `;
-            
-            if (isNested) makeDraggable(el, b.id, false);
-            return el;
-        }
+                const colorOptions = bubblePalette.map(c => 
+                    `<div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor('${b.id}', '${c}')"></div>`
+                ).join('');
 
-        function setBubbleColor(id, color) {
-            const b = bubbles.find(x => x.id === id);
-            if (b) {
-                b.color = color;
-                renderBubbles();
-                autoSave();
-            }
-        }
+                el.innerHTML = `
+                    <div class="flex items-center mb-1">
+                        <span class="bubble-color-dot" style="background:${b.color}"></span>
+                        <div class="text-[11px] font-bold text-slate-200 break-words flex-1">${b.text}</div>
+                    </div>
+                    ${b.parentId ? '<div class="nested-indicator">Groupe</div>' : ''}
+                    <div class="bubble-controls">
+                        ${colorOptions}
+                        <button onclick="deleteBubble('${b.id}')" class="ml-auto text-slate-500 hover:text-red-400">✕</button>
+                    </div>
+                `;
 
-        function deleteBubble(id) {
-            bubbles = bubbles.filter(b => b.id !== id && b.parentId !== id);
-            renderBubbles();
-            autoSave();
-        }
-
-        function detachBubble(id) {
-            const b = bubbles.find(x => x.id === id);
-            const parent = bubbles.find(p => p.id === b.parentId);
-            if (b && parent) {
-                // Convert relative to absolute
-                b.x = parent.x + b.x;
-                b.y = parent.y + b.y;
-                b.parentId = null;
-                renderBubbles();
-                autoSave();
-            }
-        }
-
-        function makeDraggable(el, bubbleId, isGroup) {
-            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-            el.onmousedown = (e) => {
-                if (e.target.closest('button') || e.target.classList.contains('color-dot')) return;
-                e.preventDefault();
-                pos3 = e.clientX; pos4 = e.clientY;
-                document.onmouseup = () => {
-                    document.onmouseup = null; document.onmousemove = null;
-                    const b = bubbles.find(x => x.id === bubbleId);
-                    if (b) {
-                        b.x = parseInt(el.style.left);
-                        b.y = parseInt(el.style.top);
+                el.addEventListener('mousedown', (e) => {
+                    if (e.shiftKey) {
+                        startLinking(b.id);
+                    } else {
+                        initDrag(e, b.id, el);
                     }
-                    if (isGroup) checkCollisions(el, bubbleId);
-                    autoSave();
-                };
-                document.onmousemove = (e) => {
-                    pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
-                    pos3 = e.clientX; pos4 = e.clientY;
-                    el.style.top = (el.offsetTop - pos2) + "px";
-                    el.style.left = (el.offsetLeft - pos1) + "px";
-                };
-            };
+                });
+
+                canvas.appendChild(el);
+            });
+            drawConnections();
         }
 
-        function checkCollisions(draggedEl, draggedId) {
-            const rect1 = draggedEl.getBoundingClientRect();
-            const groups = document.querySelectorAll('.bubble-group');
+        function initDrag(e, id, el) {
+            if (e.target.closest('button') || e.target.closest('.color-dot-btn')) return;
             
-            groups.forEach(targetGroup => {
-                const targetId = targetGroup.dataset.id;
-                if (targetId === draggedId) return;
+            const rect = canvas.getBoundingClientRect();
+            let startX = e.clientX - el.offsetLeft;
+            let startY = e.clientY - el.offsetTop;
 
-                const rect2 = targetGroup.getBoundingClientRect();
+            function doDrag(e) {
+                let x = e.clientX - startX;
+                let y = e.clientY - startY;
+
+                // Bounds
+                x = Math.max(0, Math.min(x, canvas.clientWidth - el.offsetWidth));
+                y = Math.max(0, Math.min(y, canvas.clientHeight - el.offsetHeight));
+
+                el.style.left = x + "px";
+                el.style.top = y + "px";
+                
+                // Live update data for lines
+                const b = bubbles.find(b => b.id === id);
+                b.x = x; b.y = y;
+                drawConnections();
+            }
+
+            function stopDrag() {
+                document.removeEventListener('mousemove', doDrag);
+                document.removeEventListener('mouseup', stopDrag);
+                checkNesting(id, el);
+                autoSave();
+            }
+
+            document.addEventListener('mousemove', doDrag);
+            document.addEventListener('mouseup', stopDrag);
+        }
+
+        function checkNesting(draggedId, el) {
+            const rect1 = el.getBoundingClientRect();
+            let foundParent = null;
+
+            bubbles.forEach(other => {
+                if (other.id === draggedId) return;
+                const otherEl = document.getElementById(other.id);
+                if (!otherEl) return;
+                const rect2 = otherEl.getBoundingClientRect();
+
                 const overlap = !(rect1.right < rect2.left || rect1.left > rect2.right || rect1.bottom < rect2.top || rect1.top > rect2.bottom);
+                if (overlap) foundParent = other.id;
+            });
 
-                if (overlap) {
-                    const b = bubbles.find(x => x.id === draggedId);
-                    const parent = bubbles.find(x => x.id === targetId);
-                    
-                    // Calcul de la position relative pour que la bulle reste AU MÊME ENDROIT VISUEL
-                    b.x = b.x - parent.x;
-                    b.y = b.y - parent.y;
-                    b.parentId = targetId;
+            const b = bubbles.find(b => b.id === draggedId);
+            b.parentId = foundParent;
+            renderBubbles();
+        }
 
-                    // On déplace aussi les enfants s'il y en avait (fusion de groupes)
-                    bubbles.forEach(child => {
-                        if (child.parentId === draggedId) {
-                            child.parentId = targetId;
-                            child.x = (b.x + child.x);
-                            child.y = (b.y + child.y);
+        function startLinking(id) {
+            if (linkingFromId && linkingFromId !== id) {
+                const b = bubbles.find(b => b.id === linkingFromId);
+                if (!b.links) b.links = [];
+                if (!b.links.includes(id)) b.links.push(id);
+                linkingFromId = null;
+                renderBubbles();
+                autoSave();
+            } else {
+                linkingFromId = id;
+                renderBubbles();
+            }
+        }
+
+        function drawConnections() {
+            svgLayer.innerHTML = "";
+            bubbles.forEach(b => {
+                if (b.links) {
+                    b.links.forEach(targetId => {
+                        const target = bubbles.find(t => t.id === targetId);
+                        if (target) {
+                            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                            line.setAttribute("x1", b.x + 80);
+                            line.setAttribute("y1", b.y + 30);
+                            line.setAttribute("x2", target.x + 80);
+                            line.setAttribute("y2", target.y + 30);
+                            line.setAttribute("stroke", b.color);
+                            line.setAttribute("stroke-width", "2");
+                            line.setAttribute("stroke-dasharray", "5,5");
+                            line.setAttribute("opacity", "0.4");
+                            svgLayer.appendChild(line);
                         }
                     });
-                    renderBubbles();
                 }
             });
         }
 
-        function syncBubblesToTimeline() {
-            const parents = bubbles.filter(b => !b.parentId).sort((a,b) => a.y - b.y);
-            timelineSteps = [];
-            parents.forEach(p => {
-                timelineSteps.push({ text: p.text, color: p.color });
-                bubbles.filter(b => b.parentId === p.id).forEach(c => {
-                    timelineSteps.push({ text: c.text, color: p.color });
-                });
-            });
-            renderTimeline();
-            setStep(2);
+        function setBubbleColor(id, color) {
+            const b = bubbles.find(b => b.id === id);
+            b.color = color;
+            renderBubbles();
             autoSave();
         }
 
-        // --- AUTH & DATA ---
+        function deleteBubble(id) {
+            bubbles = bubbles.filter(b => b.id !== id);
+            bubbles.forEach(b => { if(b.links) b.links = b.links.filter(l => l !== id); });
+            renderBubbles();
+            autoSave();
+        }
+
+        // --- END BUBBLE SYSTEM ---
 
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
@@ -481,11 +543,18 @@
                 document.getElementById('auth-btn-text').innerText = "Déconnexion";
                 document.getElementById('user-display').innerText = user.displayName;
                 document.getElementById('share-btn').style.display = 'flex';
+                document.getElementById('shared-scripts-container').classList.remove('hidden');
                 document.getElementById('projects-nav').classList.remove('hidden');
+                const urlParams = new URLSearchParams(window.location.search);
+                const inviteToken = urlParams.get('invite');
+                if (inviteToken) { await consumeInvite(inviteToken); window.history.replaceState({}, document.title, window.location.pathname); }
                 switchProject(1);
+                listenToSharedScripts();
             } else {
                 currentScriptId = null;
+                document.getElementById('auth-btn-text').innerText = "Se connecter";
                 document.getElementById('user-display').innerText = "Mode Local";
+                document.getElementById('share-btn').style.display = 'none';
                 textarea.value = localStorage.getItem('purge-content') || "";
                 bubbles = JSON.parse(localStorage.getItem('purge-bubbles')) || [];
                 renderBubbles();
@@ -506,70 +575,227 @@
             scriptListener = db.collection('scripts').doc(id).onSnapshot(doc => {
                 if (!doc.exists) {
                     if (id.startsWith(currentUser.uid)) { 
-                        db.collection('scripts').doc(id).set({ content: "", bubbles: [], timeline: [], title: `Projet ${id.split('_')[1]}`, owner: currentUser.uid, ownerEmail: currentUser.email, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }); 
+                        db.collection('scripts').doc(id).set({ content: "", bubbles: [], title: `Projet ${id.split('_')[1]}`, owner: currentUser.uid, ownerEmail: currentUser.email, editors: [], viewers: [], ignoredWords: [], lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }); 
                     }
                     return;
                 }
                 const data = doc.data();
-                if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) { bubbles = data.bubbles || []; renderBubbles(); }
                 if (data.content !== textarea.value && document.activeElement !== textarea) textarea.value = data.content || "";
-                timelineSteps = data.timeline || [];
-                renderTimeline();
+                
+                // Sync bubbles only if different to avoid jitter
+                if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) {
+                    bubbles = data.bubbles || [];
+                    renderBubbles();
+                }
+
+                userRole = data.owner === currentUser.uid ? 'owner' : (data.editors?.includes(currentUser.email) ? 'editor' : 'viewer');
+                textarea.readOnly = (userRole === 'viewer');
+                document.getElementById('rename-btn').style.display = (userRole === 'owner') ? 'block' : 'none';
+                
+                const slotMatch = id.match(/_([1-4])$/); 
+                if (slotMatch && userRole === 'owner') {
+                    const tab = document.getElementById(`p-tab-${slotMatch[1]}`);
+                    if (tab) tab.innerText = data.title;
+                }
+
+                if (userRole === 'owner') updateCollaboratorsUI(data);
+                ignoredRepeats = new Set(data.ignoredWords || []);
                 process();
             });
         }
 
-        function autoSave() {
-            if (currentUser && currentScriptId) {
-                db.collection('scripts').doc(currentScriptId).update({ 
-                    bubbles: bubbles, timeline: timelineSteps, content: textarea.value, 
-                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
-                }).then(() => { 
-                    const s = document.getElementById('save-status'); s.style.opacity = '1'; 
-                    setTimeout(() => s.style.opacity = '0', 1000); 
-                });
-            } else {
-                localStorage.setItem('purge-content', textarea.value);
-                localStorage.setItem('purge-bubbles', JSON.stringify(bubbles));
-            }
+        function listenToSharedScripts() {
+            db.collection('scripts').where('editors', 'array-contains', currentUser.email).onSnapshot(snap => syncSharedTabs(snap));
+            db.collection('scripts').where('viewers', 'array-contains', currentUser.email).onSnapshot(snap => syncSharedTabs(snap));
         }
 
-        // --- UI RENDERERS ---
-
-        function renderTimeline() {
-            const container = document.getElementById('timeline-container');
-            container.innerHTML = "";
-            timelineSteps.forEach((step, i) => {
-                const div = document.createElement('div');
-                div.className = "flex gap-3 bg-slate-800/50 p-3 rounded-2xl border border-slate-700 items-start group timeline-block";
-                div.style.borderLeftColor = step.color || 'var(--accent-color)';
-                div.innerHTML = `
-                    <textarea oninput="timelineSteps[${i}].text=this.value;autoSave()" class="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 py-1 resize-none" rows="1">${step.text}</textarea>
-                    <button onclick="timelineSteps.splice(${i},1);renderTimeline();autoSave()" class="p-2 text-slate-600 hover:text-red-500">✕</button>
-                `;
-                container.appendChild(div);
+        function syncSharedTabs(snap) {
+            const tabsContainer = document.getElementById('tabs-container');
+            const sharedList = document.getElementById('shared-list');
+            sharedList.innerHTML = "";
+            snap.forEach(doc => {
+                const data = doc.data();
+                const tabId = `p-tab-shared-${doc.id}`;
+                const li = document.createElement('li');
+                li.className = `p-3 bg-slate-800/50 border border-slate-700 rounded-xl cursor-pointer hover:bg-indigo-900/40 transition flex justify-between items-center mb-2`;
+                li.innerHTML = `<span class="truncate text-[10px] font-bold uppercase">${data.title}</span>`;
+                li.onclick = () => openSharedProject(doc.id);
+                sharedList.appendChild(li);
+                if (!document.getElementById(tabId)) {
+                    const btn = document.createElement('button');
+                    btn.id = tabId;
+                    btn.className = "project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition";
+                    btn.innerText = `🤝 ${data.title}`;
+                    btn.onclick = () => openSharedProject(doc.id);
+                    tabsContainer.appendChild(btn);
+                }
             });
+        }
+
+        function openSharedProject(id) {
+            document.querySelectorAll('.project-tab').forEach(t => { t.classList.remove('active'); t.style.backgroundColor = "transparent"; });
+            const tab = document.getElementById(`p-tab-shared-${id}`);
+            if (tab) { tab.classList.add('active'); tab.style.backgroundColor = "var(--accent-color)"; }
+            loadScript(id);
         }
 
         function process() {
             if (currentStep !== 3) return;
             const text = textarea.value;
-            const wordCount = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
+            const showP = document.getElementById('toggle-parasites').checked;
+            const showR = document.getElementById('toggle-repeats').checked;
+            const showM = document.getElementById('toggle-montage').checked;
+            editorWrapper.classList.toggle('show-parasites', showP);
+            editorWrapper.classList.toggle('show-repeats', showR);
+            editorWrapper.classList.toggle('show-montage', showM);
+            
+            let montageIndices = new Set();
+            if (showM) {
+                const montageRegex = /\[.*?\]/g;
+                let mMatch; while ((mMatch = montageRegex.exec(text)) !== null) { for (let i = 0; i < mMatch[0].length; i++) montageIndices.add(mMatch.index + i); }
+            }
+
+            let parasiteIndices = new Set(); let parasiteCounts = {}; let totalParasites = 0;
+            parasiteDictionary.forEach(word => {
+                const regex = new RegExp(`\\b(${word})\\b`, 'gi');
+                let match; while ((match = regex.exec(text)) !== null) {
+                    if (montageIndices.has(match.index)) continue;
+                    totalParasites++; parasiteCounts[word.toLowerCase()] = (parasiteCounts[word.toLowerCase()] || 0) + 1;
+                    for (let i = 0; i < match[0].length; i++) parasiteIndices.add(match.index + i);
+                }
+            });
+
+            const wordRegex = /[a-zA-ZàâäéèêëîïôöûüùçÀÂÄÉÈÊËÎÏÔÖÛÜÙÇ]{3,}/g;
+            let lastSeenAt = {}; let badRepeatIndices = new Set(); let repeatCounts = {}; let wordCounter = 0; let match;
+            while ((match = wordRegex.exec(text)) !== null) {
+                wordCounter++; const word = match[0].toLowerCase();
+                if (!stopWords.includes(word) && !parasiteIndices.has(match.index) && !montageIndices.has(match.index) && !ignoredRepeats.has(word)) {
+                    if (lastSeenAt[word] && (wordCounter - lastSeenAt[word].count <= 70)) {
+                        for (let i = 0; i < word.length; i++) { badRepeatIndices.add(match.index + i); badRepeatIndices.add(lastSeenAt[word].pos + i); }
+                        repeatCounts[word] = (repeatCounts[word] || 0) + 1;
+                    }
+                    lastSeenAt[word] = { count: wordCounter, pos: match.index };
+                }
+            }
+
             const wpm = parseInt(document.getElementById('wpm-slider').value) || 150;
+            const wordCount = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
             const totalSeconds = Math.round((wordCount / wpm) * 60);
             document.getElementById('duration-display').innerText = `${Math.floor(totalSeconds / 60)}m ${totalSeconds % 60}s`;
-            
-            // Minimal highlight logic for performance
-            highlightLayer.innerHTML = text.replace(/\n/g, '<br>') + ' ';
+
+            let focusIndices = new Set();
+            if (activeFocusWord) {
+                const escaped = activeFocusWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const fRegex = new RegExp(`\\b(${escaped})\\b`, 'gi');
+                let fMatch; while ((fMatch = fRegex.exec(text)) !== null) { for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i); }
+            }
+
+            let finalHtml = ""; let i = 0;
+            while (i < text.length) {
+                let className = "";
+                if (montageIndices.has(i)) className = "montage";
+                else if (focusIndices.has(i)) className = "focus-active";
+                else if (parasiteIndices.has(i)) className = "parasite";
+                else if (badRepeatIndices.has(i)) className = "repeat";
+                
+                if (className) {
+                    finalHtml += `<mark class="${className}">`;
+                    while (i < text.length && ((className === "montage" && montageIndices.has(i)) || (className === "focus-active" && focusIndices.has(i)) || (className === "parasite" && parasiteIndices.has(i)) || (className === "repeat" && badRepeatIndices.has(i)))) {
+                        finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++;
+                    }
+                    finalHtml += `</mark>`;
+                } else { finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++; }
+            }
+            highlightLayer.innerHTML = finalHtml + (text.endsWith('\n') ? '\n ' : '');
+            document.getElementById('total-parasites').innerText = totalParasites;
+            document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
             document.getElementById('total-words').innerText = wordCount;
+            document.getElementById('focus-display').innerText = activeFocusWord || "Aucun";
+            updateSidebars(parasiteCounts, repeatCounts);
             autoSave();
         }
 
-        function copyText() { navigator.clipboard.writeText(textarea.value); alert("Script copié !"); }
-        function addTimelineStep() { timelineSteps.push({ text: "Nouveau bloc", color: "#6366f1" }); renderTimeline(); autoSave(); }
+        let saveTimeout;
+        function autoSave() {
+            if (userRole === 'viewer') return;
+            if (currentUser && currentScriptId) {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    db.collection('scripts').doc(currentScriptId).update({ 
+                        bubbles: bubbles,
+                        content: textarea.value, 
+                        ignoredWords: Array.from(ignoredRepeats), 
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
+                    })
+                    .then(() => { const s = document.getElementById('save-status'); s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 1000); });
+                }, 800);
+            } else { 
+                localStorage.setItem('purge-content', textarea.value); 
+                localStorage.setItem('purge-bubbles', JSON.stringify(bubbles)); 
+            }
+        }
+
+        function updateSidebars(pCounts, rCounts) {
+            const pList = document.getElementById('word-list'); const rList = document.getElementById('repeat-list');
+            pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="sidebar-item flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span>${w}</span><span style="color: var(--accent-color);">${c}</span></li>`).join('') || 'RAS';
+            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li class="sidebar-item flex justify-between items-center uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="flex-1 truncate">${w}</span><div class="flex items-center gap-2"><span class="text-amber-500">${c+1}x</span><button onclick="ignoreWord('${w}')" class="ignore-btn">✕</button></div></li>`).join('') || 'RAS';
+            if (ignoredRepeats.size > 0) { document.getElementById('ignored-section').classList.remove('hidden'); document.getElementById('ignored-list').innerHTML = Array.from(ignoredRepeats).map(w => `<li onclick="unignoreWord('${w}')" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer">#${w}</li>`).join(''); } else document.getElementById('ignored-section').classList.add('hidden');
+        }
+
+        async function generateInviteLink() {
+            if (!currentUser || !currentScriptId) return;
+            const role = document.getElementById('share-role').value;
+            try {
+                const inviteRef = await db.collection('invites').add({ scriptId: currentScriptId, role: role, createdBy: currentUser.email, used: false, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                const inviteURL = `${window.location.origin}${window.location.pathname}?invite=${inviteRef.id}`;
+                await navigator.clipboard.writeText(inviteURL);
+                alert("Lien d'invitation copié !");
+                toggleShareModal();
+            } catch (e) { alert("Erreur."); }
+        }
+
+        async function consumeInvite(tokenId) {
+            try {
+                const doc = await db.collection('invites').doc(tokenId).get();
+                if (!doc.exists || doc.data().used === true) return;
+                const data = doc.data();
+                await db.collection('scripts').doc(data.scriptId).update({ [data.role]: firebase.firestore.FieldValue.arrayUnion(currentUser.email) });
+                await db.collection('invites').doc(tokenId).update({ used: true, usedBy: currentUser.email });
+                alert("Accès accordé !");
+            } catch (e) {}
+        }
+
+        function toggleFocus(w) { activeFocusWord = (activeFocusWord === w) ? null : w; process(); }
+        function ignoreWord(w) { ignoredRepeats.add(w.toLowerCase()); autoSave(); process(); }
+        function unignoreWord(w) { ignoredRepeats.delete(w); autoSave(); process(); }
+        function copyText() { navigator.clipboard.writeText(textarea.value); alert("Copié !"); }
+        function downloadText() { const blob = new Blob([textarea.value], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `script.txt`; a.click(); }
         function toggleShareModal() { document.getElementById('share-modal').style.display = (document.getElementById('share-modal').style.display === 'flex') ? 'none' : 'flex'; }
+        
+        function updateCollaboratorsUI(data) {
+            const list = document.getElementById('collaborators-list'); list.innerHTML = ""; const ed = data.editors || []; const vi = data.viewers || [];
+            if (ed.length === 0 && vi.length === 0) { document.getElementById('collaborators-section').classList.add('hidden'); return; }
+            document.getElementById('collaborators-section').classList.remove('hidden');
+            [...ed.map(e=>({e,r:'editors',l:'Éditeur'})), ...vi.map(e=>({e,r:'viewers',l:'Lecteur'}))].forEach(o => {
+                const li = document.createElement('li'); li.className = "flex justify-between items-center bg-slate-800/40 p-2 rounded-lg border border-slate-700";
+                li.innerHTML = `<div class="flex flex-col"><span class="font-bold truncate max-w-[100px] text-[10px]">${o.e.split('@')[0]}</span><span class="text-[8px] text-slate-500 uppercase">${o.l}</span></div><button onclick="removeCollaborator('${o.e}', '${o.r}')" class="text-slate-500 hover:text-red-500 px-2">✕</button>`;
+                list.appendChild(li);
+            });
+        }
+        async function removeCollaborator(e, r) { if (confirm(`Retirer ${e} ?`)) await db.collection('scripts').doc(currentScriptId).update({ [r]: firebase.firestore.FieldValue.arrayRemove(e) }); }
+        async function renameCurrentProject() { const n = prompt("Nom du projet :"); if(n) await db.collection('scripts').doc(currentScriptId).update({ title: n }); }
 
         window.onload = () => {
+            const themes = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#10b981', '#06b6d4', '#2563eb', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e'];
+            themes.forEach(t => {
+                const b = document.createElement('button'); b.className = 'w-4 h-4 rounded-full border border-white/20'; b.style.backgroundColor = t;
+                b.onclick = () => { 
+                    document.documentElement.style.setProperty('--accent-color', t); 
+                    document.documentElement.style.setProperty('--accent-soft', t + '26');
+                    process(); 
+                };
+                document.getElementById('theme-picker').appendChild(b);
+            });
             textarea.addEventListener('input', process);
             textarea.addEventListener('scroll', () => highlightLayer.scrollTop = textarea.scrollTop);
             setStep(1);
