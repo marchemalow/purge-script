@@ -178,7 +178,7 @@
         input:checked + .slider:before { transform: translateX(14px); }
 
         #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
-        .modal-content { background: #1e293b; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 400px; color: white; border: 1px solid #334155; }
+        .modal-content { background: #1e293b; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 420px; color: white; border: 1px solid #334155; }
         .project-tab.active { color: white; background-color: var(--accent-color) !important; }
 
         .wf-tab { position: relative; padding: 1rem 1.5rem; cursor: pointer; color: #64748b; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; transition: all 0.3s; }
@@ -197,15 +197,29 @@
     <!-- Modal de Partage -->
     <div id="share-modal">
         <div class="modal-content shadow-2xl">
-            <h3 class="text-xl font-extrabold mb-2">Lien d'invitation</h3>
-            <p class="text-xs text-slate-400 mb-6">Générez un lien unique à usage unique pour un collaborateur.</p>
-            <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Permission du lien</label>
-            <select id="share-role" class="w-full p-4 rounded-xl border bg-slate-900 border-slate-700 outline-none text-white mb-8">
-                <option value="editors">Éditeur (Peut modifier)</option>
-                <option value="viewers">Lecteur (Lecture seule)</option>
-            </select>
+            <h3 class="text-xl font-extrabold mb-2">Inviter un collaborateur</h3>
+            <p class="text-xs text-slate-400 mb-6">Ajoutez quelqu'un directement ou générez un lien.</p>
+            
+            <div class="space-y-4 mb-8">
+                <div>
+                    <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Rôle souhaité</label>
+                    <select id="share-role" class="w-full p-3 rounded-xl border bg-slate-900 border-slate-700 outline-none text-white text-sm">
+                        <option value="editors">Éditeur (Peut modifier)</option>
+                        <option value="viewers">Lecteur (Lecture seule)</option>
+                    </select>
+                </div>
+
+                <div class="pt-2">
+                    <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Ajouter par E-mail</label>
+                    <div class="flex gap-2">
+                        <input type="email" id="share-email" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-red-500 transition" placeholder="nom@exemple.com">
+                        <button onclick="addCollaboratorDirect()" class="bg-slate-700 hover:bg-slate-600 px-4 rounded-xl text-xs font-bold transition">Ajouter</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="flex flex-col gap-3">
-                <button id="confirm-share-btn" onclick="generateInviteLink()" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-4 rounded-2xl font-bold text-sm transition" style="background-color: var(--accent-color);">Générer et copier le lien</button>
+                <button id="invite-link-btn" onclick="generateInviteLink()" class="w-full text-white py-4 rounded-2xl font-bold text-sm transition hover:brightness-110" style="background-color: var(--accent-color);">Générer un lien d'invitation</button>
                 <button onclick="toggleShareModal()" class="w-full bg-slate-800 py-4 rounded-2xl font-bold text-sm text-slate-400">Annuler</button>
             </div>
         </div>
@@ -359,7 +373,6 @@
         let scriptListener = null; 
         let currentStep = 1;
         let bubbles = []; 
-        let isRemoteUpdate = false;
 
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
@@ -417,7 +430,6 @@
         bubbleInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') createBubbleFromInput(); });
 
         function createBubbleFromInput() {
-            if (userRole === 'viewer') return;
             const text = bubbleInput.value.trim();
             if (!text) return;
             const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#ef4444';
@@ -449,13 +461,11 @@
                     `<div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor('${b.id}', '${c}')"></div>`
                 ).join('');
 
-                const isReadonly = userRole === 'viewer' ? 'readonly' : '';
-
                 el.innerHTML = `
                     <div class="mb-3">
-                        <textarea class="bubble-input-field" ${isReadonly} oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea>
+                        <textarea class="bubble-input-field" oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea>
                     </div>
-                    <div class="flex items-center justify-between border-t border-slate-700/50 pt-2 ${userRole === 'viewer' ? 'hidden' : ''}">
+                    <div class="flex items-center justify-between border-t border-slate-700/50 pt-2">
                         <div class="relative">
                             <div class="color-picker-trigger" onclick="toggleColorMenu(event, '${b.id}_menu')">
                                 <svg class="w-3.5 h-3.5 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M14.06,9L15,9.94L5.92,19H5V18.08L14.06,9M17.66,3C17.41,3 17.15,3.1 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18.17,3.09 17.92,3 17.66,3M14.06,6.19L3,17.25V21H6.75L17.81,9.94L14.06,6.19Z"/></svg>
@@ -468,12 +478,10 @@
                     </div>
                 `;
 
-                if (userRole !== 'viewer') {
-                    el.addEventListener('mousedown', (e) => {
-                        if (e.target.closest('button') || e.target.closest('.color-picker-trigger') || e.target.closest('.color-menu') || e.target.closest('textarea')) return;
-                        initDrag(e, b.id, el);
-                    });
-                }
+                el.addEventListener('mousedown', (e) => {
+                    if (e.target.closest('button') || e.target.closest('.color-picker-trigger') || e.target.closest('.color-menu') || e.target.closest('textarea')) return;
+                    initDrag(e, b.id, el);
+                });
                 canvas.appendChild(el);
             });
         }
@@ -518,7 +526,7 @@
             sorted.forEach((b) => {
                 const block = document.createElement('div');
                 block.className = 'timeline-block';
-                block.draggable = userRole !== 'viewer';
+                block.draggable = true;
                 block.dataset.id = b.id;
                 block.style.borderColor = b.color;
 
@@ -526,48 +534,42 @@
                     `<div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor('${b.id}', '${c}')"></div>`
                 ).join('');
 
-                const isReadonly = userRole === 'viewer' ? 'readonly' : '';
-
                 block.innerHTML = `
-                    <div class="drag-handle ${userRole === 'viewer' ? 'hidden' : ''}">
+                    <div class="drag-handle">
                         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 9h8v2H8zm0 4h8v2H8z"></path></svg>
                     </div>
-                    <div class="relative ${userRole === 'viewer' ? 'hidden' : ''}">
+                    <div class="relative">
                         <div class="color-picker-trigger" onclick="toggleColorMenu(event, '${b.id}_tl_menu')">
                              <div class="w-3.5 h-3.5 rounded-full" style="background-color: ${b.color}"></div>
                         </div>
                         <div id="${b.id}_tl_menu" class="color-menu">${paletteHtml}</div>
                     </div>
                     <div class="flex-1 h-full py-3">
-                        <textarea class="sync-input editor-font" ${isReadonly} oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea>
+                        <textarea class="sync-input editor-font" oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea>
                     </div>
-                    <button onclick="deleteBubble('${b.id}')" class="text-slate-500 hover:text-red-400 ml-2 ${userRole === 'viewer' ? 'hidden' : ''}">
+                    <button onclick="deleteBubble('${b.id}')" class="text-slate-500 hover:text-red-400 ml-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     </button>
                 `;
 
-                if (userRole !== 'viewer') {
-                    block.addEventListener('dragstart', () => block.classList.add('dragging'));
-                    block.addEventListener('dragend', () => {
-                        block.classList.remove('dragging');
-                        reorderTimeline();
-                    });
-                }
+                block.addEventListener('dragstart', () => block.classList.add('dragging'));
+                block.addEventListener('dragend', () => {
+                    block.classList.remove('dragging');
+                    reorderTimeline();
+                });
 
                 timeline.appendChild(block);
             });
 
-            if (userRole !== 'viewer') {
-                timeline.addEventListener('dragover', e => {
-                    e.preventDefault();
-                    const afterElement = getDragAfterElement(timeline, e.clientY);
-                    const dragging = document.querySelector('.dragging');
-                    if (dragging) {
-                        if (afterElement == null) timeline.appendChild(dragging);
-                        else timeline.insertBefore(dragging, afterElement);
-                    }
-                });
-            }
+            timeline.addEventListener('dragover', e => {
+                e.preventDefault();
+                const afterElement = getDragAfterElement(timeline, e.clientY);
+                const dragging = document.querySelector('.dragging');
+                if (dragging) {
+                    if (afterElement == null) timeline.appendChild(dragging);
+                    else timeline.insertBefore(dragging, afterElement);
+                }
+            });
         }
 
         function getDragAfterElement(container, y) {
@@ -619,13 +621,9 @@
                 document.getElementById('share-btn').style.display = 'flex';
                 document.getElementById('shared-scripts-container').classList.remove('hidden');
                 document.getElementById('projects-nav').classList.remove('hidden');
-                
                 const urlParams = new URLSearchParams(window.location.search);
                 const inviteToken = urlParams.get('invite');
-                if (inviteToken) { 
-                    await consumeInvite(inviteToken); 
-                    window.history.replaceState({}, document.title, window.location.pathname); 
-                }
+                if (inviteToken) { await consumeInvite(inviteToken); window.history.replaceState({}, document.title, window.location.pathname); }
                 switchProject(1);
                 listenToSharedScripts();
             } else {
@@ -640,16 +638,9 @@
 
         async function switchProject(index) {
             if (!currentUser) return;
-            document.querySelectorAll('.project-tab').forEach(t => { 
-                t.classList.remove('active'); 
-                t.style.backgroundColor = "transparent"; 
-            });
+            document.querySelectorAll('.project-tab').forEach(t => { t.classList.remove('active'); t.style.backgroundColor = "transparent"; });
             const activeTab = document.getElementById(`p-tab-${index}`);
-            if(activeTab) { 
-                activeTab.classList.add('active'); 
-                activeTab.style.backgroundColor = "var(--accent-color)"; 
-                loadScript(`${currentUser.uid}_${index}`); 
-            }
+            if(activeTab) { activeTab.classList.add('active'); activeTab.style.backgroundColor = "var(--accent-color)"; loadScript(`${currentUser.uid}_${index}`); }
         }
 
         function loadScript(id) {
@@ -658,55 +649,38 @@
             scriptListener = db.collection('scripts').doc(id).onSnapshot(doc => {
                 if (!doc.exists) {
                     if (id.startsWith(currentUser.uid)) { 
-                        db.collection('scripts').doc(id).set({ 
-                            content: "", 
-                            bubbles: [], 
-                            title: `Projet ${id.split('_')[1]}`, 
-                            owner: currentUser.uid, 
-                            ownerEmail: currentUser.email, 
-                            editors: [], 
-                            viewers: [], 
-                            ignoredWords: [], 
-                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
-                        }); 
+                        db.collection('scripts').doc(id).set({ content: "", bubbles: [], title: `Projet ${id.split('_')[1]}`, owner: currentUser.uid, ownerEmail: currentUser.email, editors: [], viewers: [], ignoredWords: [], lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }); 
                     }
                     return;
                 }
                 const data = doc.data();
 
-                // Calcul du rôle
-                userRole = data.owner === currentUser.uid ? 'owner' : (data.editors?.includes(currentUser.email) ? 'editor' : 'viewer');
-                
-                // Sync du texte sans perte de focus
                 if (data.content !== textarea.value) {
-                    isRemoteUpdate = true;
-                    const start = textarea.selectionStart;
-                    const end = textarea.selectionEnd;
-                    textarea.value = data.content || "";
-                    if (document.activeElement === textarea) {
+                    if (document.activeElement !== textarea) {
+                        textarea.value = data.content || "";
+                        process();
+                    } else {
+                        const start = textarea.selectionStart;
+                        const end = textarea.selectionEnd;
+                        textarea.value = data.content || "";
                         textarea.setSelectionRange(start, end);
+                        process();
                     }
-                    process();
-                    isRemoteUpdate = false;
                 }
 
-                // Sync des bulles
                 if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) {
                     bubbles = data.bubbles || [];
-                    if(currentStep === 1) renderDraft(); 
-                    else if(currentStep === 2) renderTimeline();
+                    if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
                 }
 
+                userRole = data.owner === currentUser.uid ? 'owner' : (data.editors?.includes(currentUser.email) ? 'editor' : 'viewer');
                 textarea.readOnly = (userRole === 'viewer');
-                
-                // Update UI Navigation
                 const slotMatch = id.match(/_([1-4])$/); 
                 if (slotMatch && userRole === 'owner') {
                     const tab = document.getElementById(`p-tab-${slotMatch[1]}`);
                     if (tab) tab.innerText = data.title;
                 }
                 if (userRole === 'owner') updateCollaboratorsUI(data);
-                
                 ignoredRepeats = new Set(data.ignoredWords || []);
                 process();
             });
@@ -720,20 +694,15 @@
         function syncSharedTabs(snap) {
             const tabsContainer = document.getElementById('tabs-container');
             const sharedList = document.getElementById('shared-list');
-            
+            sharedList.innerHTML = "";
             snap.forEach(doc => {
                 const data = doc.data();
                 const tabId = `p-tab-shared-${doc.id}`;
-                
-                if (!document.querySelector(`[data-shared-id="${doc.id}"]`)) {
-                    const li = document.createElement('li');
-                    li.setAttribute('data-shared-id', doc.id);
-                    li.className = `p-3 bg-slate-800/50 border border-slate-700 rounded-xl cursor-pointer hover:bg-indigo-900/40 transition flex justify-between items-center mb-2`;
-                    li.innerHTML = `<span class="truncate text-[10px] font-bold uppercase">${data.title}</span>`;
-                    li.onclick = () => openSharedProject(doc.id);
-                    sharedList.appendChild(li);
-                }
-
+                const li = document.createElement('li');
+                li.className = `p-3 bg-slate-800/50 border border-slate-700 rounded-xl cursor-pointer hover:bg-indigo-900/40 transition flex justify-between items-center mb-2`;
+                li.innerHTML = `<span class="truncate text-[10px] font-bold uppercase">${data.title}</span>`;
+                li.onclick = () => openSharedProject(doc.id);
+                sharedList.appendChild(li);
                 if (!document.getElementById(tabId)) {
                     const btn = document.createElement('button');
                     btn.id = tabId;
@@ -746,19 +715,13 @@
         }
 
         function openSharedProject(id) {
-            document.querySelectorAll('.project-tab').forEach(t => { 
-                t.classList.remove('active'); 
-                t.style.backgroundColor = "transparent"; 
-            });
+            document.querySelectorAll('.project-tab').forEach(t => { t.classList.remove('active'); t.style.backgroundColor = "transparent"; });
             const tab = document.getElementById(`p-tab-shared-${id}`);
-            if (tab) { 
-                tab.classList.add('active'); 
-                tab.style.backgroundColor = "var(--accent-color)"; 
-            }
+            if (tab) { tab.classList.add('active'); tab.style.backgroundColor = "var(--accent-color)"; }
             loadScript(id);
         }
 
-        // --- ÉTAPE 3: ANALYSEUR ---
+        // --- ANALYSEUR ---
 
         function process() {
             const text = textarea.value;
@@ -832,8 +795,7 @@
             document.getElementById('total-words').innerText = wordCount;
             document.getElementById('focus-display').innerText = activeFocusWord || "Aucun";
             updateSidebars(parasiteCounts, repeatCounts);
-            
-            if (!isRemoteUpdate) autoSave();
+            autoSave();
         }
 
         let saveTimeout;
@@ -848,9 +810,8 @@
                         ignoredWords: Array.from(ignoredRepeats), 
                         lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
                     })
-                    .then(() => { const s = document.getElementById('save-status'); s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 1000); })
-                    .catch(e => console.error("Save error:", e));
-                }, 1000);
+                    .then(() => { const s = document.getElementById('save-status'); s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 1000); });
+                }, 800);
             } else { 
                 localStorage.setItem('purge-content', textarea.value); 
                 localStorage.setItem('purge-bubbles', JSON.stringify(bubbles)); 
@@ -860,74 +821,56 @@
         function updateSidebars(pCounts, rCounts) {
             const pList = document.getElementById('word-list'); const rList = document.getElementById('repeat-list');
             pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="sidebar-item flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span>${w}</span><span style="color: var(--accent-color);">${c}</span></li>`).join('') || 'RAS';
-            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li class="sidebar-item flex justify-between items-center uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="flex-1 truncate">${w}</span><div class="flex items-center gap-2"><span class="text-amber-500">${c+1}x</span><button onclick="ignoreWord('${w}')" class="ignore-btn ${userRole === 'viewer' ? 'hidden' : ''}">✕</button></div></li>`).join('') || 'RAS';
+            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li class="sidebar-item flex justify-between items-center uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="flex-1 truncate">${w}</span><div class="flex items-center gap-2"><span class="text-amber-500">${c+1}x</span><button onclick="ignoreWord('${w}')" class="ignore-btn">✕</button></div></li>`).join('') || 'RAS';
             if (ignoredRepeats.size > 0) { document.getElementById('ignored-section').classList.remove('hidden'); document.getElementById('ignored-list').innerHTML = Array.from(ignoredRepeats).map(w => `<li onclick="unignoreWord('${w}')" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer">#${w}</li>`).join(''); } else document.getElementById('ignored-section').classList.add('hidden');
+        }
+
+        // --- PARTAGE ---
+
+        async function addCollaboratorDirect() {
+            const email = document.getElementById('share-email').value.trim().toLowerCase();
+            const role = document.getElementById('share-role').value;
+            if (!email || !currentScriptId) return;
+            try {
+                await db.collection('scripts').doc(currentScriptId).update({ [role]: firebase.firestore.FieldValue.arrayUnion(email) });
+                alert(`${email} ajouté avec succès !`);
+                document.getElementById('share-email').value = "";
+                toggleShareModal();
+            } catch (e) { alert("Erreur lors de l'ajout."); }
         }
 
         async function generateInviteLink() {
             if (!currentUser || !currentScriptId) return;
             const role = document.getElementById('share-role').value;
-            const btn = document.getElementById('confirm-share-btn');
-            btn.innerText = "Génération...";
-            btn.disabled = true;
-            
+            const btn = document.getElementById('invite-link-btn');
+            btn.innerText = "Génération..."; btn.disabled = true;
             try {
-                const inviteRef = await db.collection('invites').add({ 
-                    scriptId: currentScriptId, 
-                    role: role, 
-                    createdBy: currentUser.email, 
-                    used: false, 
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp() 
-                });
+                const inviteRef = await db.collection('invites').add({ scriptId: currentScriptId, role: role, createdBy: currentUser.email, used: false, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
                 const inviteURL = `${window.location.origin}${window.location.pathname}?invite=${inviteRef.id}`;
                 await navigator.clipboard.writeText(inviteURL);
-                alert("Lien d'invitation copié dans le presse-papier !");
+                alert("Lien d'invitation copié !");
                 toggleShareModal();
-            } catch (e) { 
-                console.error(e);
-                alert("Erreur lors de la création de l'invitation."); 
-            } finally {
-                btn.innerText = "Générer et copier le lien";
-                btn.disabled = false;
-            }
+            } catch (e) { alert("Erreur."); }
+            finally { btn.innerText = "Générer un lien d'invitation"; btn.disabled = false; }
         }
 
         async function consumeInvite(tokenId) {
             try {
                 const doc = await db.collection('invites').doc(tokenId).get();
-                if (!doc.exists) return;
+                if (!doc.exists || doc.data().used === true) return;
                 const data = doc.data();
-                if (data.used === true) return;
-                if (data.createdBy === currentUser.email) return;
-                
-                await db.collection('scripts').doc(data.scriptId).update({ 
-                    [data.role]: firebase.firestore.FieldValue.arrayUnion(currentUser.email) 
-                });
-                await db.collection('invites').doc(tokenId).update({ 
-                    used: true, 
-                    usedBy: currentUser.email 
-                });
-                alert("Nouveau projet partagé ajouté à votre liste !");
-                openSharedProject(data.scriptId);
-            } catch (e) { console.error(e); }
+                await db.collection('scripts').doc(data.scriptId).update({ [data.role]: firebase.firestore.FieldValue.arrayUnion(currentUser.email) });
+                await db.collection('invites').doc(tokenId).update({ used: true, usedBy: currentUser.email });
+                alert("Accès accordé !");
+            } catch (e) {}
         }
 
         function toggleFocus(w) { activeFocusWord = (activeFocusWord === w) ? null : w; process(); }
-        function ignoreWord(w) { if(userRole === 'viewer') return; ignoredRepeats.add(w.toLowerCase()); autoSave(); process(); }
-        function unignoreWord(w) { if(userRole === 'viewer') return; ignoredRepeats.delete(w); autoSave(); process(); }
+        function ignoreWord(w) { ignoredRepeats.add(w.toLowerCase()); autoSave(); process(); }
+        function unignoreWord(w) { ignoredRepeats.delete(w); autoSave(); process(); }
         function copyText() { navigator.clipboard.writeText(textarea.value); alert("Copié !"); }
         function downloadText() { const blob = new Blob([textarea.value], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `script.txt`; a.click(); }
-        
-        function toggleShareModal() { 
-            // Fix: Autoriser l'ouverture si on est propriétaire (ID commence par l'UID) ou si Firestore confirme le rôle owner
-            const isOwner = currentScriptId && currentScriptId.startsWith(currentUser.uid);
-            if (!isOwner && userRole !== 'owner') {
-                alert("Seul le propriétaire peut inviter des collaborateurs.");
-                return;
-            }
-            const modal = document.getElementById('share-modal');
-            modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex'; 
-        }
+        function toggleShareModal() { document.getElementById('share-modal').style.display = (document.getElementById('share-modal').style.display === 'flex') ? 'none' : 'flex'; }
         
         function updateCollaboratorsUI(data) {
             const list = document.getElementById('collaborators-list'); list.innerHTML = ""; const ed = data.editors || []; const vi = data.viewers || [];
@@ -940,7 +883,7 @@
             });
         }
         async function removeCollaborator(e, r) { if (confirm(`Retirer ${e} ?`)) await db.collection('scripts').doc(currentScriptId).update({ [r]: firebase.firestore.FieldValue.arrayRemove(e) }); }
-        async function renameCurrentProject() { if(userRole !== 'owner') return; const n = prompt("Nouveau nom du projet :"); if(n) await db.collection('scripts').doc(currentScriptId).update({ title: n }); }
+        async function renameCurrentProject() { const n = prompt("Nouveau nom du projet :"); if(n) await db.collection('scripts').doc(currentScriptId).update({ title: n }); }
 
         function applyTheme(color) {
             document.documentElement.style.setProperty('--accent-color', color); 
