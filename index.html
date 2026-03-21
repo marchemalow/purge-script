@@ -14,8 +14,8 @@
 
     <style>
         :root { 
-            --accent-color: #6366f1; 
-            --accent-soft: rgba(99, 102, 241, 0.15); 
+            --accent-color: #ef4444; 
+            --accent-soft: rgba(239, 68, 68, 0.15); 
             --focus-color: #f02e65; 
             --montage-color: #7dd3fc; 
         }
@@ -31,14 +31,13 @@
         h1, h1 span { color: #ffffff !important; }
         .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.6; }
         
-        /* Canvas & Bubbles Styles */
+        /* Layout */
         #canvas-container {
             position: relative;
             width: 100%;
-            height: 700px;
+            height: 600px;
             background-color: #0f172a;
-            background-image: 
-                radial-gradient(circle at 2px 2px, #1e293b 1px, transparent 0);
+            background-image: radial-gradient(circle at 2px 2px, #1e293b 1px, transparent 0);
             background-size: 40px 40px;
             overflow: hidden;
             border-radius: 2rem;
@@ -46,65 +45,100 @@
             touch-action: none;
         }
 
-        #connection-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-        }
-
+        /* Bubbles (Draft) */
         .bubble {
             position: absolute;
-            min-width: 160px;
-            max-width: 280px;
-            padding: 1.25rem;
+            min-width: 200px;
+            max-width: 300px;
+            padding: 1rem;
             background: #1e293b;
             border: 2px solid #334155;
-            border-radius: 1.5rem;
+            border-radius: 1.25rem;
             cursor: grab;
             user-select: none;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
             z-index: 10;
-            transition: transform 0.1s, box-shadow 0.2s, border-color 0.3s;
         }
+        .bubble:active { cursor: grabbing; }
 
-        .bubble:active { cursor: grabbing; transform: scale(1.02); }
-        .bubble.linking { border-color: #facc15 !important; box-shadow: 0 0 15px #facc15; }
+        /* Timeline Blocks (Step 2) */
+        #timeline-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 20px;
+            min-height: 500px;
+            background: #0f172a;
+            border-radius: 2rem;
+            border: 1px solid #334155;
+        }
+        .timeline-block {
+            width: 100%;
+            background: #1e293b;
+            border-left: 6px solid var(--accent-color);
+            border-radius: 1rem;
+            padding: 0 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: move;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.3s;
+            border-top: 1px solid #334155;
+            border-right: 1px solid #334155;
+            border-bottom: 1px solid #334155;
+            height: 80px; /* Taille fixe */
+            position: relative;
+        }
+        .timeline-block.dragging { opacity: 0.5; transform: scale(0.98); }
+
+        /* Color Picker Component */
+        .color-picker-trigger {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .color-picker-trigger:hover { background: rgba(255,255,255,0.1); }
         
-        .bubble-color-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .nested-indicator {
+        .color-menu {
+            display: none;
             position: absolute;
-            bottom: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--accent-color);
-            color: white;
-            font-size: 8px;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-weight: 800;
-            text-transform: uppercase;
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 10px;
+            border-radius: 1rem;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            z-index: 1000;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+            margin-top: 8px;
         }
+        .color-menu.active { display: grid; }
+        
+        .color-dot-btn { 
+            width: 18px; 
+            height: 18px; 
+            border-radius: 50%; 
+            cursor: pointer; 
+            border: 1px solid rgba(255,255,255,0.2); 
+            transition: transform 0.1s; 
+        }
+        .color-dot-btn:hover { transform: scale(1.3); }
 
+        /* Step 3 Styling */
         .editor-container { 
             position: relative; 
-            min-height: 500px; 
+            min-height: 600px; 
             border-radius: 1.5rem; 
             background-color: #1e293b; 
             border: 1px solid #334155;
         }
-
         .sync-text { 
             position: absolute; 
             top: 0; left: 0; width: 100%; height: 100%; 
@@ -116,7 +150,6 @@
             margin: 0; 
             background: transparent; 
         }
-        
         #textarea { color: transparent; caret-color: #ffffff; z-index: 2; resize: none; outline: none; }
         #highlight-layer { z-index: 1; pointer-events: none; color: #e2e8f0 !important; }
         
@@ -152,19 +185,9 @@
         .wf-step-num { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid currentColor; margin-right: 8px; font-size: 10px; }
         .wf-tab.active .wf-step-num { background: var(--accent-color); border-color: var(--accent-color); color: white; }
 
-        .bubble-controls {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-            padding-top: 8px;
-            border-top: 1px solid #334155;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .bubble:hover .bubble-controls { opacity: 1; }
-        
-        .color-dot-btn { width: 14px; height: 14px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); transition: transform 0.1s; }
-        .color-dot-btn:hover { transform: scale(1.3); }
+        .drag-handle { cursor: grab; color: #475569; }
+        .sync-input { background: transparent; border: none; outline: none; color: white; width: 100%; font-weight: 500; height: 100%; resize: none; overflow: hidden; }
+        .bubble-input-field { background: transparent; border: none; outline: none; color: white; width: 100%; font-size: 11px; font-weight: 600; }
     </style>
 </head>
 <body class="antialiased">
@@ -187,7 +210,8 @@
     </div>
 
     <div class="max-w-7xl mx-auto px-6 py-6 md:py-10">
-        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-4 border-b border-slate-800 pb-8">
+        <!-- HEADER -->
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
             <div>
                 <div class="flex items-center gap-3">
                     <h1 class="text-3xl font-extrabold tracking-tight">Purge-Script<span>.</span></h1>
@@ -204,65 +228,72 @@
             </div>
         </header>
 
+        <!-- NAVIGATION PROJETS (TOUT EN HAUT) -->
+        <div id="projects-nav" class="hidden flex items-center justify-between bg-slate-800/50 p-2 rounded-2xl border border-slate-700 mb-6 shadow-sm">
+            <div class="flex gap-2" id="tabs-container">
+                <button onclick="switchProject(1)" id="p-tab-1" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 1</button>
+                <button onclick="switchProject(2)" id="p-tab-2" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 2</button>
+                <button onclick="switchProject(3)" id="p-tab-3" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 3</button>
+                <button onclick="switchProject(4)" id="p-tab-4" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 4</button>
+            </div>
+            <button id="rename-btn" onclick="renameCurrentProject()" class="p-2 text-slate-500 hover:text-indigo-400 transition ml-4">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+            </button>
+        </div>
+
+        <!-- WORKFLOW TABS -->
         <div class="flex items-center justify-center mb-6 bg-slate-900/50 p-1 rounded-2xl border border-slate-800 max-w-2xl mx-auto">
             <div onclick="setStep(1)" id="wf-tab-1" class="wf-tab active flex-1 text-center"><span class="wf-step-num">1</span>Brouillon</div>
             <div onclick="setStep(2)" id="wf-tab-2" class="wf-tab flex-1 text-center"><span class="wf-step-num">2</span>Chronologie</div>
             <div onclick="setStep(3)" id="wf-tab-3" class="wf-tab flex-1 text-center"><span class="wf-step-num">3</span>Rédaction</div>
         </div>
 
+        <!-- STATS (Visible en étape 3) -->
+        <div id="stats-row" class="hidden grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+            <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
+                <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Tics</p>
+                <p id="total-parasites" class="text-lg font-extrabold" style="color: var(--accent-color);">0</p>
+            </div>
+            <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
+                <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Répétitions</p>
+                <p id="total-repeats" class="text-lg font-extrabold text-amber-500">0</p>
+            </div>
+            <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
+                <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Mots</p>
+                <p id="total-words" class="text-lg font-extrabold">0</p>
+            </div>
+            <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
+                <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Durée</p>
+                <p id="duration-display" class="text-lg font-extrabold" style="color: var(--accent-color);">0s</p>
+            </div>
+            <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm overflow-hidden">
+                <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Focus</p>
+                <p id="focus-display" class="text-sm font-extrabold text-slate-400 truncate">Aucun</p>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            <div id="stats-row" class="lg:col-span-12 hidden grid grid-cols-5 gap-3">
-                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
-                    <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Tics</p>
-                    <p id="total-parasites" class="text-lg font-extrabold" style="color: var(--accent-color);">0</p>
-                </div>
-                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
-                    <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Répétitions</p>
-                    <p id="total-repeats" class="text-lg font-extrabold text-amber-500">0</p>
-                </div>
-                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
-                    <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Mots</p>
-                    <p id="total-words" class="text-lg font-extrabold">0</p>
-                </div>
-                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
-                    <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Durée</p>
-                    <p id="duration-display" class="text-lg font-extrabold" style="color: var(--accent-color);">0s</p>
-                </div>
-                <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm overflow-hidden">
-                    <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Focus</p>
-                    <p id="focus-display" class="text-sm font-extrabold text-slate-400 truncate">Aucun</p>
-                </div>
-            </div>
-
-            <div id="main-column" class="lg:col-span-12 space-y-4 transition-all duration-500">
-                <div id="projects-nav" class="hidden flex items-center justify-between bg-card p-2 rounded-2xl border shadow-sm">
-                    <div class="flex gap-2" id="tabs-container">
-                        <button onclick="switchProject(1)" id="p-tab-1" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 1</button>
-                        <button onclick="switchProject(2)" id="p-tab-2" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 2</button>
-                        <button onclick="switchProject(3)" id="p-tab-3" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 3</button>
-                        <button onclick="switchProject(4)" id="p-tab-4" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 4</button>
-                    </div>
-                    <button id="rename-btn" onclick="renameCurrentProject()" class="p-2 text-slate-500 hover:text-indigo-400 transition ml-4">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                    </button>
-                </div>
-
-                <!-- STEP 1 & 2 SHARED CANVAS AREA -->
-                <div id="canvas-view" class="space-y-4 relative">
+            <div id="main-column" class="lg:col-span-12 space-y-4">
+                
+                <!-- STEP 1 VIEW (BROUILLON) -->
+                <div id="step-1-view" class="space-y-4">
                     <div id="canvas-container" class="shadow-2xl">
-                        <svg id="connection-layer"></svg>
-                        <!-- Bulles injectées ici -->
+                        <!-- Bulles flottantes -->
                     </div>
                     
-                    <div class="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-xl px-4 z-50">
-                        <div class="bg-slate-800/90 backdrop-blur-md p-2 rounded-3xl border border-slate-700 shadow-2xl flex gap-3 items-center">
-                            <input type="text" id="bubble-input" class="flex-1 bg-transparent border-none outline-none px-6 py-3 text-white placeholder-slate-500 font-medium" placeholder="Écrivez une idée et tapez Entrée...">
-                            <button onclick="createBubbleFromInput()" class="bg-indigo-500 text-white p-3 rounded-2xl hover:bg-indigo-600 transition" style="background-color: var(--accent-color);">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                            </button>
-                        </div>
-                        <p class="text-center text-[9px] uppercase font-bold text-slate-500 mt-3 tracking-widest">Glissez une bulle sur une autre pour les grouper • Shift+Clic pour lier</p>
+                    <div class="flex gap-3 bg-slate-900/50 p-4 rounded-3xl border border-slate-800 max-w-2xl mx-auto w-full">
+                        <input type="text" id="bubble-input" class="flex-1 bg-slate-800 border border-slate-700 rounded-2xl px-6 py-3 text-white placeholder-slate-500 font-medium outline-none focus:border-indigo-500" placeholder="Une idée ? Tapez Entrée...">
+                        <button onclick="createBubbleFromInput()" class="bg-indigo-500 text-white p-4 rounded-2xl hover:bg-indigo-600 transition" style="background-color: var(--accent-color);">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STEP 2 VIEW (CHRONOLOGIE) -->
+                <div id="step-2-view" class="hidden space-y-4">
+                    <div id="timeline-container" class="shadow-inner">
+                        <!-- Blocs synchronisés -->
                     </div>
                 </div>
 
@@ -283,23 +314,24 @@
 
                     <div id="editor-wrapper" class="editor-container shadow-sm overflow-hidden show-parasites show-repeats show-montage">
                         <div id="highlight-layer" class="sync-text editor-font"></div>
-                        <textarea id="textarea" class="sync-text editor-font" placeholder="Écrivez votre script final..." spellcheck="false"></textarea>
+                        <textarea id="textarea" class="sync-text editor-font" placeholder="Rédigez votre script final ici..." spellcheck="false"></textarea>
                     </div>
                     
                     <div class="flex gap-4">
-                        <button onclick="copyText()" class="text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition" style="background-color: var(--accent-color);">Copier</button>
-                        <button onclick="downloadText()" class="bg-slate-700 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest transition">Exporter</button>
+                        <button onclick="copyText()" class="text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition" style="background-color: var(--accent-color);">Copier le texte</button>
+                        <button onclick="downloadText()" class="bg-slate-700 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest transition">Exporter .txt</button>
                     </div>
                 </div>
             </div>
 
+            <!-- ASIDE ANALYSE (Visible en étape 3) -->
             <div id="analysis-column" class="lg:col-span-4 hidden space-y-6">
                 <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8 border border-slate-800" id="analysis-card">
-                    <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Tics</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px] scroll-custom"></ul></div>
-                    <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Répétitions</h2><ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px] scroll-custom"></ul></div>
+                    <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Tics de langage</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px] scroll-custom"></ul></div>
+                    <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Répétitions proches</h2><ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px] scroll-custom"></ul></div>
                     <div id="ignored-section" class="hidden"><h2 class="text-[9px] font-bold uppercase text-red-400 mb-4">Ignorés</h2><ul id="ignored-list" class="flex flex-wrap gap-2 text-[10px]"></ul></div>
                     <div id="collaborators-section" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-indigo-400 mb-4">Collaborateurs</h2><ul id="collaborators-list" class="space-y-2 text-[11px]"></ul></div>
-                    <div id="shared-scripts-container" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Partagés</h2><ul id="shared-list" class="space-y-2 text-[11px]"></ul></div>
+                    <div id="shared-scripts-container" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Partagés avec moi</h2><ul id="shared-list" class="space-y-2 text-[11px]"></ul></div>
                 </div>
             </div>
         </div>
@@ -320,78 +352,97 @@
 
         const parasiteDictionary = ["du coup", "en fait", "voilà", "un petit peu", "euh", "globalement", "concrètement", "effectivement", "donc", "c'est-à-dire", "au final", "disons que", "typiquement", "clairement", "tout simplement", "en gros", "pour le coup", "un peu", "voilà quoi", "tu vois", "franchement", "honnêtement", "en réalité", "pour ainsi dire", "alors", "en quelque sorte", "justement", "au niveau de", "quelque part", "on va dire", "fondablement", "véritablement", "pour ma part", "en soi", "entre guillemets", "si vous voulez", "de base", "sur la fin"];
         const stopWords = ["je", "me", "moi", "tu", "te", "toi", "il", "elle", "on", "nous", "vous", "ils", "elles", "le", "la", "les", "un", "une", "des", "du", "de", "ce", "cet", "cette", "ces", "se", "soi", "lui", "leur", "y", "en", "mon", "ton", "son", "ma", "ta", "sa", "mes", "tes", "ses", "notre", "votre", "nos", "vos", "leurs", "qui", "que", "quoi", "dont", "où", "quel", "quels", "quelle", "quelles", "et", "ou", "mais", "est", "sont", "pour", "dans", "par", "avec", "pas", "ne", "si", "ici", "là", "ont", "aux", "très"];
-        const bubblePalette = ['#6366f1', '#f43f5e', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899'];
+        
+        // ARC-EN-CIEL RESTAURÉ (12)
+        const bubblePalette = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#10b981', '#06b6d4', '#2563eb', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e'];
 
-        let activeFocusWord = null; let currentUser = null; let currentScriptId = null; let userRole = 'owner'; 
-        let ignoredRepeats = new Set(); let scriptListener = null; let currentStep = 1;
-        let bubbles = []; // { id, text, x, y, parentId, color, links: [] }
-        let linkingFromId = null;
+        let activeFocusWord = null; 
+        let currentUser = null; 
+        let currentScriptId = null; 
+        let userRole = 'owner'; 
+        let ignoredRepeats = new Set(); 
+        let scriptListener = null; 
+        let currentStep = 1;
+        let bubbles = []; 
 
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
         const editorWrapper = document.getElementById('editor-wrapper');
         const canvas = document.getElementById('canvas-container');
-        const svgLayer = document.getElementById('connection-layer');
+        const timeline = document.getElementById('timeline-container');
         const bubbleInput = document.getElementById('bubble-input');
 
         function updateWpmDisplay(v) { document.getElementById('wpm-value').innerText = v; }
         function handleAuth() { if (currentUser) auth.signOut(); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+
+        // Fermer les menus de couleur lors d'un clic extérieur
+        window.addEventListener('click', (e) => {
+            if (!e.target.closest('.color-picker-trigger') && !e.target.closest('.color-menu')) {
+                document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
+            }
+        });
 
         function setStep(step) {
             currentStep = step;
             document.querySelectorAll('.wf-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(`wf-tab-${step}`).classList.add('active');
             
-            const canvasView = document.getElementById('canvas-view');
-            const step3View = document.getElementById('step-3-view');
+            const s1 = document.getElementById('step-1-view');
+            const s2 = document.getElementById('step-2-view');
+            const s3 = document.getElementById('step-3-view');
             const mainCol = document.getElementById('main-column');
             const analysisCol = document.getElementById('analysis-column');
             const statsRow = document.getElementById('stats-row');
 
-            if (step === 3) {
-                canvasView.classList.add('hidden');
-                step3View.classList.remove('hidden');
+            [s1, s2, s3].forEach(el => el.classList.add('hidden'));
+
+            if (step === 1) {
+                s1.classList.remove('hidden');
+                mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12');
+                analysisCol.classList.add('hidden');
+                statsRow.classList.add('hidden');
+                renderDraft();
+            } else if (step === 2) {
+                s2.classList.remove('hidden');
+                mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12');
+                analysisCol.classList.add('hidden');
+                statsRow.classList.add('hidden');
+                renderTimeline();
+            } else if (step === 3) {
+                s3.classList.remove('hidden');
                 mainCol.classList.replace('lg:col-span-12', 'lg:col-span-8');
                 analysisCol.classList.remove('hidden');
                 statsRow.classList.remove('hidden');
                 process();
-            } else {
-                canvasView.classList.remove('hidden');
-                step3View.classList.add('hidden');
-                mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12');
-                analysisCol.classList.add('hidden');
-                statsRow.classList.add('hidden');
-                renderBubbles(); // Refresh canvas on step 1/2
             }
         }
 
-        // --- CORE BUBBLE SYSTEM ---
+        // --- GESTION DES BULLES (DATA SOURCE) ---
 
         bubbleInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') createBubbleFromInput(); });
 
         function createBubbleFromInput() {
             const text = bubbleInput.value.trim();
             if (!text) return;
+            const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#ef4444';
             const newBubble = {
                 id: "b_" + Date.now(),
                 text: text,
-                x: 100 + Math.random() * 200,
-                y: 100 + Math.random() * 200,
-                parentId: null,
-                color: 'var(--accent-color)',
-                links: []
+                x: 50 + Math.random() * 300,
+                y: 50 + Math.random() * 300,
+                order: bubbles.length,
+                color: accent
             };
             bubbles.push(newBubble);
             bubbleInput.value = "";
-            renderBubbles();
+            renderDraft();
             autoSave();
         }
 
-        function renderBubbles() {
-            // Clear existing but keep SVG
-            const existingBubbles = canvas.querySelectorAll('.bubble');
-            existingBubbles.forEach(b => b.remove());
-            
+        // --- STEP 1: BROUILLON (VUE FLOTTANTE) ---
+
+        function renderDraft() {
+            canvas.innerHTML = "";
             bubbles.forEach(b => {
                 const el = document.createElement('div');
                 el.className = `bubble`;
@@ -399,40 +450,45 @@
                 el.style.left = b.x + "px";
                 el.style.top = b.y + "px";
                 el.style.borderColor = b.color;
-                if (linkingFromId === b.id) el.classList.add('linking');
 
-                const colorOptions = bubblePalette.map(c => 
+                const paletteHtml = bubblePalette.map(c => 
                     `<div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor('${b.id}', '${c}')"></div>`
                 ).join('');
 
                 el.innerHTML = `
-                    <div class="flex items-center mb-1">
-                        <span class="bubble-color-dot" style="background:${b.color}"></span>
-                        <div class="text-[11px] font-bold text-slate-200 break-words flex-1">${b.text}</div>
+                    <div class="mb-3">
+                        <textarea class="bubble-input-field" oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea>
                     </div>
-                    ${b.parentId ? '<div class="nested-indicator">Groupe</div>' : ''}
-                    <div class="bubble-controls">
-                        ${colorOptions}
-                        <button onclick="deleteBubble('${b.id}')" class="ml-auto text-slate-500 hover:text-red-400">✕</button>
+                    <div class="flex items-center justify-between border-t border-slate-700/50 pt-2">
+                        <div class="relative">
+                            <div class="color-picker-trigger" onclick="toggleColorMenu(event, '${b.id}_menu')">
+                                <svg class="w-3.5 h-3.5 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M14.06,9L15,9.94L5.92,19H5V18.08L14.06,9M17.66,3C17.41,3 17.15,3.1 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18.17,3.09 17.92,3 17.66,3M14.06,6.19L3,17.25V21H6.75L17.81,9.94L14.06,6.19Z"/></svg>
+                            </div>
+                            <div id="${b.id}_menu" class="color-menu">${paletteHtml}</div>
+                        </div>
+                        <button onclick="deleteBubble('${b.id}')" class="text-slate-500 hover:text-red-400">
+                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
                     </div>
                 `;
 
                 el.addEventListener('mousedown', (e) => {
-                    if (e.shiftKey) {
-                        startLinking(b.id);
-                    } else {
-                        initDrag(e, b.id, el);
-                    }
+                    if (e.target.closest('button') || e.target.closest('.color-picker-trigger') || e.target.closest('.color-menu') || e.target.closest('textarea')) return;
+                    initDrag(e, b.id, el);
                 });
-
                 canvas.appendChild(el);
             });
-            drawConnections();
+        }
+
+        function toggleColorMenu(e, menuId) {
+            e.stopPropagation();
+            const menu = document.getElementById(menuId);
+            const isOpen = menu.classList.contains('active');
+            document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
+            if (!isOpen) menu.classList.add('active');
         }
 
         function initDrag(e, id, el) {
-            if (e.target.closest('button') || e.target.closest('.color-dot-btn')) return;
-            
             const rect = canvas.getBoundingClientRect();
             let startX = e.clientX - el.offsetLeft;
             let startY = e.clientY - el.offsetTop;
@@ -440,102 +496,119 @@
             function doDrag(e) {
                 let x = e.clientX - startX;
                 let y = e.clientY - startY;
-
-                // Bounds
                 x = Math.max(0, Math.min(x, canvas.clientWidth - el.offsetWidth));
                 y = Math.max(0, Math.min(y, canvas.clientHeight - el.offsetHeight));
-
                 el.style.left = x + "px";
                 el.style.top = y + "px";
-                
-                // Live update data for lines
                 const b = bubbles.find(b => b.id === id);
                 b.x = x; b.y = y;
-                drawConnections();
             }
 
             function stopDrag() {
                 document.removeEventListener('mousemove', doDrag);
                 document.removeEventListener('mouseup', stopDrag);
-                checkNesting(id, el);
                 autoSave();
             }
-
             document.addEventListener('mousemove', doDrag);
             document.addEventListener('mouseup', stopDrag);
         }
 
-        function checkNesting(draggedId, el) {
-            const rect1 = el.getBoundingClientRect();
-            let foundParent = null;
+        // --- STEP 2: CHRONOLOGIE (VUE LISTE SYNCHRO) ---
 
-            bubbles.forEach(other => {
-                if (other.id === draggedId) return;
-                const otherEl = document.getElementById(other.id);
-                if (!otherEl) return;
-                const rect2 = otherEl.getBoundingClientRect();
+        function renderTimeline() {
+            timeline.innerHTML = "";
+            const sorted = [...bubbles].sort((a, b) => a.order - b.order);
 
-                const overlap = !(rect1.right < rect2.left || rect1.left > rect2.right || rect1.bottom < rect2.top || rect1.top > rect2.bottom);
-                if (overlap) foundParent = other.id;
+            sorted.forEach((b) => {
+                const block = document.createElement('div');
+                block.className = 'timeline-block';
+                block.draggable = true;
+                block.dataset.id = b.id;
+                block.style.borderColor = b.color;
+
+                const paletteHtml = bubblePalette.map(c => 
+                    `<div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor('${b.id}', '${c}')"></div>`
+                ).join('');
+
+                block.innerHTML = `
+                    <div class="drag-handle">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 9h8v2H8zm0 4h8v2H8z"></path></svg>
+                    </div>
+                    <div class="relative">
+                        <div class="color-picker-trigger" onclick="toggleColorMenu(event, '${b.id}_tl_menu')">
+                             <div class="w-3.5 h-3.5 rounded-full" style="background-color: ${b.color}"></div>
+                        </div>
+                        <div id="${b.id}_tl_menu" class="color-menu">${paletteHtml}</div>
+                    </div>
+                    <div class="flex-1 h-full py-3">
+                        <textarea class="sync-input editor-font" oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea>
+                    </div>
+                    <button onclick="deleteBubble('${b.id}')" class="text-slate-500 hover:text-red-400 ml-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                `;
+
+                block.addEventListener('dragstart', () => block.classList.add('dragging'));
+                block.addEventListener('dragend', () => {
+                    block.classList.remove('dragging');
+                    reorderTimeline();
+                });
+
+                timeline.appendChild(block);
             });
 
-            const b = bubbles.find(b => b.id === draggedId);
-            b.parentId = foundParent;
-            renderBubbles();
-        }
-
-        function startLinking(id) {
-            if (linkingFromId && linkingFromId !== id) {
-                const b = bubbles.find(b => b.id === linkingFromId);
-                if (!b.links) b.links = [];
-                if (!b.links.includes(id)) b.links.push(id);
-                linkingFromId = null;
-                renderBubbles();
-                autoSave();
-            } else {
-                linkingFromId = id;
-                renderBubbles();
-            }
-        }
-
-        function drawConnections() {
-            svgLayer.innerHTML = "";
-            bubbles.forEach(b => {
-                if (b.links) {
-                    b.links.forEach(targetId => {
-                        const target = bubbles.find(t => t.id === targetId);
-                        if (target) {
-                            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                            line.setAttribute("x1", b.x + 80);
-                            line.setAttribute("y1", b.y + 30);
-                            line.setAttribute("x2", target.x + 80);
-                            line.setAttribute("y2", target.y + 30);
-                            line.setAttribute("stroke", b.color);
-                            line.setAttribute("stroke-width", "2");
-                            line.setAttribute("stroke-dasharray", "5,5");
-                            line.setAttribute("opacity", "0.4");
-                            svgLayer.appendChild(line);
-                        }
-                    });
+            timeline.addEventListener('dragover', e => {
+                e.preventDefault();
+                const afterElement = getDragAfterElement(timeline, e.clientY);
+                const dragging = document.querySelector('.dragging');
+                if (dragging) {
+                    if (afterElement == null) timeline.appendChild(dragging);
+                    else timeline.insertBefore(dragging, afterElement);
                 }
             });
         }
 
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.timeline-block:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
+                else return closest;
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function reorderTimeline() {
+            const blocks = [...timeline.querySelectorAll('.timeline-block')];
+            blocks.forEach((block, index) => {
+                const b = bubbles.find(b => b.id === block.dataset.id);
+                if (b) b.order = index;
+            });
+            autoSave();
+        }
+
+        function updateBubbleText(id, val) {
+            const b = bubbles.find(b => b.id === id);
+            if (b) b.text = val;
+            autoSave();
+        }
+
         function setBubbleColor(id, color) {
             const b = bubbles.find(b => b.id === id);
-            b.color = color;
-            renderBubbles();
+            if (b) b.color = color;
+            // Fermeture immédiate du menu après choix
+            document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
+            if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
             autoSave();
         }
 
         function deleteBubble(id) {
             bubbles = bubbles.filter(b => b.id !== id);
-            bubbles.forEach(b => { if(b.links) b.links = b.links.filter(l => l !== id); });
-            renderBubbles();
+            currentStep === 1 ? renderDraft() : renderTimeline();
             autoSave();
         }
 
-        // --- END BUBBLE SYSTEM ---
+        // --- FIREBASE & CORE LOGIC ---
 
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
@@ -554,11 +627,9 @@
                 currentScriptId = null;
                 document.getElementById('auth-btn-text').innerText = "Se connecter";
                 document.getElementById('user-display').innerText = "Mode Local";
-                document.getElementById('share-btn').style.display = 'none';
                 textarea.value = localStorage.getItem('purge-content') || "";
                 bubbles = JSON.parse(localStorage.getItem('purge-bubbles')) || [];
-                renderBubbles();
-                process();
+                setStep(1);
             }
         });
 
@@ -581,23 +652,17 @@
                 }
                 const data = doc.data();
                 if (data.content !== textarea.value && document.activeElement !== textarea) textarea.value = data.content || "";
-                
-                // Sync bubbles only if different to avoid jitter
                 if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) {
                     bubbles = data.bubbles || [];
-                    renderBubbles();
+                    currentStep === 1 ? renderDraft() : renderTimeline();
                 }
-
                 userRole = data.owner === currentUser.uid ? 'owner' : (data.editors?.includes(currentUser.email) ? 'editor' : 'viewer');
                 textarea.readOnly = (userRole === 'viewer');
-                document.getElementById('rename-btn').style.display = (userRole === 'owner') ? 'block' : 'none';
-                
                 const slotMatch = id.match(/_([1-4])$/); 
                 if (slotMatch && userRole === 'owner') {
                     const tab = document.getElementById(`p-tab-${slotMatch[1]}`);
                     if (tab) tab.innerText = data.title;
                 }
-
                 if (userRole === 'owner') updateCollaboratorsUI(data);
                 ignoredRepeats = new Set(data.ignoredWords || []);
                 process();
@@ -638,6 +703,8 @@
             if (tab) { tab.classList.add('active'); tab.style.backgroundColor = "var(--accent-color)"; }
             loadScript(id);
         }
+
+        // --- ÉTAPE 3: ANALYSEUR ---
 
         function process() {
             if (currentStep !== 3) return;
@@ -742,6 +809,8 @@
             if (ignoredRepeats.size > 0) { document.getElementById('ignored-section').classList.remove('hidden'); document.getElementById('ignored-list').innerHTML = Array.from(ignoredRepeats).map(w => `<li onclick="unignoreWord('${w}')" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer">#${w}</li>`).join(''); } else document.getElementById('ignored-section').classList.add('hidden');
         }
 
+        // --- COLLABORATION ---
+
         async function generateInviteLink() {
             if (!currentUser || !currentScriptId) return;
             const role = document.getElementById('share-role').value;
@@ -783,16 +852,17 @@
             });
         }
         async function removeCollaborator(e, r) { if (confirm(`Retirer ${e} ?`)) await db.collection('scripts').doc(currentScriptId).update({ [r]: firebase.firestore.FieldValue.arrayRemove(e) }); }
-        async function renameCurrentProject() { const n = prompt("Nom du projet :"); if(n) await db.collection('scripts').doc(currentScriptId).update({ title: n }); }
+        async function renameCurrentProject() { const n = prompt("Nouveau nom du projet :"); if(n) await db.collection('scripts').doc(currentScriptId).update({ title: n }); }
 
         window.onload = () => {
-            const themes = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#10b981', '#06b6d4', '#2563eb', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e'];
-            themes.forEach(t => {
-                const b = document.createElement('button'); b.className = 'w-4 h-4 rounded-full border border-white/20'; b.style.backgroundColor = t;
+            // ARC-EN-CIEL RESTAURÉ
+            bubblePalette.forEach(t => {
+                const b = document.createElement('button'); b.className = 'w-4 h-4 rounded-full border border-white/20 hover:scale-125 transition'; b.style.backgroundColor = t;
                 b.onclick = () => { 
                     document.documentElement.style.setProperty('--accent-color', t); 
                     document.documentElement.style.setProperty('--accent-soft', t + '26');
                     process(); 
+                    if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
                 };
                 document.getElementById('theme-picker').appendChild(b);
             });
