@@ -1,11 +1,12 @@
+--- START OF FILE index.html ---
 <!DOCTYPE html>
 <html lang="fr" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Purge-Script Pro | Workflow Collaboratif</title>
+    <title>Purge-Script Pro | Workflow Collaboratif & IA-Proof</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -27,314 +28,332 @@
             color: #f1f5f9; 
             margin: 0;
             overflow-x: hidden;
+            letter-spacing: -0.01em;
         } 
         
         h1, h1 span { color: #ffffff !important; }
-        .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.6; }
+        .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.1rem; line-height: 1.7; }
         
-        /* Layout Canvas (Step 1) */
+        /* Step 1: Canvas Layout */
         #canvas-container {
             position: relative;
             width: 100%;
-            height: 600px;
+            height: 650px;
             background-color: #0f172a;
             background-image: radial-gradient(circle at 2px 2px, #1e293b 1px, transparent 0);
             background-size: 40px 40px;
             overflow: hidden;
-            border-radius: 2rem;
+            border-radius: 2.5rem;
             border: 1px solid #334155;
             touch-action: none;
         }
 
         .bubble {
             position: absolute;
-            min-width: 200px;
-            max-width: 300px;
-            padding: 1rem;
+            min-width: 220px;
+            max-width: 320px;
+            padding: 1.25rem;
             background: #1e293b;
             border: 2px solid #334155;
-            border-radius: 1.25rem;
+            border-radius: 1.5rem;
             cursor: grab;
             user-select: none;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
             z-index: 10;
+            transition: transform 0.1s, box-shadow 0.2s;
         }
-        .bubble:active { cursor: grabbing; }
+        .bubble:active { cursor: grabbing; transform: scale(1.02); }
 
-        /* Timeline Blocks (Step 2) */
+        /* Step 2: Timeline Blocks */
         #timeline-container {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            padding: 20px;
-            min-height: 500px;
+            gap: 14px;
+            padding: 24px;
+            min-height: 550px;
             background: #0f172a;
-            border-radius: 2rem;
+            border-radius: 2.5rem;
             border: 1px solid #334155;
         }
         .timeline-block {
             width: 100%;
             background: #1e293b;
             border-left: 6px solid var(--accent-color);
-            border-radius: 1rem;
-            padding: 0 1.25rem;
+            border-radius: 1.25rem;
+            padding: 0 1.5rem;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 20px;
             cursor: move;
-            transition: transform 0.2s, box-shadow 0.2s, border-color 0.3s;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             border: 1px solid #334155;
-            height: 80px;
+            height: 90px;
             position: relative;
         }
-        .timeline-block.dragging { opacity: 0.5; transform: scale(0.98); }
+        .timeline-block.dragging { opacity: 0.4; transform: scale(0.96); filter: grayscale(1); }
 
-        /* Color Picker */
+        /* Interactive Elements */
         .color-picker-trigger {
-            width: 28px;
-            height: 28px;
-            border-radius: 8px;
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: background 0.2s;
-            background: rgba(255,255,255,0.05);
+            transition: all 0.2s;
+            background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.1);
         }
+        .color-picker-trigger:hover { background: rgba(255,255,255,0.08); border-color: var(--accent-color); }
+
         .color-menu {
             display: none;
             position: absolute;
             background: #1e293b;
             border: 1px solid #334155;
-            padding: 10px;
-            border-radius: 1rem;
+            padding: 12px;
+            border-radius: 1.25rem;
             grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
+            gap: 8px;
             z-index: 1000;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.6);
-            margin-top: 8px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);
+            margin-top: 10px;
+            animation: popIn 0.2s ease-out;
         }
+        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .color-menu.active { display: grid; }
-        .color-dot-btn { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); transition: transform 0.1s; }
-        .color-dot-btn:hover { transform: scale(1.3); }
+        .color-dot-btn { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.15s; }
+        .color-dot-btn:hover { transform: scale(1.2); border-color: white; }
 
-        /* Editor & Highlights (Step 3) */
-        .editor-container { position: relative; min-height: 600px; border-radius: 1.5rem; background-color: #1e293b; border: 1px solid #334155; }
-        .sync-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 30px; white-space: pre-wrap; word-wrap: break-word; overflow-y: auto; border: none; margin: 0; background: transparent; }
+        /* Editor & Highlights */
+        .editor-container { position: relative; min-height: 700px; border-radius: 2rem; background-color: #1e293b; border: 1px solid #334155; }
+        .sync-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 40px; white-space: pre-wrap; word-wrap: break-word; overflow-y: auto; border: none; margin: 0; background: transparent; }
         #textarea { color: transparent; caret-color: #ffffff; z-index: 2; resize: none; outline: none; }
         #highlight-layer { z-index: 1; pointer-events: none; color: #e2e8f0 !important; }
         
-        mark { background: none; color: inherit; position: relative; }
-        .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); border-radius: 2px; }
-        .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; border-radius: 2px; }
+        mark { background: none; color: inherit; position: relative; border-radius: 4px; }
+        .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); }
+        .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; }
         mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; font-weight: 600; }
-        .show-montage mark.montage { background-color: var(--montage-color) !important; color: #0369a1 !important; font-weight: 700; }
+        .show-montage mark.montage { background-color: var(--montage-color) !important; color: #0369a1 !important; font-weight: 700; padding: 0 4px; }
         
-        /* Interactive Comments */
-        mark.comment-highlight {
-            background-color: rgba(250, 204, 21, 0.2);
-            border-bottom: 2px dashed var(--comment-color);
+        /* New: Floating Suggestion System */
+        #floating-suggest-btn {
+            display: none;
+            position: fixed;
+            z-index: 500;
+            background: var(--accent-color);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-weight: 800;
+            font-size: 12px;
+            text-transform: uppercase;
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4);
             cursor: pointer;
-            pointer-events: auto; /* Permet le hover dans le layer highlight */
+            pointer-events: auto;
+            animation: bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes bounceIn { from { transform: translateY(10px) scale(0.8); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+
+        mark.comment-highlight {
+            background-color: rgba(250, 204, 21, 0.15);
+            border-bottom: 2px dashed var(--comment-color);
+            cursor: help;
+            pointer-events: auto;
             transition: background-color 0.2s;
         }
-        mark.comment-highlight:hover {
-            background-color: rgba(250, 204, 21, 0.4);
-        }
+        mark.comment-highlight:hover { background-color: rgba(250, 204, 21, 0.3); }
 
         #comment-tooltip {
             display: none;
             position: fixed;
-            z-index: 9999;
+            z-index: 1000;
             background: #1e293b;
             border: 1px solid #334155;
-            padding: 16px;
-            border-radius: 1.25rem;
-            width: 280px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            padding: 18px;
+            border-radius: 1.5rem;
+            width: 300px;
+            box-shadow: 0 30px 60px -12px rgba(0,0,0,0.8);
             pointer-events: auto;
+            animation: fadeIn 0.2s ease-out;
         }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        #comment-btn-floating {
-            display: none;
-            position: fixed;
-            z-index: 50;
-            background: var(--accent-color);
-            color: #fff;
-            padding: 10px 16px;
-            border-radius: 12px;
-            font-weight: 800;
-            font-size: 13px;
-            cursor: pointer;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-            transform: translateY(-100%);
-            transition: background-color 0.3s;
-        }
-
-        /* UI Styles */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        /* UI Helpers */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        #textarea::-webkit-scrollbar-thumb, .scroll-custom::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb { background: var(--accent-color); border-radius: 10px; }
-        .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
+        #textarea::-webkit-scrollbar-thumb, .scroll-custom::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; border: 2px solid #0f172a; }
+        #textarea::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
+
+        .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--accent-color); }
-        input:checked + .slider:before { transform: translateX(14px); }
-        #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
-        .modal-content { background: #1e293b; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 400px; color: white; border: 1px solid #334155; }
-        .project-tab.active { color: white; background-color: var(--accent-color) !important; }
-        .wf-tab { position: relative; padding: 1rem 1.5rem; cursor: pointer; color: #64748b; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; transition: all 0.3s; }
+        input:checked + .slider:before { transform: translateX(18px); }
+
+        #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(12px); }
+        .modal-content { background: #1e293b; padding: 2.5rem; border-radius: 2rem; width: 90%; max-width: 450px; border: 1px solid #334155; }
+        
+        .project-tab { opacity: 0.6; transition: all 0.3s; }
+        .project-tab.active { opacity: 1; transform: translateY(-2px); }
+        
+        .wf-tab { position: relative; padding: 1.25rem 2rem; cursor: pointer; color: #64748b; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; transition: all 0.3s; }
         .wf-tab.active { color: white; }
-        .wf-tab.active::after { content: ""; position: absolute; bottom: 0; left: 25%; width: 50%; height: 3px; background: var(--accent-color); border-radius: 10px 10px 0 0; }
-        .sync-input { background: transparent; border: none; outline: none; color: white; width: 100%; font-weight: 500; height: 100%; resize: none; overflow: hidden; }
-        .bubble-input-field { background: transparent; border: none; outline: none; color: white; width: 100%; font-size: 11px; font-weight: 600; }
+        .wf-tab.active::after { content: ""; position: absolute; bottom: 0; left: 20%; width: 60%; height: 4px; background: var(--accent-color); border-radius: 10px 10px 0 0; }
+        
+        .sync-input { background: transparent; border: none; outline: none; color: white; width: 100%; font-weight: 600; height: 100%; resize: none; overflow: hidden; }
+        .bubble-input-field { background: transparent; border: none; outline: none; color: white; width: 100%; font-size: 13px; font-weight: 600; line-height: 1.4; }
     </style>
 </head>
-<body class="antialiased">
+<body class="antialiased scroll-custom">
 
-    <!-- Tooltip Suggestion Interactive -->
+    <!-- FLOATING SUGGEST BUTTON -->
+    <div id="floating-suggest-btn" onclick="openCommentPrompt()">Suggérer +</div>
+
+    <!-- COMMENT TOOLTIP -->
     <div id="comment-tooltip">
-        <p id="comment-author" class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest"></p>
-        <p id="comment-text" class="text-sm text-slate-100 mb-4 font-medium leading-relaxed"></p>
+        <div class="flex items-center justify-between mb-3">
+            <p id="comment-author" class="text-[10px] font-black text-slate-500 uppercase tracking-widest"></p>
+            <button onclick="closeTooltip()" class="text-slate-500 hover:text-white">✕</button>
+        </div>
+        <p id="comment-text" class="text-sm text-slate-100 mb-5 font-semibold leading-relaxed"></p>
         
-        <div class="border-t border-slate-700 pt-3 mb-3">
-            <p class="text-[9px] font-bold text-slate-500 uppercase mb-2">Couleur du surlignage</p>
+        <div class="border-t border-slate-700/50 pt-4 mb-4">
+            <p class="text-[9px] font-bold text-slate-500 uppercase mb-3 tracking-tighter">Couleur du Surlignage</p>
             <div id="comment-palette" class="grid grid-cols-6 gap-2"></div>
         </div>
 
-        <button id="comment-delete-btn" class="w-full py-2 rounded-lg bg-red-500/10 text-red-400 text-[10px] uppercase font-extrabold hover:bg-red-500 hover:text-white transition">Supprimer la suggestion</button>
+        <button id="comment-delete-btn" class="w-full py-2.5 rounded-xl bg-red-500/10 text-red-400 text-[10px] uppercase font-black hover:bg-red-500 hover:text-white transition-all">Supprimer</button>
     </div>
 
-    <!-- Bouton flottant commentaire -->
-    <div id="comment-btn-floating" onclick="openCommentPrompt()">Suggérer</div>
-
-    <!-- Modal de Partage -->
+    <!-- SHARE MODAL -->
     <div id="share-modal">
         <div class="modal-content shadow-2xl">
-            <h3 class="text-xl font-extrabold mb-2">Inviter un collaborateur</h3>
-            <p class="text-xs text-slate-400 mb-6">Définissez le rôle avant de générer le lien.</p>
-            <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Rôle de l'invité</label>
-            <select id="share-role" class="w-full p-4 rounded-xl border bg-slate-900 border-slate-700 outline-none text-white mb-8">
+            <h3 class="text-2xl font-black mb-2">Partager le Script</h3>
+            <p class="text-xs text-slate-400 mb-8">Invitez votre équipe sur ce projet spécifique.</p>
+            <label class="text-[10px] font-black uppercase text-slate-500 mb-2 block tracking-widest">Rôle de l'invité</label>
+            <select id="share-role" class="w-full p-4 rounded-2xl border bg-slate-900 border-slate-700 outline-none text-white mb-10 font-bold">
                 <option value="editors">Éditeur (Modifications)</option>
-                <option value="commenters">Commentateur (Suggestions uniquement)</option>
+                <option value="commenters">Commentateur (Suggestions)</option>
                 <option value="viewers">Lecteur (Lecture seule)</option>
             </select>
             <div class="flex flex-col gap-3">
-                <button onclick="generateInviteLink()" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-4 rounded-2xl font-bold text-sm transition" style="background-color: var(--accent-color);">Générer et copier le lien</button>
-                <button onclick="toggleShareModal()" class="w-full bg-slate-800 py-4 rounded-2xl font-bold text-sm text-slate-400">Annuler</button>
+                <button onclick="generateInviteLink()" class="w-full py-4 rounded-2xl font-black text-sm transition-transform hover:scale-[1.02]" style="background-color: var(--accent-color);">COPIER LE LIEN D'INVITATION</button>
+                <button onclick="toggleShareModal()" class="w-full bg-slate-800 py-4 rounded-2xl font-black text-sm text-slate-400">FERMER</button>
             </div>
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-6 py-6 md:py-10">
+    <div class="max-w-7xl mx-auto px-6 py-8 md:py-14">
         <!-- HEADER -->
-        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-10">
             <div>
-                <div class="flex items-center gap-3">
-                    <h1 class="text-3xl font-extrabold tracking-tight">Purge-Script<span>.</span></h1>
-                    <span id="save-status" class="text-[10px] uppercase font-bold transition-opacity" style="color: var(--accent-color); opacity: 0;">En direct</span>
+                <div class="flex items-center gap-4">
+                    <h1 class="text-4xl font-black tracking-tighter">Purge-Script<span style="color: var(--accent-color)">.</span></h1>
+                    <span id="save-status" class="text-[10px] uppercase font-black px-2 py-1 rounded bg-red-500/10 transition-opacity duration-500" style="color: var(--accent-color); opacity: 0;">Cloud Sync</span>
                 </div>
-                <p class="text-slate-500 text-sm font-medium italic mt-1"><span id="user-display">Mode Local</span> • <span id="role-display" class="uppercase font-bold text-[10px]">Propriétaire</span></p>
+                <p class="text-slate-500 text-sm font-semibold mt-2"><span id="user-display">Chargement...</span> • <span id="role-display" class="uppercase font-black text-[10px] bg-slate-800 px-2 py-0.5 rounded">LOCAL</span></p>
             </div>
-            <div class="flex flex-wrap items-center gap-4">
-                <button id="share-btn" onclick="toggleShareModal()" class="hidden items-center gap-2 px-5 py-2.5 text-white rounded-xl text-xs font-bold hover:scale-105 transition shadow-lg" style="background-color: var(--accent-color);">Inviter</button>
-                <button id="auth-btn" onclick="handleAuth()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold shadow-sm transition"><span id="auth-btn-text">Se connecter</span></button>
-                <div class="bg-slate-800 p-3 rounded-2xl shadow-sm border border-slate-700 flex items-center gap-4">
-                    <div class="flex flex-wrap gap-1.5 max-w-[130px]" id="theme-picker"></div>
+            <div class="flex flex-wrap items-center gap-5">
+                <button id="share-btn" onclick="toggleShareModal()" class="hidden items-center gap-2 px-6 py-3 text-white rounded-2xl text-xs font-black hover:scale-105 transition shadow-xl" style="background-color: var(--accent-color);">INVITER</button>
+                <button id="auth-btn" onclick="handleAuth()" class="flex items-center gap-2 px-5 py-3 bg-slate-800 border border-slate-700 rounded-2xl text-xs font-black shadow-sm hover:bg-slate-700 transition"><span id="auth-btn-text">SE CONNECTER</span></button>
+                <div class="bg-slate-800/80 backdrop-blur-md p-3.5 rounded-3xl shadow-sm border border-slate-700 flex items-center gap-4">
+                    <div class="flex flex-wrap gap-2 max-w-[150px]" id="theme-picker"></div>
                 </div>
             </div>
         </header>
 
-        <!-- NAVIGATION PROJETS -->
-        <div id="projects-nav" class="hidden flex items-center justify-between bg-slate-800/50 p-2 rounded-2xl border border-slate-700 mb-6 shadow-sm">
-            <div class="flex gap-2" id="tabs-container">
-                <button onclick="switchProject(1)" id="p-tab-1" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 1</button>
-                <button onclick="switchProject(2)" id="p-tab-2" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 2</button>
-                <button onclick="switchProject(3)" id="p-tab-3" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 3</button>
-                <button onclick="switchProject(4)" id="p-tab-4" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 4</button>
+        <!-- PROJECTS NAVIGATION -->
+        <div id="projects-nav" class="hidden flex items-center justify-between bg-slate-800/30 p-2.5 rounded-3xl border border-slate-700/50 mb-10 shadow-sm">
+            <div class="flex gap-2.5" id="tabs-container">
+                <button onclick="switchProject(1)" id="p-tab-1" class="project-tab px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase transition-all bg-slate-700/50">Projet 1</button>
+                <button onclick="switchProject(2)" id="p-tab-2" class="project-tab px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase transition-all">Projet 2</button>
+                <button onclick="switchProject(3)" id="p-tab-3" class="project-tab px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase transition-all">Projet 3</button>
+                <button onclick="switchProject(4)" id="p-tab-4" class="project-tab px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase transition-all">Projet 4</button>
             </div>
-            <button id="rename-btn" onclick="renameCurrentProject()" class="p-2 text-slate-500 hover:text-indigo-400 transition ml-4">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+            <button id="rename-btn" onclick="renameCurrentProject()" class="p-3 text-slate-500 hover:text-white transition-colors bg-slate-800 rounded-2xl border border-slate-700 mr-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
             </button>
         </div>
 
-        <!-- WORKFLOW TABS -->
-        <div class="flex items-center justify-center mb-6 bg-slate-900/50 p-1 rounded-2xl border border-slate-800 max-w-2xl mx-auto">
+        <!-- WORKFLOW STEPS -->
+        <div class="flex items-center justify-center mb-10 bg-slate-900/50 p-1.5 rounded-3xl border border-slate-800 max-w-xl mx-auto backdrop-blur-sm">
             <div onclick="setStep(1)" id="wf-tab-1" class="wf-tab active flex-1 text-center">Brouillon</div>
-            <div onclick="setStep(2)" id="wf-tab-2" class="wf-tab flex-1 text-center">Chronologie</div>
+            <div onclick="setStep(2)" id="wf-tab-2" class="wf-tab flex-1 text-center">Structure</div>
             <div onclick="setStep(3)" id="wf-tab-3" class="wf-tab flex-1 text-center">Rédaction</div>
         </div>
 
-        <!-- STATS -->
-        <div id="stats-row" class="hidden grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-            <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm"><p class="text-slate-500 text-[8px] font-bold uppercase mb-1">Tics</p><p id="total-parasites" class="text-lg font-extrabold" style="color: var(--accent-color);">0</p></div>
-            <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm"><p class="text-slate-500 text-[8px] font-bold uppercase mb-1">Répétitions</p><p id="total-repeats" class="text-lg font-extrabold text-amber-500">0</p></div>
-            <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm"><p class="text-slate-500 text-[8px] font-bold uppercase mb-1">Mots</p><p id="total-words" class="text-lg font-extrabold">0</p></div>
-            <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm"><p class="text-slate-500 text-[8px] font-bold uppercase mb-1">Durée</p><p id="duration-display" class="text-lg font-extrabold" style="color: var(--accent-color);">0s</p></div>
-            <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm"><p class="text-slate-500 text-[8px] font-bold uppercase mb-1">Focus</p><p id="focus-display" class="text-sm font-extrabold text-slate-400 truncate">Aucun</p></div>
+        <!-- LIVE ANALYSIS STATS -->
+        <div id="stats-row" class="hidden grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+            <div class="bg-slate-800/40 p-5 rounded-3xl border border-slate-700/50"><p class="text-slate-500 text-[9px] font-black uppercase mb-1 tracking-widest">Tics</p><p id="total-parasites" class="text-2xl font-black" style="color: var(--accent-color);">0</p></div>
+            <div class="bg-slate-800/40 p-5 rounded-3xl border border-slate-700/50"><p class="text-slate-500 text-[9px] font-black uppercase mb-1 tracking-widest">Répétitions</p><p id="total-repeats" class="text-2xl font-black text-amber-500">0</p></div>
+            <div class="bg-slate-800/40 p-5 rounded-3xl border border-slate-700/50"><p class="text-slate-500 text-[9px] font-black uppercase mb-1 tracking-widest">Mots</p><p id="total-words" class="text-2xl font-black">0</p></div>
+            <div class="bg-slate-800/40 p-5 rounded-3xl border border-slate-700/50"><p class="text-slate-500 text-[9px] font-black uppercase mb-1 tracking-widest">Durée</p><p id="duration-display" class="text-2xl font-black" style="color: var(--accent-color);">0s</p></div>
+            <div class="bg-slate-800/40 p-5 rounded-3xl border border-slate-700/50"><p class="text-slate-500 text-[9px] font-black uppercase mb-1 tracking-widest">Focus</p><p id="focus-display" class="text-sm font-black text-slate-400 truncate">Aucun</p></div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div id="main-column" class="lg:col-span-12 space-y-4">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            <div id="main-column" class="lg:col-span-12 space-y-6">
                 
-                <!-- STEP 1: BROUILLON -->
-                <div id="step-1-view" class="space-y-4">
+                <!-- STEP 1: BRAINSTORMING CANVAS -->
+                <div id="step-1-view" class="space-y-6">
                     <div id="canvas-container" class="shadow-2xl"></div>
-                    <div class="flex gap-3 bg-slate-900/50 p-4 rounded-3xl border border-slate-800 max-w-2xl mx-auto w-full">
-                        <input type="text" id="bubble-input" class="flex-1 bg-slate-800 border border-slate-700 rounded-2xl px-6 py-3 text-white placeholder-slate-500 font-medium outline-none" placeholder="Une idée ? Tapez Entrée...">
-                        <button id="add-bubble-btn" onclick="createBubbleFromInput()" class="bg-indigo-500 text-white p-4 rounded-2xl transition" style="background-color: var(--accent-color);">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        </button>
+                    <div class="flex gap-4 bg-slate-900/60 p-5 rounded-[2.5rem] border border-slate-800 max-w-3xl mx-auto w-full shadow-lg">
+                        <input type="text" id="bubble-input" class="flex-1 bg-slate-800/80 border border-slate-700 rounded-2xl px-8 py-4 text-white placeholder-slate-500 font-bold outline-none focus:border-red-500 transition-colors" placeholder="Une idée géniale ? Tapez Entrée...">
+                        <button id="add-bubble-btn" onclick="createBubbleFromInput()" class="text-white px-8 rounded-2xl font-black transition-transform hover:scale-105 active:scale-95" style="background-color: var(--accent-color);">AJOUTER</button>
                     </div>
                 </div>
 
-                <!-- STEP 2: CHRONOLOGIE -->
-                <div id="step-2-view" class="hidden space-y-4">
+                <!-- STEP 2: CHRONOLOGICAL TIMELINE -->
+                <div id="step-2-view" class="hidden space-y-6">
                     <div id="timeline-container" class="shadow-inner"></div>
                 </div>
 
-                <!-- STEP 3: RÉDACTION -->
-                <div id="step-3-view" class="hidden space-y-4">
-                    <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 flex flex-wrap items-center gap-6 text-[10px] font-bold uppercase">
-                        <div class="flex items-center gap-4 flex-1">
-                            <span>Débit :</span>
-                            <input type="range" id="wpm-slider" min="100" max="250" value="150" class="flex-1" style="accent-color: var(--accent-color);" oninput="updateWpmDisplay(this.value); process();">
-                            <span id="wpm-value" class="w-12 text-right" style="color: var(--accent-color);">150</span>
+                <!-- STEP 3: ADVANCED EDITOR -->
+                <div id="step-3-view" class="hidden space-y-6">
+                    <div class="bg-slate-800/60 p-5 rounded-3xl border border-slate-700 flex flex-wrap items-center gap-8 text-[11px] font-black uppercase tracking-wider">
+                        <div class="flex items-center gap-5 flex-1">
+                            <span class="text-slate-400">Débit (WPM) :</span>
+                            <input type="range" id="wpm-slider" min="100" max="250" value="160" class="flex-1" style="accent-color: var(--accent-color);" oninput="updateWpmDisplay(this.value); process();">
+                            <span id="wpm-value" class="w-10 text-right font-black" style="color: var(--accent-color);">160</span>
                         </div>
-                        <div class="flex gap-4 border-l border-slate-700 pl-6">
-                            <div class="flex items-center gap-2"><span>Tics</span><label class="switch"><input type="checkbox" id="toggle-parasites" checked onchange="process()"><span class="slider"></span></label></div>
-                            <div class="flex items-center gap-2"><span>Répé.</span><label class="switch"><input type="checkbox" id="toggle-repeats" checked onchange="process()"><span class="slider"></span></label></div>
-                            <div class="flex items-center gap-2"><span>Mont.</span><label class="switch"><input type="checkbox" id="toggle-montage" checked onchange="process()"><span class="slider"></span></label></div>
+                        <div class="flex gap-6 border-l border-slate-700 pl-8">
+                            <div class="flex items-center gap-3"><span>Tics</span><label class="switch"><input type="checkbox" id="toggle-parasites" checked onchange="process()"><span class="slider"></span></label></div>
+                            <div class="flex items-center gap-3"><span>Répét.</span><label class="switch"><input type="checkbox" id="toggle-repeats" checked onchange="process()"><span class="slider"></span></label></div>
+                            <div class="flex items-center gap-3"><span>Montage</span><label class="switch"><input type="checkbox" id="toggle-montage" checked onchange="process()"><span class="slider"></span></label></div>
                         </div>
                     </div>
 
-                    <div id="editor-wrapper" class="editor-container shadow-sm overflow-hidden show-parasites show-repeats show-montage">
+                    <div id="editor-wrapper" class="editor-container shadow-2xl overflow-hidden show-parasites show-repeats show-montage">
                         <div id="highlight-layer" class="sync-text editor-font"></div>
-                        <textarea id="textarea" class="sync-text editor-font" placeholder="Rédigez ici..." spellcheck="false"></textarea>
+                        <textarea id="textarea" class="sync-text editor-font" placeholder="Laissez la magie opérer ici..." spellcheck="false" onmouseup="handleTextSelection()" onkeyup="handleTextSelection()"></textarea>
                     </div>
                     
                     <div class="flex gap-4">
-                        <button onclick="copyText()" class="text-white px-8 py-3.5 rounded-2xl font-bold uppercase text-xs" style="background-color: var(--accent-color);">Copier</button>
-                        <button onclick="downloadText()" class="bg-slate-700 text-white px-8 py-3.5 rounded-2xl font-bold uppercase text-xs">Exporter</button>
+                        <button onclick="copyText()" class="text-white px-10 py-5 rounded-2xl font-black uppercase text-xs transition-all hover:brightness-110 shadow-lg shadow-red-500/20" style="background-color: var(--accent-color);">COPIER LE SCRIPT</button>
+                        <button onclick="downloadText()" class="bg-slate-800 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs hover:bg-slate-700 transition-colors">EXPORTER .TXT</button>
                     </div>
                 </div>
             </div>
 
-            <div id="analysis-column" class="lg:col-span-4 hidden space-y-6">
-                <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8 border border-slate-800">
-                    <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Tics</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px] scroll-custom"></ul></div>
-                    <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Répétitions</h2><ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px] scroll-custom"></ul></div>
-                    <div id="ignored-section" class="hidden"><h2 class="text-[9px] font-bold uppercase text-red-400 mb-4">Ignorés</h2><ul id="ignored-list" class="flex flex-wrap gap-2 text-[10px]"></ul></div>
-                    <div id="collaborators-section" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-indigo-400 mb-4">Collaborateurs</h2><ul id="collaborators-list" class="space-y-2 text-[11px]"></ul></div>
-                    <div id="shared-scripts-container" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Partagés</h2><ul id="shared-list" class="space-y-2 text-[11px]"></ul></div>
+            <!-- ANALYSIS SIDEBAR -->
+            <div id="analysis-column" class="lg:col-span-4 hidden space-y-8">
+                <div class="bg-slate-900/80 backdrop-blur-xl text-white p-8 rounded-[3rem] shadow-2xl space-y-10 border border-slate-800">
+                    <div><h2 class="text-[10px] font-black uppercase text-slate-500 mb-5 tracking-[0.2em]">Top Tics</h2><ul id="word-list" class="space-y-2 max-h-48 overflow-y-auto pr-2 text-xs scroll-custom"></ul></div>
+                    <div><h2 class="text-[10px] font-black uppercase text-slate-500 mb-5 tracking-[0.2em]">Répétitions</h2><ul id="repeat-list" class="space-y-2 max-h-48 overflow-y-auto pr-2 text-xs scroll-custom"></ul></div>
+                    <div id="ignored-section" class="hidden"><h2 class="text-[10px] font-black uppercase text-red-400 mb-5 tracking-[0.2em]">Ignorés</h2><ul id="ignored-list" class="flex flex-wrap gap-2 text-[10px]"></ul></div>
+                    <div id="collaborators-section" class="hidden border-t border-slate-800 pt-8"><h2 class="text-[10px] font-black uppercase text-indigo-400 mb-5 tracking-[0.2em]">Collaborateurs</h2><ul id="collaborators-list" class="space-y-3 text-xs"></ul></div>
+                    <div id="shared-scripts-container" class="hidden border-t border-slate-800 pt-8"><h2 class="text-[10px] font-black uppercase text-slate-500 mb-5 tracking-[0.2em]">Scripts Partagés</h2><ul id="shared-list" class="space-y-3 text-xs"></ul></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        // --- CONFIGURATION & CONSTANTES ---
         const firebaseConfig = { 
             apiKey: "AIzaSyCPI5JRtaODgMbhpvmb5jJ9pGaEOFms8sI", 
             authDomain: "script-p-6c6df.firebaseapp.com", 
@@ -359,7 +378,7 @@
         let scriptListener = null; 
         let currentStep = 1;
         let bubbles = []; 
-        let comments = []; // [{id, start, end, text, author, authorName, color}]
+        let comments = []; // Structure: {id, start, end, text, author, authorName, color}
 
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
@@ -367,13 +386,13 @@
         const canvas = document.getElementById('canvas-container');
         const timeline = document.getElementById('timeline-container');
         const bubbleInput = document.getElementById('bubble-input');
-        const commentBtnFloating = document.getElementById('comment-btn-floating');
+        const floatBtn = document.getElementById('floating-suggest-btn');
+        const tooltip = document.getElementById('comment-tooltip');
 
         function updateWpmDisplay(v) { document.getElementById('wpm-value').innerText = v; }
         function handleAuth() { if (currentUser) auth.signOut(); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
-        // --- GESTION DES RÔLES ET LOCK ---
-
+        // --- GESTION DES RÔLES ---
         function applyRoleSecurity() {
             const isRestricted = (userRole === 'viewers' || userRole === 'commenters');
             textarea.readOnly = (userRole === 'viewers');
@@ -384,49 +403,42 @@
             
             const style = document.createElement('style');
             if (isRestricted) {
-                style.innerHTML = `.bubble-controls, .timeline-block button, .delete-comment-btn { display: none !important; }`;
+                style.innerHTML = `.bubble-controls, .timeline-block button, .delete-comment-btn, .bubble button { display: none !important; }`;
             }
             document.head.appendChild(style);
         }
 
-        // --- NOUVEAU SYSTÈME DE COMMENTAIRES SURLIGNÉS ---
-
-        textarea.addEventListener('mouseup', handleTextSelection);
-        textarea.addEventListener('keyup', handleTextSelection);
-        textarea.addEventListener('scroll', () => {
-            commentBtnFloating.style.display = 'none';
-        });
+        // --- SYSTÈME DE SUGGESTIONS (CONTEXTUEL) ---
 
         function handleTextSelection() {
             if (userRole === 'viewers') return;
             const start = textarea.selectionStart;
             const end = textarea.selectionEnd;
 
-            if (start !== end) {
-                const textBefore = textarea.value.substring(0, start);
-                const lines = textBefore.split('\n');
-                const lastLine = lines[lines.length - 1];
-                
-                // Positionnement approximatif
-                const rect = textarea.getBoundingClientRect();
-                const charWidth = 9; // Approx pour police monospace/IBM
-                const lineHeight = 28;
-                
-                commentBtnFloating.style.display = 'block';
-                commentBtnFloating.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
-                commentBtnFloating.style.top = (rect.top + (lines.length * lineHeight) - textarea.scrollTop) + "px";
-                commentBtnFloating.style.left = (rect.left + (lastLine.length * charWidth) + 40) + "px";
+            if (start !== end && start !== undefined) {
+                // Création d'un élément temporaire pour mesurer la position de la sélection
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    // On utilise le highlightLayer pour obtenir les coordonnées réelles du texte
+                    // C'est plus précis car le textarea cache le rendu visuel
+                    floatBtn.style.display = 'block';
+                    const rects = selection.getRangeAt(0).getClientRects();
+                    const lastRect = rects[rects.length - 1];
+                    
+                    floatBtn.style.top = (window.scrollY + lastRect.top - 45) + "px";
+                    floatBtn.style.left = (window.scrollX + lastRect.left + (lastRect.width / 2) - 40) + "px";
+                }
             } else {
-                commentBtnFloating.style.display = 'none';
+                floatBtn.style.display = 'none';
             }
         }
 
         function openCommentPrompt() {
             const start = textarea.selectionStart;
             const end = textarea.selectionEnd;
-            const suggestion = prompt("Votre suggestion / commentaire pour ce passage :");
+            const suggestion = prompt("Votre suggestion ou commentaire :");
             
-            if (suggestion) {
+            if (suggestion && suggestion.trim() !== "") {
                 const newComment = {
                     id: "c_" + Date.now(),
                     start: start,
@@ -434,10 +446,10 @@
                     text: suggestion,
                     author: currentUser.uid,
                     authorName: currentUser.displayName || currentUser.email,
-                    color: getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#facc15'
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim()
                 };
                 comments.push(newComment);
-                commentBtnFloating.style.display = 'none';
+                floatBtn.style.display = 'none';
                 autoSave();
                 process();
             }
@@ -448,11 +460,9 @@
             const com = comments.find(c => c.id === id);
             if (!com) return;
 
-            const tooltip = document.getElementById('comment-tooltip');
             document.getElementById('comment-author').innerText = com.authorName;
             document.getElementById('comment-text').innerText = com.text;
             
-            // Palette de couleurs pour la suggestion
             const palette = document.getElementById('comment-palette');
             palette.innerHTML = bubblePalette.map(color => `
                 <div class="w-6 h-6 rounded-full cursor-pointer border-2 ${com.color === color ? 'border-white' : 'border-transparent'}" 
@@ -469,8 +479,8 @@
             }
 
             tooltip.style.display = 'block';
-            tooltip.style.top = Math.min(window.innerHeight - 300, event.clientY + 15) + "px";
-            tooltip.style.left = Math.min(window.innerWidth - 300, event.clientX + 15) + "px";
+            tooltip.style.top = Math.min(window.innerHeight - 320, event.clientY + 20) + "px";
+            tooltip.style.left = Math.min(window.innerWidth - 320, event.clientX - 150) + "px";
         }
 
         function updateCommentColor(id, color) {
@@ -479,12 +489,7 @@
                 com.color = color;
                 autoSave();
                 process();
-                // On garde le tooltip ouvert pour feedback
-                const palette = document.getElementById('comment-palette');
-                [...palette.children].forEach(child => {
-                    child.classList.remove('border-white');
-                    if (child.style.backgroundColor === color) child.classList.add('border-white');
-                });
+                tooltip.style.display = 'none';
             }
         }
 
@@ -494,13 +499,16 @@
             process();
         }
 
+        function closeTooltip() { tooltip.style.display = 'none'; }
+
+        // Fermer le tooltip si on clique ailleurs
         document.addEventListener('mousedown', (e) => {
             if (!e.target.closest('mark.comment-highlight') && !e.target.closest('#comment-tooltip')) {
-                document.getElementById('comment-tooltip').style.display = 'none';
+                closeTooltip();
             }
         });
 
-        // --- BROUILLON & CHRONOLOGIE (STEP 1 & 2) ---
+        // --- BROUILLON (STEP 1) & CHRONOLOGIE (STEP 2) ---
 
         function createBubbleFromInput() {
             const text = bubbleInput.value.trim();
@@ -509,8 +517,8 @@
             const newBubble = {
                 id: "b_" + Date.now(),
                 text: text,
-                x: 50 + Math.random() * 300,
-                y: 50 + Math.random() * 300,
+                x: 100 + Math.random() * 200,
+                y: 100 + Math.random() * 200,
                 order: bubbles.length,
                 color: accent
             };
@@ -524,22 +532,25 @@
             canvas.innerHTML = "";
             bubbles.forEach(b => {
                 const el = document.createElement('div');
-                el.className = `bubble`;
+                el.className = `bubble shadow-2xl`;
                 el.id = b.id;
                 el.style.left = b.x + "px";
                 el.style.top = b.y + "px";
                 el.style.borderColor = b.color;
+                
                 const paletteHtml = bubblePalette.map(c => `<div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor('${b.id}', '${c}')"></div>`).join('');
                 el.innerHTML = `
-                    <div class="mb-3"><textarea class="bubble-input-field" ${userRole === 'viewers' || userRole === 'commenters' ? 'disabled' : ''} oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea></div>
-                    <div class="flex items-center justify-between border-t border-slate-700/50 pt-2">
+                    <div class="mb-4"><textarea class="bubble-input-field scroll-custom" ${userRole === 'viewers' || userRole === 'commenters' ? 'disabled' : ''} oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea></div>
+                    <div class="flex items-center justify-between border-t border-slate-700/50 pt-3">
                         <div class="relative">
                             <div class="color-picker-trigger" onclick="toggleColorMenu(event, '${b.id}_menu')">
-                                <svg class="w-3.5 h-3.5 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M14.06,9L15,9.94L5.92,19H5V18.08L14.06,9M17.66,3C17.41,3 17.15,3.1 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18.17,3.09 17.92,3 17.66,3M14.06,6.19L3,17.25V21H6.75L17.81,9.94L14.06,6.19Z"/></svg>
+                                <div class="w-3 h-3 rounded-full" style="background:${b.color}"></div>
                             </div>
                             <div id="${b.id}_menu" class="color-menu">${paletteHtml}</div>
                         </div>
-                        <button onclick="deleteBubble('${b.id}')" class="text-slate-500 hover:text-red-400">✕</button>
+                        <button onclick="deleteBubble('${b.id}')" class="text-slate-500 hover:text-red-500 transition-colors">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                        </button>
                     </div>`;
                 el.addEventListener('mousedown', (e) => {
                     if (e.target.closest('button') || e.target.closest('.color-picker-trigger') || e.target.closest('.color-menu') || e.target.closest('textarea')) return;
@@ -574,13 +585,13 @@
                 block.style.borderColor = b.color;
                 const paletteHtml = bubblePalette.map(c => `<div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor('${b.id}', '${c}')"></div>`).join('');
                 block.innerHTML = `
-                    <div class="drag-handle"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 9h8v2H8zm0 4h8v2H8z"></path></svg></div>
+                    <div class="text-slate-600"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 9h8v2H8zm0 4h8v2H8z"></path></svg></div>
                     <div class="relative">
                         <div class="color-picker-trigger" onclick="toggleColorMenu(event, '${b.id}_tl_menu')"><div class="w-3.5 h-3.5 rounded-full" style="background-color: ${b.color}"></div></div>
                         <div id="${b.id}_tl_menu" class="color-menu">${paletteHtml}</div>
                     </div>
-                    <div class="flex-1 h-full py-3"><textarea class="sync-input editor-font" ${userRole === 'viewers' || userRole === 'commenters' ? 'disabled' : ''} oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea></div>
-                    <button onclick="deleteBubble('${b.id}')" class="text-slate-500 hover:text-red-400 ml-2">✕</button>`;
+                    <div class="flex-1 h-full py-4"><textarea class="sync-input editor-font" ${userRole === 'viewers' || userRole === 'commenters' ? 'disabled' : ''} oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea></div>
+                    <button onclick="deleteBubble('${b.id}')" class="text-slate-600 hover:text-red-500 ml-2">✕</button>`;
                 block.addEventListener('dragstart', () => block.classList.add('dragging'));
                 block.addEventListener('dragend', () => { block.classList.remove('dragging'); reorderTimeline(); });
                 timeline.appendChild(block);
@@ -644,15 +655,36 @@
             currentStep = step;
             document.querySelectorAll('.wf-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(`wf-tab-${step}`).classList.add('active');
-            const s1 = document.getElementById('step-1-view'), s2 = document.getElementById('step-2-view'), s3 = document.getElementById('step-3-view');
-            const mainCol = document.getElementById('main-column'), analysisCol = document.getElementById('analysis-column'), statsRow = document.getElementById('stats-row');
-            [s1, s2, s3].forEach(el => el.classList.add('hidden'));
-            if (step === 1) { s1.classList.remove('hidden'); mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12'); analysisCol.classList.add('hidden'); statsRow.classList.add('hidden'); renderDraft(); }
-            else if (step === 2) { s2.classList.remove('hidden'); mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12'); analysisCol.classList.add('hidden'); statsRow.classList.add('hidden'); renderTimeline(); }
-            else if (step === 3) { s3.classList.remove('hidden'); mainCol.classList.replace('lg:col-span-12', 'lg:col-span-8'); analysisCol.classList.remove('hidden'); statsRow.classList.remove('hidden'); process(); }
+            
+            const views = [document.getElementById('step-1-view'), document.getElementById('step-2-view'), document.getElementById('step-3-view')];
+            views.forEach(v => v.classList.add('hidden'));
+            
+            const mainCol = document.getElementById('main-column');
+            const analysisCol = document.getElementById('analysis-column');
+            const statsRow = document.getElementById('stats-row');
+
+            if (step === 1) {
+                views[0].classList.remove('hidden');
+                mainCol.className = 'lg:col-span-12 space-y-6';
+                analysisCol.classList.add('hidden');
+                statsRow.classList.add('hidden');
+                renderDraft();
+            } else if (step === 2) {
+                views[1].classList.remove('hidden');
+                mainCol.className = 'lg:col-span-12 space-y-6';
+                analysisCol.classList.add('hidden');
+                statsRow.classList.add('hidden');
+                renderTimeline();
+            } else {
+                views[2].classList.remove('hidden');
+                mainCol.className = 'lg:col-span-8 space-y-6';
+                analysisCol.classList.remove('hidden');
+                statsRow.classList.remove('hidden');
+                process();
+            }
         }
 
-        // --- ÉTAPE 3: ANALYSEUR ET RENDU ---
+        // --- ÉTAPE 3: ANALYSEUR & RENDU ---
 
         function process() {
             if (currentStep !== 3) return;
@@ -660,70 +692,81 @@
             const showP = document.getElementById('toggle-parasites').checked;
             const showR = document.getElementById('toggle-repeats').checked;
             const showM = document.getElementById('toggle-montage').checked;
-            editorWrapper.classList.toggle('show-parasites', showP);
-            editorWrapper.classList.toggle('show-repeats', showR);
-            editorWrapper.classList.toggle('show-montage', showM);
             
+            editorWrapper.className = `editor-container shadow-2xl overflow-hidden ${showP?'show-parasites':''} ${showR?'show-repeats':''} ${showM?'show-montage':''}`;
+            
+            // 1. Analyse Montage [brackets]
             let montageIndices = new Set();
-            if (showM) {
-                const montageRegex = /\[.*?\]/g;
-                let mMatch; while ((mMatch = montageRegex.exec(text)) !== null) { for (let i = 0; i < mMatch[0].length; i++) montageIndices.add(mMatch.index + i); }
+            const montageRegex = /\[.*?\]/g;
+            let mMatch; while ((mMatch = montageRegex.exec(text)) !== null) { 
+                for (let i = 0; i < mMatch[0].length; i++) montageIndices.add(mMatch.index + i); 
             }
 
-            let parasiteIndices = new Set(); let parasiteCounts = {}; let totalParasites = 0;
+            // 2. Analyse Tics
+            let parasiteIndices = new Set(); 
+            let parasiteCounts = {}; 
+            let totalParasites = 0;
             parasiteDictionary.forEach(word => {
                 const regex = new RegExp(`\\b(${word})\\b`, 'gi');
                 let match; while ((match = regex.exec(text)) !== null) {
                     if (montageIndices.has(match.index)) continue;
-                    totalParasites++; parasiteCounts[word.toLowerCase()] = (parasiteCounts[word.toLowerCase()] || 0) + 1;
+                    totalParasites++; 
+                    parasiteCounts[word.toLowerCase()] = (parasiteCounts[word.toLowerCase()] || 0) + 1;
                     for (let i = 0; i < match[0].length; i++) parasiteIndices.add(match.index + i);
                 }
             });
 
+            // 3. Analyse Répétitions
             const wordRegex = /[a-zA-ZàâäéèêëîïôöûüùçÀÂÄÉÈÊËÎÏÔÖÛÜÙÇ]{3,}/g;
-            let lastSeenAt = {}; let badRepeatIndices = new Set(); let repeatCounts = {}; let wordCounter = 0; let match;
+            let lastSeenAt = {}; 
+            let badRepeatIndices = new Set(); 
+            let repeatCounts = {}; 
+            let wordCounter = 0; 
+            let match;
             while ((match = wordRegex.exec(text)) !== null) {
-                wordCounter++; const word = match[0].toLowerCase();
+                wordCounter++; 
+                const word = match[0].toLowerCase();
                 if (!stopWords.includes(word) && !parasiteIndices.has(match.index) && !montageIndices.has(match.index) && !ignoredRepeats.has(word)) {
-                    if (lastSeenAt[word] && (wordCounter - lastSeenAt[word].count <= 70)) {
-                        for (let i = 0; i < word.length; i++) { badRepeatIndices.add(match.index + i); badRepeatIndices.add(lastSeenAt[word].pos + i); }
+                    if (lastSeenAt[word] && (wordCounter - lastSeenAt[word].count <= 75)) {
+                        for (let i = 0; i < word.length; i++) { 
+                            badRepeatIndices.add(match.index + i); 
+                            badRepeatIndices.add(lastSeenAt[word].pos + i); 
+                        }
                         repeatCounts[word] = (repeatCounts[word] || 0) + 1;
                     }
                     lastSeenAt[word] = { count: wordCounter, pos: match.index };
                 }
             }
 
-            const wpm = parseInt(document.getElementById('wpm-slider').value) || 150;
-            const wordCount = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
-            const totalSeconds = Math.round((wordCount / wpm) * 60);
-            document.getElementById('duration-display').innerText = `${Math.floor(totalSeconds / 60)}m ${totalSeconds % 60}s`;
-
+            // 4. Focus Word
             let focusIndices = new Set();
             if (activeFocusWord) {
                 const escaped = activeFocusWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 const fRegex = new RegExp(`\\b(${escaped})\\b`, 'gi');
-                let fMatch; while ((fMatch = fRegex.exec(text)) !== null) { for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i); }
+                let fMatch; while ((fMatch = fRegex.exec(text)) !== null) { 
+                    for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i); 
+                }
             }
 
-            // Gestion du rendu par caractères pour injecter les balises au bon endroit
+            // 5. Rendu du Layer avec Commentaires
             let finalHtml = "";
             for (let i = 0; i < text.length; i++) {
-                // Priorité 1 : Commentaires (peuvent englober d'autres tics)
-                let activeComment = comments.find(c => i >= c.start && i < c.end);
+                // Vérifier si un commentaire commence ici
+                let activeCom = comments.find(c => i >= c.start && i < c.end);
                 
-                if (activeComment) {
-                    let cColor = activeComment.color || 'rgba(250, 204, 21, 0.4)';
-                    finalHtml += `<mark class="comment-highlight" style="background-color: ${cColor}33; border-bottom-color: ${cColor}" onclick="showComment('${activeComment.id}', event)">`;
-                    while (i < text.length && i < activeComment.end) {
+                if (activeCom) {
+                    let cColor = activeCom.color || '#facc15';
+                    finalHtml += `<mark class="comment-highlight" style="background-color: ${cColor}26; border-bottom-color: ${cColor}" onclick="showComment('${activeCom.id}', event)">`;
+                    // On consomme tous les caractères du commentaire d'un coup pour éviter les chevauchements de mark complexes
+                    while (i < text.length && i < activeCom.end) {
                         finalHtml += escapeHtml(text[i]);
                         i++;
                     }
                     finalHtml += `</mark>`;
-                    i--; // Ajustement car la boucle for fera i++
+                    i--; // Ajustement car la boucle fera i++
                     continue;
                 }
 
-                // Priorité 2 : Tics, Répétitions, Montage, Focus
                 let className = "";
                 if (montageIndices.has(i)) className = "montage";
                 else if (focusIndices.has(i)) className = "focus-active";
@@ -739,7 +782,6 @@
                         else if (focusIndices.has(i)) loopClass = "focus-active";
                         else if (parasiteIndices.has(i)) loopClass = "parasite";
                         else if (badRepeatIndices.has(i)) loopClass = "repeat";
-                        
                         if (loopClass !== currentClass) break;
                         finalHtml += escapeHtml(text[i]);
                         i++;
@@ -752,10 +794,18 @@
             }
 
             highlightLayer.innerHTML = finalHtml + (text.endsWith('\n') ? '\n ' : '');
+            
+            // Stats
+            const wpm = parseInt(document.getElementById('wpm-slider').value) || 160;
+            const wordCount = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
+            const totalSec = Math.round((wordCount / wpm) * 60);
+            
             document.getElementById('total-parasites').innerText = totalParasites;
             document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
             document.getElementById('total-words').innerText = wordCount;
+            document.getElementById('duration-display').innerText = `${Math.floor(totalSec/60)}m ${totalSec%60}s`;
             document.getElementById('focus-display').innerText = activeFocusWord || "Aucun";
+            
             updateSidebars(parasiteCounts, repeatCounts);
             autoSave();
         }
@@ -764,29 +814,24 @@
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
-        let saveTimeout;
-        function autoSave() {
-            if (userRole === 'viewers') return;
-            if (currentUser && currentScriptId) {
-                clearTimeout(saveTimeout);
-                saveTimeout = setTimeout(() => {
-                    db.collection('scripts').doc(currentScriptId).update({ 
-                        bubbles: bubbles,
-                        content: textarea.value, 
-                        comments: comments,
-                        ignoredWords: Array.from(ignoredRepeats), 
-                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
-                    })
-                    .then(() => { const s = document.getElementById('save-status'); s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 1000); });
-                }, 800);
-            }
-        }
-
         function updateSidebars(pCounts, rCounts) {
-            const pList = document.getElementById('word-list'); const rList = document.getElementById('repeat-list');
-            pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="sidebar-item flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span>${w}</span><span style="color: var(--accent-color);">${c}</span></li>`).join('') || 'RAS';
-            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li class="sidebar-item flex justify-between items-center uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="flex-1 truncate">${w}</span><div class="flex items-center gap-2"><span class="text-amber-500">${c+1}x</span><button onclick="ignoreWord('${w}')" class="ignore-btn">✕</button></div></li>`).join('') || 'RAS';
-            if (ignoredRepeats.size > 0) { document.getElementById('ignored-section').classList.remove('hidden'); document.getElementById('ignored-list').innerHTML = Array.from(ignoredRepeats).map(w => `<li onclick="unignoreWord('${w}')" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer">#${w}</li>`).join(''); } else document.getElementById('ignored-section').classList.add('hidden');
+            const pList = document.getElementById('word-list'); 
+            const rList = document.getElementById('repeat-list');
+            
+            pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1])
+                .map(([w,c])=>`<li onclick="toggleFocus(\`${w}\`)" class="flex justify-between font-bold p-3 bg-slate-800/40 rounded-xl mb-1 cursor-pointer hover:bg-slate-700 transition-colors uppercase tracking-tight"><span>${w}</span><span style="color: var(--accent-color);">${c}</span></li>`)
+                .join('') || '<li class="text-slate-600 italic">Aucun tic détecté</li>';
+            
+            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1])
+                .map(([w,c])=>`<li class="flex justify-between items-center font-bold p-3 bg-slate-800/40 rounded-xl mb-1 uppercase tracking-tight"><span onclick="toggleFocus(\`${w}\`)" class="flex-1 truncate cursor-pointer hover:text-amber-500">${w}</span><div class="flex items-center gap-3"><span class="text-amber-500">${c+1}x</span><button onclick="ignoreWord('${w}')" class="text-slate-600 hover:text-white">✕</button></div></li>`)
+                .join('') || '<li class="text-slate-600 italic">Aucune répétition</li>';
+            
+            if (ignoredRepeats.size > 0) { 
+                document.getElementById('ignored-section').classList.remove('hidden'); 
+                document.getElementById('ignored-list').innerHTML = Array.from(ignoredRepeats).map(w => `<li onclick="unignoreWord('${w}')" class="bg-red-500/10 text-red-400 px-3 py-1 rounded-lg font-black cursor-pointer hover:bg-red-500 hover:text-white transition-all text-[9px] uppercase tracking-widest">#${w}</li>`).join(''); 
+            } else {
+                document.getElementById('ignored-section').classList.add('hidden');
+            }
         }
 
         // --- FIREBASE SYNC & AUTH ---
@@ -794,29 +839,33 @@
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
             if (user) {
-                document.getElementById('auth-btn-text').innerText = "Déconnexion";
+                document.getElementById('auth-btn-text').innerText = "DÉCONNEXION";
                 document.getElementById('user-display').innerText = user.displayName || user.email;
                 document.getElementById('share-btn').style.display = 'flex';
                 document.getElementById('shared-scripts-container').classList.remove('hidden');
                 document.getElementById('projects-nav').classList.remove('hidden');
+                
                 const urlParams = new URLSearchParams(window.location.search);
                 const inviteToken = urlParams.get('invite');
-                if (inviteToken) { await consumeInvite(inviteToken); window.history.replaceState({}, document.title, window.location.pathname); }
+                if (inviteToken) { 
+                    await consumeInvite(inviteToken); 
+                    window.history.replaceState({}, document.title, window.location.pathname); 
+                }
                 switchProject(1);
                 listenToSharedScripts();
             } else {
                 currentScriptId = null;
-                document.getElementById('auth-btn-text').innerText = "Se connecter";
-                document.getElementById('user-display').innerText = "Mode Local";
+                document.getElementById('auth-btn-text').innerText = "SE CONNECTER";
+                document.getElementById('user-display').innerText = "Invité Local";
                 setStep(1);
             }
         });
 
         async function switchProject(index) {
             if (!currentUser) return;
-            document.querySelectorAll('.project-tab').forEach(t => { t.classList.remove('active'); t.style.backgroundColor = "transparent"; });
+            document.querySelectorAll('.project-tab').forEach(t => { t.classList.remove('active', 'bg-slate-700/50'); });
             const activeTab = document.getElementById(`p-tab-${index}`);
-            if(activeTab) { activeTab.classList.add('active'); activeTab.style.backgroundColor = "var(--accent-color)"; loadScript(`${currentUser.uid}_${index}`); }
+            if(activeTab) { activeTab.classList.add('active', 'bg-slate-700/50'); loadScript(`${currentUser.uid}_${index}`); }
         }
 
         function loadScript(id) {
@@ -825,13 +874,29 @@
             scriptListener = db.collection('scripts').doc(id).onSnapshot(doc => {
                 if (!doc.exists) {
                     if (id.startsWith(currentUser.uid)) { 
-                        db.collection('scripts').doc(id).set({ content: "", bubbles: [], comments: [], title: `Projet ${id.split('_')[1]}`, owner: currentUser.uid, ownerEmail: currentUser.email, editors: [], viewers: [], commenters: [], ignoredWords: [], lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }); 
+                        db.collection('scripts').doc(id).set({ 
+                            content: "", 
+                            bubbles: [], 
+                            comments: [],
+                            title: `Projet ${id.split('_')[1]}`, 
+                            owner: currentUser.uid, 
+                            ownerEmail: currentUser.email, 
+                            editors: [], viewers: [], commenters: [], 
+                            ignoredWords: [], 
+                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
+                        }); 
                     }
                     return;
                 }
                 const data = doc.data();
+                // On n'écrase pas si l'utilisateur est en train de taper
                 if (data.content !== textarea.value && document.activeElement !== textarea) textarea.value = data.content || "";
-                if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) { bubbles = data.bubbles || []; currentStep === 1 ? renderDraft() : renderTimeline(); }
+                
+                if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) { 
+                    bubbles = data.bubbles || []; 
+                    if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline(); 
+                }
+                
                 comments = data.comments || [];
                 
                 if (data.owner === currentUser.uid) userRole = 'owner';
@@ -840,19 +905,45 @@
                 else userRole = 'viewers';
                 
                 applyRoleSecurity();
+                
                 const slotMatch = id.match(/_([1-4])$/); 
-                if (slotMatch && data.owner === currentUser.uid) { const tab = document.getElementById(`p-tab-${slotMatch[1]}`); if (tab) tab.innerText = data.title; }
+                if (slotMatch && data.owner === currentUser.uid) { 
+                    const tab = document.getElementById(`p-tab-${slotMatch[1]}`); 
+                    if (tab) tab.innerText = data.title; 
+                }
                 if (userRole === 'owner') updateCollaboratorsUI(data);
                 ignoredRepeats = new Set(data.ignoredWords || []);
                 process();
             });
         }
 
+        let saveTimeout;
+        function autoSave() {
+            if (userRole === 'viewers' || !currentUser || !currentScriptId) return;
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                db.collection('scripts').doc(currentScriptId).update({ 
+                    bubbles: bubbles,
+                    content: textarea.value, 
+                    comments: comments,
+                    ignoredWords: Array.from(ignoredRepeats), 
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
+                }).then(() => {
+                    const s = document.getElementById('save-status');
+                    s.style.opacity = '1';
+                    setTimeout(() => s.style.opacity = '0', 1500);
+                });
+            }, 1000);
+        }
+
         function listenToSharedScripts() {
             const email = currentUser.email;
-            db.collection('scripts').where('editors', 'array-contains', email).onSnapshot(syncSharedTabs);
-            db.collection('scripts').where('commenters', 'array-contains', email).onSnapshot(syncSharedTabs);
-            db.collection('scripts').where('viewers', 'array-contains', email).onSnapshot(syncSharedTabs);
+            const queries = [
+                db.collection('scripts').where('editors', 'array-contains', email),
+                db.collection('scripts').where('commenters', 'array-contains', email),
+                db.collection('scripts').where('viewers', 'array-contains', email)
+            ];
+            queries.forEach(q => q.onSnapshot(syncSharedTabs));
         }
 
         function syncSharedTabs(snap) {
@@ -861,69 +952,115 @@
                 const data = doc.data();
                 const tabId = `p-tab-shared-${doc.id}`;
                 if (!document.getElementById(tabId)) {
-                    const btn = document.createElement('button'); btn.id = tabId;
-                    btn.className = "project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition";
-                    btn.innerText = `🤝 ${data.title}`; btn.onclick = () => openSharedProject(doc.id);
+                    const btn = document.createElement('button'); 
+                    btn.id = tabId;
+                    btn.className = "project-tab px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase transition-all";
+                    btn.innerText = `🤝 ${data.title}`; 
+                    btn.onclick = () => {
+                        document.querySelectorAll('.project-tab').forEach(t => t.classList.remove('active', 'bg-slate-700/50'));
+                        btn.classList.add('active', 'bg-slate-700/50');
+                        loadScript(doc.id);
+                    };
                     tabsContainer.appendChild(btn);
                 }
             });
         }
 
-        function openSharedProject(id) {
-            document.querySelectorAll('.project-tab').forEach(t => { t.classList.remove('active'); t.style.backgroundColor = "transparent"; });
-            loadScript(id);
-        }
-
         async function generateInviteLink() {
             const role = document.getElementById('share-role').value;
-            const inviteRef = await db.collection('invites').add({ scriptId: currentScriptId, role: role, createdBy: currentUser.email, used: false, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            const inviteRef = await db.collection('invites').add({ 
+                scriptId: currentScriptId, 
+                role: role, 
+                createdBy: currentUser.email, 
+                used: false, 
+                createdAt: firebase.firestore.FieldValue.serverTimestamp() 
+            });
             const inviteURL = `${window.location.origin}${window.location.pathname}?invite=${inviteRef.id}`;
-            await navigator.clipboard.writeText(inviteURL); alert("Lien d'invitation copié !"); toggleShareModal();
+            await navigator.clipboard.writeText(inviteURL); 
+            alert("Lien d'invitation copié dans le presse-papier !"); 
+            toggleShareModal();
         }
 
         async function consumeInvite(tokenId) {
-            const doc = await db.collection('invites').doc(tokenId).get();
-            if (doc.exists && !doc.data().used) {
-                const data = doc.data();
-                await db.collection('scripts').doc(data.scriptId).update({ [data.role]: firebase.firestore.FieldValue.arrayUnion(currentUser.email) });
-                await db.collection('invites').doc(tokenId).update({ used: true, usedBy: currentUser.email });
-                alert("Accès accordé !");
-            }
+            try {
+                const doc = await db.collection('invites').doc(tokenId).get();
+                if (doc.exists && !doc.data().used) {
+                    const data = doc.data();
+                    await db.collection('scripts').doc(data.scriptId).update({ 
+                        [data.role]: firebase.firestore.FieldValue.arrayUnion(currentUser.email) 
+                    });
+                    await db.collection('invites').doc(tokenId).update({ used: true, usedBy: currentUser.email });
+                    alert("Accès au projet collaboratif activé !");
+                }
+            } catch(e) { console.error("Invite Error", e); }
         }
 
         function updateCollaboratorsUI(data) {
-            const list = document.getElementById('collaborators-list'); list.innerHTML = "";
+            const list = document.getElementById('collaborators-list'); 
+            list.innerHTML = "";
             const roles = [{k:'editors',l:'Éditeur'}, {k:'commenters',l:'Commentateur'}, {k:'viewers',l:'Lecteur'}];
             roles.forEach(r => {
                 (data[r.k] || []).forEach(email => {
-                    const li = document.createElement('li'); li.className = "flex justify-between items-center bg-slate-800/40 p-2 rounded-lg border border-slate-700";
-                    li.innerHTML = `<div class="flex flex-col"><span class="font-bold truncate max-w-[100px] text-[10px]">${email.split('@')[0]}</span><span class="text-[8px] text-slate-500 uppercase">${r.l}</span></div><button onclick="removeCollaborator('${email}', '${r.k}')" class="text-slate-500 hover:text-red-500 px-2">✕</button>`;
+                    const li = document.createElement('li'); 
+                    li.className = "flex justify-between items-center bg-slate-800/40 p-3 rounded-xl border border-slate-700/50";
+                    li.innerHTML = `
+                        <div class="flex flex-col">
+                            <span class="font-bold truncate max-w-[120px] text-[10px] uppercase tracking-tight">${email.split('@')[0]}</span>
+                            <span class="text-[8px] text-slate-500 font-black uppercase tracking-widest">${r.l}</span>
+                        </div>
+                        <button onclick="removeCollaborator('${email}', '${r.k}')" class="text-slate-600 hover:text-red-500 transition-colors">✕</button>`;
                     list.appendChild(li);
                 });
             });
         }
 
-        async function removeCollaborator(e, r) { if (confirm(`Retirer ${e} ?`)) await db.collection('scripts').doc(currentScriptId).update({ [r]: firebase.firestore.FieldValue.arrayRemove(e) }); }
-        async function renameCurrentProject() { const n = prompt("Nouveau nom :"); if(n) await db.collection('scripts').doc(currentScriptId).update({ title: n }); }
+        async function removeCollaborator(e, r) { if (confirm(`Retirer l'accès à ${e} ?`)) await db.collection('scripts').doc(currentScriptId).update({ [r]: firebase.firestore.FieldValue.arrayRemove(e) }); }
+        async function renameCurrentProject() { const n = prompt("Nouveau nom du projet :"); if(n) await db.collection('scripts').doc(currentScriptId).update({ title: n }); }
+        
         function toggleFocus(w) { activeFocusWord = (activeFocusWord === w) ? null : w; process(); }
         function ignoreWord(w) { ignoredRepeats.add(w.toLowerCase()); autoSave(); process(); }
         function unignoreWord(w) { ignoredRepeats.delete(w); autoSave(); process(); }
-        function copyText() { navigator.clipboard.writeText(textarea.value); alert("Copié !"); }
-        function downloadText() { const blob = new Blob([textarea.value], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `script.txt`; a.click(); }
-        function toggleShareModal() { document.getElementById('share-modal').style.display = (document.getElementById('share-modal').style.display === 'flex') ? 'none' : 'flex'; }
+        
+        function copyText() { 
+            textarea.select();
+            document.execCommand('copy');
+            alert("Script copié !"); 
+        }
 
+        function downloadText() { 
+            const blob = new Blob([textarea.value], { type: 'text/plain' }); 
+            const a = document.createElement('a'); 
+            a.href = URL.createObjectURL(blob); 
+            a.download = `purge-script-${Date.now()}.txt`; 
+            a.click(); 
+        }
+
+        function toggleShareModal() { 
+            const modal = document.getElementById('share-modal');
+            modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex'; 
+        }
+
+        // --- INITIALISATION ---
         window.onload = () => {
             bubblePalette.forEach(t => {
-                const b = document.createElement('button'); b.className = 'w-4 h-4 rounded-full border border-white/20 hover:scale-125 transition'; b.style.backgroundColor = t;
+                const b = document.createElement('button'); 
+                b.className = 'w-5 h-5 rounded-full border-2 border-white/10 hover:scale-125 hover:border-white transition-all'; 
+                b.style.backgroundColor = t;
                 b.onclick = () => { 
                     document.documentElement.style.setProperty('--accent-color', t); 
                     document.documentElement.style.setProperty('--accent-soft', t + '26');
-                    process(); if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
+                    process(); 
+                    if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
                 };
                 document.getElementById('theme-picker').appendChild(b);
             });
+            
             textarea.addEventListener('input', process);
-            textarea.addEventListener('scroll', () => highlightLayer.scrollTop = textarea.scrollTop);
+            textarea.addEventListener('scroll', () => {
+                highlightLayer.scrollTop = textarea.scrollTop;
+                floatBtn.style.display = 'none'; // Cacher le bouton flottant au scroll
+            });
+            
             setStep(1);
         };
     </script>
