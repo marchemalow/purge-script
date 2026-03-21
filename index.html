@@ -62,7 +62,6 @@
         .sidebar-item { cursor: pointer; transition: all 0.2s; }
         .sidebar-item:hover { background-color: rgba(255,255,255,0.05); }
         
-        /* Gros blocs : Bande fine 4px */
         .bg-card { background-color: #1e293b; border: 1px solid #334155; border-left: 4px solid var(--accent-color); }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -86,7 +85,6 @@
         .wf-step-num { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid currentColor; margin-right: 8px; font-size: 10px; }
         .wf-tab.active .wf-step-num { background: var(--accent-color); border-color: var(--accent-color); color: white; }
 
-        /* Timeline : Bande de 16px */
         .timeline-block { border-left-width: 16px !important; transition: border-color 0.3s; }
     </style>
 </head>
@@ -173,7 +171,7 @@
 
                 <div id="step-1-view" class="space-y-4">
                     <div class="bg-card p-8 rounded-[2rem] shadow-lg">
-                        <h2 class="textxl font-bold mb-4 flex items-center gap-2"><span style="color: var(--accent-color);">#</span> Brouillon & Idées</h2>
+                        <h2 class="text-xl font-bold mb-4 flex items-center gap-2"><span style="color: var(--accent-color);">#</span> Brouillon & Idées</h2>
                         <textarea id="draft-area" class="w-full h-[500px] bg-slate-900/50 border border-slate-700 rounded-2xl p-6 editor-font outline-none focus:border-indigo-500 transition text-slate-300" placeholder="Jetez vos idées ici..."></textarea>
                     </div>
                 </div>
@@ -381,17 +379,15 @@
             autoSave();
         }
 
-        function toggleBlockColorMenu(index) {
-            const menu = document.getElementById(`color-menu-${index}`);
-            const isHidden = menu.classList.contains('hidden');
-            // On ferme tous les autres menus d'abord
+        function showBlockColorMenu(index) {
             document.querySelectorAll('.timeline-color-menu').forEach(m => m.classList.add('hidden'));
-            if(isHidden) menu.classList.remove('hidden');
+            document.getElementById(`color-menu-${index}`).classList.remove('hidden');
         }
 
         function setBlockColor(index, color) {
             if (userRole === 'viewer') return;
             timelineSteps[index].color = color;
+            document.getElementById(`color-menu-${index}`).classList.add('hidden');
             renderTimeline();
             autoSave();
         }
@@ -432,7 +428,7 @@
                     <textarea oninput="updateTimelineText(${i}, this.value)" class="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 py-1 resize-none" rows="1" placeholder="Action ou séquence...">${step.text}</textarea>
                     <div class="flex gap-2 items-center">
                         <div class="relative">
-                            <button onclick="toggleBlockColorMenu(${i})" class="p-2 text-slate-500 hover:text-white transition">🎨</button>
+                            <button onmouseenter="showBlockColorMenu(${i})" class="p-2 text-slate-500 hover:text-white transition">🎨</button>
                             <div id="color-menu-${i}" class="timeline-color-menu absolute right-full top-1/2 -translate-y-1/2 mr-3 bg-slate-900 border border-slate-700 p-3 rounded-2xl shadow-2xl flex flex-wrap gap-1.5 max-w-[130px] hidden z-20">
                                 ${colorOptions}
                             </div>
@@ -594,4 +590,4 @@
         };
     </script>
 </body>
-</html>
+</html>```
