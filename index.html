@@ -32,7 +32,7 @@
         h1, h1 span { color: #ffffff !important; }
         .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.6; }
         
-        /* Layout Canvas */
+        /* Layout Canvas (Step 1) */
         #canvas-container {
             position: relative;
             width: 100%;
@@ -46,7 +46,6 @@
             touch-action: none;
         }
 
-        /* Bubbles */
         .bubble {
             position: absolute;
             min-width: 200px;
@@ -62,7 +61,7 @@
         }
         .bubble:active { cursor: grabbing; }
 
-        /* Timeline Blocks */
+        /* Timeline Blocks (Step 2) */
         #timeline-container {
             display: flex;
             flex-direction: column;
@@ -120,7 +119,7 @@
         .color-dot-btn { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); transition: transform 0.1s; }
         .color-dot-btn:hover { transform: scale(1.3); }
 
-        /* Editor & Highlights */
+        /* Editor & Highlights (Step 3) */
         .editor-container { position: relative; min-height: 600px; border-radius: 1.5rem; background-color: #1e293b; border: 1px solid #334155; }
         .sync-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 30px; white-space: pre-wrap; word-wrap: break-word; overflow-y: auto; border: none; margin: 0; background: transparent; }
         #textarea { color: transparent; caret-color: #ffffff; z-index: 2; resize: none; outline: none; }
@@ -132,46 +131,45 @@
         mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; font-weight: 600; }
         .show-montage mark.montage { background-color: var(--montage-color) !important; color: #0369a1 !important; font-weight: 700; }
         
-        /* Comments System */
-        .comment-dot {
-            display: inline-flex;
-            width: 12px;
-            height: 12px;
-            background-color: var(--comment-color);
-            border-radius: 50%;
-            margin: 0 2px;
+        /* Interactive Comments */
+        mark.comment-highlight {
+            background-color: rgba(250, 204, 21, 0.2);
+            border-bottom: 2px dashed var(--comment-color);
             cursor: pointer;
-            pointer-events: auto; /* Permet le clic dans le layer highlight */
-            box-shadow: 0 0 5px var(--comment-color);
-            vertical-align: middle;
-            transition: transform 0.2s;
+            pointer-events: auto; /* Permet le hover dans le layer highlight */
+            transition: background-color 0.2s;
         }
-        .comment-dot:hover { transform: scale(1.4); }
+        mark.comment-highlight:hover {
+            background-color: rgba(250, 204, 21, 0.4);
+        }
 
         #comment-tooltip {
             display: none;
             position: fixed;
             z-index: 9999;
             background: #1e293b;
-            border: 1px solid #facc15;
-            padding: 12px;
-            border-radius: 12px;
-            width: 250px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid #334155;
+            padding: 16px;
+            border-radius: 1.25rem;
+            width: 280px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            pointer-events: auto;
         }
 
         #comment-btn-floating {
             display: none;
             position: fixed;
             z-index: 50;
-            background: var(--comment-color);
-            color: #000;
-            padding: 8px 12px;
-            border-radius: 10px;
+            background: var(--accent-color);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 12px;
             font-weight: 800;
-            font-size: 12px;
+            font-size: 13px;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            transform: translateY(-100%);
+            transition: background-color 0.3s;
         }
 
         /* UI Styles */
@@ -196,15 +194,21 @@
 </head>
 <body class="antialiased">
 
-    <!-- Tooltip Commentaire -->
+    <!-- Tooltip Suggestion Interactive -->
     <div id="comment-tooltip">
-        <p id="comment-author" class="text-[10px] font-bold text-yellow-500 uppercase mb-1"></p>
-        <p id="comment-text" class="text-xs text-slate-200 mb-3 italic"></p>
-        <button id="comment-delete-btn" class="text-[9px] uppercase font-extrabold text-red-400 hover:text-red-300">Supprimer</button>
+        <p id="comment-author" class="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest"></p>
+        <p id="comment-text" class="text-sm text-slate-100 mb-4 font-medium leading-relaxed"></p>
+        
+        <div class="border-t border-slate-700 pt-3 mb-3">
+            <p class="text-[9px] font-bold text-slate-500 uppercase mb-2">Couleur du surlignage</p>
+            <div id="comment-palette" class="grid grid-cols-6 gap-2"></div>
+        </div>
+
+        <button id="comment-delete-btn" class="w-full py-2 rounded-lg bg-red-500/10 text-red-400 text-[10px] uppercase font-extrabold hover:bg-red-500 hover:text-white transition">Supprimer la suggestion</button>
     </div>
 
     <!-- Bouton flottant commentaire -->
-    <div id="comment-btn-floating" onclick="openCommentPrompt()">+ Commenter</div>
+    <div id="comment-btn-floating" onclick="openCommentPrompt()">Suggérer</div>
 
     <!-- Modal de Partage -->
     <div id="share-modal">
@@ -355,7 +359,7 @@
         let scriptListener = null; 
         let currentStep = 1;
         let bubbles = []; 
-        let comments = []; // [{id, index, text, author, authorName}]
+        let comments = []; // [{id, start, end, text, author, authorName, color}]
 
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
@@ -363,6 +367,7 @@
         const canvas = document.getElementById('canvas-container');
         const timeline = document.getElementById('timeline-container');
         const bubbleInput = document.getElementById('bubble-input');
+        const commentBtnFloating = document.getElementById('comment-btn-floating');
 
         function updateWpmDisplay(v) { document.getElementById('wpm-value').innerText = v; }
         function handleAuth() { if (currentUser) auth.signOut(); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
@@ -370,16 +375,13 @@
         // --- GESTION DES RÔLES ET LOCK ---
 
         function applyRoleSecurity() {
-            const isReadOnly = (userRole === 'viewers');
-            const isRestricted = (userRole === 'commenters' || userRole === 'viewers');
-
-            textarea.readOnly = isRestricted;
+            const isRestricted = (userRole === 'viewers' || userRole === 'commenters');
+            textarea.readOnly = (userRole === 'viewers');
             bubbleInput.disabled = isRestricted;
             document.getElementById('add-bubble-btn').disabled = isRestricted;
             document.getElementById('rename-btn').style.display = (userRole === 'owner') ? 'block' : 'none';
             document.getElementById('role-display').innerText = userRole === 'owner' ? 'Propriétaire' : (userRole === 'editors' ? 'Éditeur' : (userRole === 'commenters' ? 'Commentateur' : 'Lecteur'));
             
-            // Masquer boutons de suppression pour les lecteurs
             const style = document.createElement('style');
             if (isRestricted) {
                 style.innerHTML = `.bubble-controls, .timeline-block button, .delete-comment-btn { display: none !important; }`;
@@ -387,40 +389,55 @@
             document.head.appendChild(style);
         }
 
-        // --- SYSTÈME DE COMMENTAIRES ---
+        // --- NOUVEAU SYSTÈME DE COMMENTAIRES SURLIGNÉS ---
 
         textarea.addEventListener('mouseup', handleTextSelection);
         textarea.addEventListener('keyup', handleTextSelection);
+        textarea.addEventListener('scroll', () => {
+            commentBtnFloating.style.display = 'none';
+        });
 
         function handleTextSelection() {
             if (userRole === 'viewers') return;
             const start = textarea.selectionStart;
             const end = textarea.selectionEnd;
-            const btn = document.getElementById('comment-btn-floating');
 
             if (start !== end) {
+                const textBefore = textarea.value.substring(0, start);
+                const lines = textBefore.split('\n');
+                const lastLine = lines[lines.length - 1];
+                
+                // Positionnement approximatif
                 const rect = textarea.getBoundingClientRect();
-                // Approximation de la position du curseur
-                btn.style.display = 'block';
-                btn.style.top = (rect.top - 40) + "px";
-                btn.style.left = (rect.left + 50) + "px";
+                const charWidth = 9; // Approx pour police monospace/IBM
+                const lineHeight = 28;
+                
+                commentBtnFloating.style.display = 'block';
+                commentBtnFloating.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
+                commentBtnFloating.style.top = (rect.top + (lines.length * lineHeight) - textarea.scrollTop) + "px";
+                commentBtnFloating.style.left = (rect.left + (lastLine.length * charWidth) + 40) + "px";
             } else {
-                btn.style.display = 'none';
+                commentBtnFloating.style.display = 'none';
             }
         }
 
         function openCommentPrompt() {
-            const suggestion = prompt("Votre suggestion / commentaire :");
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const suggestion = prompt("Votre suggestion / commentaire pour ce passage :");
+            
             if (suggestion) {
                 const newComment = {
                     id: "c_" + Date.now(),
-                    index: textarea.selectionStart,
+                    start: start,
+                    end: end,
                     text: suggestion,
                     author: currentUser.uid,
-                    authorName: currentUser.displayName || currentUser.email
+                    authorName: currentUser.displayName || currentUser.email,
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#facc15'
                 };
                 comments.push(newComment);
-                document.getElementById('comment-btn-floating').style.display = 'none';
+                commentBtnFloating.style.display = 'none';
                 autoSave();
                 process();
             }
@@ -435,6 +452,14 @@
             document.getElementById('comment-author').innerText = com.authorName;
             document.getElementById('comment-text').innerText = com.text;
             
+            // Palette de couleurs pour la suggestion
+            const palette = document.getElementById('comment-palette');
+            palette.innerHTML = bubblePalette.map(color => `
+                <div class="w-6 h-6 rounded-full cursor-pointer border-2 ${com.color === color ? 'border-white' : 'border-transparent'}" 
+                     style="background-color: ${color}" 
+                     onclick="updateCommentColor('${id}', '${color}')"></div>
+            `).join('');
+
             const delBtn = document.getElementById('comment-delete-btn');
             if (userRole === 'owner' || com.author === currentUser.uid) {
                 delBtn.style.display = 'block';
@@ -444,8 +469,23 @@
             }
 
             tooltip.style.display = 'block';
-            tooltip.style.top = (event.clientY + 10) + "px";
-            tooltip.style.left = (event.clientX + 10) + "px";
+            tooltip.style.top = Math.min(window.innerHeight - 300, event.clientY + 15) + "px";
+            tooltip.style.left = Math.min(window.innerWidth - 300, event.clientX + 15) + "px";
+        }
+
+        function updateCommentColor(id, color) {
+            const com = comments.find(c => c.id === id);
+            if (com) {
+                com.color = color;
+                autoSave();
+                process();
+                // On garde le tooltip ouvert pour feedback
+                const palette = document.getElementById('comment-palette');
+                [...palette.children].forEach(child => {
+                    child.classList.remove('border-white');
+                    if (child.style.backgroundColor === color) child.classList.add('border-white');
+                });
+            }
         }
 
         function deleteComment(id) {
@@ -454,13 +494,13 @@
             process();
         }
 
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.comment-dot') && !e.target.closest('#comment-tooltip')) {
+        document.addEventListener('mousedown', (e) => {
+            if (!e.target.closest('mark.comment-highlight') && !e.target.closest('#comment-tooltip')) {
                 document.getElementById('comment-tooltip').style.display = 'none';
             }
         });
 
-        // --- SYNCHRONISATION WORKFLOW (ÉTAPE 1 & 2) ---
+        // --- BROUILLON & CHRONOLOGIE (STEP 1 & 2) ---
 
         function createBubbleFromInput() {
             const text = bubbleInput.value.trim();
@@ -517,7 +557,7 @@
                 let y = e.clientY - startY;
                 el.style.left = x + "px"; el.style.top = y + "px";
                 const b = bubbles.find(b => b.id === id);
-                b.x = x; b.y = y;
+                if(b) { b.x = x; b.y = y; }
             }
             function stopDrag() { document.removeEventListener('mousemove', doDrag); document.removeEventListener('mouseup', stopDrag); autoSave(); }
             document.addEventListener('mousemove', doDrag); document.addEventListener('mouseup', stopDrag);
@@ -665,34 +705,52 @@
                 let fMatch; while ((fMatch = fRegex.exec(text)) !== null) { for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i); }
             }
 
-            // Gestion des commentaires pour le rendu
-            let commentMap = {};
-            comments.forEach(c => { if(!commentMap[c.index]) commentMap[c.index] = []; commentMap[c.index].push(c); });
-
-            let finalHtml = ""; let i = 0;
-            while (i <= text.length) {
-                if (commentMap[i]) {
-                    commentMap[i].forEach(com => {
-                        finalHtml += `<span class="comment-dot" onclick="showComment('${com.id}', event)"></span>`;
-                    });
+            // Gestion du rendu par caractères pour injecter les balises au bon endroit
+            let finalHtml = "";
+            for (let i = 0; i < text.length; i++) {
+                // Priorité 1 : Commentaires (peuvent englober d'autres tics)
+                let activeComment = comments.find(c => i >= c.start && i < c.end);
+                
+                if (activeComment) {
+                    let cColor = activeComment.color || 'rgba(250, 204, 21, 0.4)';
+                    finalHtml += `<mark class="comment-highlight" style="background-color: ${cColor}33; border-bottom-color: ${cColor}" onclick="showComment('${activeComment.id}', event)">`;
+                    while (i < text.length && i < activeComment.end) {
+                        finalHtml += escapeHtml(text[i]);
+                        i++;
+                    }
+                    finalHtml += `</mark>`;
+                    i--; // Ajustement car la boucle for fera i++
+                    continue;
                 }
-                if (i === text.length) break;
 
+                // Priorité 2 : Tics, Répétitions, Montage, Focus
                 let className = "";
                 if (montageIndices.has(i)) className = "montage";
                 else if (focusIndices.has(i)) className = "focus-active";
                 else if (parasiteIndices.has(i)) className = "parasite";
                 else if (badRepeatIndices.has(i)) className = "repeat";
-                
+
                 if (className) {
                     finalHtml += `<mark class="${className}">`;
-                    while (i < text.length && ((className === "montage" && montageIndices.has(i)) || (className === "focus-active" && focusIndices.has(i)) || (className === "parasite" && parasiteIndices.has(i)) || (className === "repeat" && badRepeatIndices.has(i)))) {
-                        finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++;
-                        if (commentMap[i]) break; // Sortir pour injecter le point si un com est à cet index
+                    let currentClass = className;
+                    while (i < text.length && !comments.some(c => i === c.start)) {
+                        let loopClass = "";
+                        if (montageIndices.has(i)) loopClass = "montage";
+                        else if (focusIndices.has(i)) loopClass = "focus-active";
+                        else if (parasiteIndices.has(i)) loopClass = "parasite";
+                        else if (badRepeatIndices.has(i)) loopClass = "repeat";
+                        
+                        if (loopClass !== currentClass) break;
+                        finalHtml += escapeHtml(text[i]);
+                        i++;
                     }
                     finalHtml += `</mark>`;
-                } else { finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++; }
+                    i--;
+                } else {
+                    finalHtml += escapeHtml(text[i]);
+                }
             }
+
             highlightLayer.innerHTML = finalHtml + (text.endsWith('\n') ? '\n ' : '');
             document.getElementById('total-parasites').innerText = totalParasites;
             document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
@@ -702,9 +760,13 @@
             autoSave();
         }
 
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
         let saveTimeout;
         function autoSave() {
-            if (userRole === 'viewers' || userRole === 'commenters') return;
+            if (userRole === 'viewers') return;
             if (currentUser && currentScriptId) {
                 clearTimeout(saveTimeout);
                 saveTimeout = setTimeout(() => {
@@ -772,7 +834,6 @@
                 if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) { bubbles = data.bubbles || []; currentStep === 1 ? renderDraft() : renderTimeline(); }
                 comments = data.comments || [];
                 
-                // Calcul du rôle
                 if (data.owner === currentUser.uid) userRole = 'owner';
                 else if (data.editors?.includes(currentUser.email)) userRole = 'editors';
                 else if (data.commenters?.includes(currentUser.email)) userRole = 'commenters';
@@ -796,7 +857,6 @@
 
         function syncSharedTabs(snap) {
             const tabsContainer = document.getElementById('tabs-container');
-            const sharedList = document.getElementById('shared-list');
             snap.forEach(doc => {
                 const data = doc.data();
                 const tabId = `p-tab-shared-${doc.id}`;
