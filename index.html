@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Purge-Script Pro | Édition Collaborative de Précision</title>
+    <title>Purge-Script Pro | Workflow Collaboratif Senior</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
     
@@ -32,7 +32,7 @@
         h1, h1 span { color: #ffffff !important; }
         .editor-font { font-family: 'IBM Plex Sans', sans-serif; font-size: 1.05rem; line-height: 1.6; }
         
-        /* Step 1: Brouillon */
+        /* Layout & Navigation */
         #canvas-container {
             position: relative;
             width: 100%;
@@ -45,6 +45,8 @@
             border: 1px solid #334155;
             touch-action: none;
         }
+
+        /* Bubbles */
         .bubble {
             position: absolute;
             min-width: 200px;
@@ -60,7 +62,7 @@
         }
         .bubble:active { cursor: grabbing; }
 
-        /* Step 2: Chronologie */
+        /* Timeline Blocks */
         #timeline-container {
             display: flex;
             flex-direction: column;
@@ -88,7 +90,7 @@
         }
         .timeline-block.dragging { opacity: 0.5; transform: scale(0.98); }
 
-        /* Menus Couleurs */
+        /* Color Picker Component */
         .color-picker-trigger {
             width: 28px;
             height: 28px;
@@ -117,7 +119,7 @@
         .color-dot-btn { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); }
         .color-dot-btn:hover { transform: scale(1.3); }
 
-        /* Step 3: Editeur & Miroir */
+        /* Editor Contextual Suggestion */
         .editor-container { 
             position: relative; 
             min-height: 600px; 
@@ -138,22 +140,38 @@
             overflow-y: auto;
             box-sizing: border-box;
         }
-        
         #textarea { 
             color: transparent; 
             caret-color: #ffffff; 
-            z-index: 1; /* Derrière la couche de surbrillance pour laisser passer les pointer-events sur les dots */
+            z-index: 2; 
             resize: none; 
             outline: none; 
         }
-        
         #highlight-layer { 
-            z-index: 2; 
-            pointer-events: none; /* Ignore le layer sauf les enfants avec auto */
+            z-index: 1; 
+            pointer-events: none; 
             color: #e2e8f0; 
         }
 
-        /* Système de Commentaires */
+        /* Comments & Floating Button */
+        #suggest-btn-context {
+            display: none;
+            position: absolute;
+            z-index: 50;
+            background: var(--comment-color);
+            color: #000;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-weight: 900;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            transition: transform 0.1s;
+        }
+        #suggest-btn-context:hover { transform: scale(1.2); }
+
         .comment-dot {
             display: inline-flex;
             width: 14px;
@@ -162,50 +180,55 @@
             border-radius: 50%;
             margin: 0 2px;
             cursor: pointer;
-            pointer-events: auto; /* IMPORTANT: Capture le clic sur le layer inactif */
+            pointer-events: auto; /* Permet le clic à travers le layer highlight */
             box-shadow: 0 0 8px var(--comment-color);
             vertical-align: middle;
-            transition: transform 0.2s;
             border: 2px solid #1e293b;
         }
-        .comment-dot:hover { transform: scale(1.4); }
 
-        #comment-tooltip {
+        #comment-popup {
             display: none;
             position: fixed;
             z-index: 9999;
             background: #1e293b;
             border: 1px solid var(--comment-color);
-            padding: 14px;
-            border-radius: 14px;
-            width: 260px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            padding: 16px;
+            border-radius: 16px;
+            width: 280px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.8);
         }
 
-        #comment-btn-floating {
+        #suggestion-input-modal {
             display: none;
             position: fixed;
-            z-index: 50;
-            background: var(--comment-color);
-            color: #000;
-            padding: 10px 16px;
-            border-radius: 12px;
-            font-weight: 800;
-            font-size: 13px;
-            cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
-            transition: transform 0.1s;
+            z-index: 10000;
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid #334155;
+            width: 320px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.9);
         }
-        #comment-btn-floating:active { transform: scale(0.95); }
 
-        /* Highlights */
+        /* Mirrors & Helpers */
+        #textarea-mirror {
+            position: absolute;
+            visibility: hidden;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            padding: 30px;
+            box-sizing: border-box;
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+
         mark { background: none; color: inherit; position: relative; }
         .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); border-radius: 2px; }
         .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; border-radius: 2px; }
         mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; font-weight: 600; }
         .show-montage mark.montage { background-color: var(--montage-color) !important; color: #0369a1 !important; font-weight: 700; }
 
-        /* UI Helpers */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         #textarea::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb { background: var(--accent-color); border-radius: 10px; }
@@ -227,32 +250,47 @@
 </head>
 <body class="antialiased">
 
-    <!-- Tooltip Commentaire -->
-    <div id="comment-tooltip">
-        <p id="comment-author" class="text-[10px] font-bold text-yellow-500 uppercase mb-1 tracking-widest"></p>
-        <p id="comment-text" class="text-xs text-slate-200 mb-4 leading-relaxed"></p>
-        <div class="flex justify-end border-t border-slate-700/50 pt-2">
-            <button id="comment-delete-btn" class="text-[9px] uppercase font-extrabold text-red-500 hover:text-red-400 tracking-tighter">Supprimer ✕</button>
+    <!-- Miroir Invisible pour calcul caret -->
+    <div id="textarea-mirror"></div>
+
+    <!-- Modals Suggestions -->
+    <div id="suggestion-input-modal" class="shadow-2xl">
+        <h4 class="text-xs font-bold uppercase text-yellow-500 mb-3 tracking-widest">Nouvelle suggestion</h4>
+        <textarea id="suggestion-text-field" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white mb-4 outline-none focus:border-yellow-500" placeholder="Écrivez votre remarque..." rows="3"></textarea>
+        <div class="flex gap-2">
+            <button onclick="submitSuggestion()" class="flex-1 bg-yellow-500 text-black font-bold py-2 rounded-lg text-xs uppercase">Valider</button>
+            <button onclick="closeSuggestionModal()" class="flex-1 bg-slate-700 text-white font-bold py-2 rounded-lg text-xs uppercase">Annuler</button>
         </div>
     </div>
 
-    <!-- Bouton flottant commentaire -->
-    <div id="comment-btn-floating" onclick="openCommentPrompt()">+ Suggerer</div>
+    <!-- Popup Visualisation Suggestion -->
+    <div id="comment-popup">
+        <div class="flex items-center justify-between mb-2">
+            <p id="comment-author" class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest"></p>
+        </div>
+        <p id="comment-text" class="text-xs text-slate-200 mb-4 leading-relaxed italic"></p>
+        <div class="flex justify-end border-t border-slate-700/50 pt-2">
+            <button id="comment-delete-btn" class="text-[9px] uppercase font-extrabold text-red-500 hover:text-red-400">Supprimer suggestion ✕</button>
+        </div>
+    </div>
+
+    <!-- Bouton Contextuel Flottant -->
+    <div id="suggest-btn-context" onclick="openSuggestionModal()">+</div>
 
     <!-- Modal de Partage -->
     <div id="share-modal">
         <div class="modal-content shadow-2xl">
-            <h3 class="text-xl font-extrabold mb-2">Collaboration</h3>
-            <p class="text-xs text-slate-400 mb-6">Assignez un rôle au futur membre.</p>
-            <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Rôle de l'invité</label>
+            <h3 class="text-xl font-extrabold mb-2">Collaborer</h3>
+            <p class="text-xs text-slate-400 mb-6">Assignez un rôle pour ce projet.</p>
+            <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Privilèges</label>
             <select id="share-role" class="w-full p-4 rounded-xl border bg-slate-900 border-slate-700 outline-none text-white mb-8">
-                <option value="editors">Éditeur (Modifications)</option>
+                <option value="editors">Éditeur (Complet)</option>
                 <option value="commenters">Commentateur (Suggestions)</option>
                 <option value="viewers">Lecteur (Lecture seule)</option>
             </select>
             <div class="flex flex-col gap-3">
-                <button onclick="generateInviteLink()" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-4 rounded-2xl font-bold text-sm transition" style="background-color: var(--accent-color);">Copier le lien unique</button>
-                <button onclick="toggleShareModal()" class="w-full bg-slate-800 py-4 rounded-2xl font-bold text-sm text-slate-400">Annuler</button>
+                <button onclick="generateInviteLink()" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-4 rounded-2xl font-bold text-sm transition" style="background-color: var(--accent-color);">Générer lien unique</button>
+                <button onclick="toggleShareModal()" class="w-full bg-slate-800 py-4 rounded-2xl font-bold text-sm text-slate-400">Fermer</button>
             </div>
         </div>
     </div>
@@ -269,14 +307,14 @@
             </div>
             <div class="flex flex-wrap items-center gap-4">
                 <button id="share-btn" onclick="toggleShareModal()" class="hidden items-center gap-2 px-5 py-2.5 text-white rounded-xl text-xs font-bold hover:scale-105 transition shadow-lg" style="background-color: var(--accent-color);">Partager</button>
-                <button id="auth-btn" onclick="handleAuth()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold shadow-sm transition"><span id="auth-btn-text">Se connecter</span></button>
+                <button id="auth-btn" onclick="handleAuth()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold shadow-sm transition"><span id="auth-btn-text">Connexion</span></button>
                 <div class="bg-slate-800 p-3 rounded-2xl shadow-sm border border-slate-700 flex items-center gap-4">
                     <div class="flex flex-wrap gap-1.5 max-w-[130px]" id="theme-picker"></div>
                 </div>
             </div>
         </header>
 
-        <!-- NAVIGATION PROJETS -->
+        <!-- PROJECT BAR (TOP) -->
         <div id="projects-nav" class="hidden flex items-center justify-between bg-slate-800/50 p-2 rounded-2xl border border-slate-700 mb-6 shadow-sm">
             <div class="flex gap-2" id="tabs-container">
                 <button onclick="switchProject(1)" id="p-tab-1" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 1</button>
@@ -339,24 +377,22 @@
                         </div>
                     </div>
 
-                    <div id="editor-wrapper" class="editor-container shadow-sm overflow-hidden show-parasites show-repeats show-montage">
-                        <!-- Miroir d'affichage (Z-index 2) -->
+                    <div id="editor-wrapper" class="editor-container shadow-sm show-parasites show-repeats show-montage">
                         <div id="highlight-layer" class="sync-text editor-font"></div>
-                        <!-- Zone de saisie transparente (Z-index 1) -->
-                        <textarea id="textarea" class="sync-text editor-font" placeholder="Rédigez ici votre script final..." spellcheck="false"></textarea>
+                        <textarea id="textarea" class="sync-text editor-font" placeholder="Rédigez ici..." spellcheck="false"></textarea>
                     </div>
                     
                     <div class="flex gap-4">
                         <button onclick="copyText()" class="text-white px-8 py-3.5 rounded-2xl font-bold uppercase text-xs" style="background-color: var(--accent-color);">Copier</button>
-                        <button onclick="downloadText()" class="bg-slate-700 text-white px-8 py-3.5 rounded-2xl font-bold uppercase text-xs">Exporter .txt</button>
+                        <button onclick="downloadText()" class="bg-slate-700 text-white px-8 py-3.5 rounded-2xl font-bold uppercase text-xs">Exporter</button>
                     </div>
                 </div>
             </div>
 
             <div id="analysis-column" class="lg:col-span-4 hidden space-y-6">
-                <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8 border border-slate-800">
-                    <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Tics</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px] scroll-custom"></ul></div>
-                    <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Répétitions</h2><ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px] scroll-custom"></ul></div>
+                <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl border border-slate-800">
+                    <div class="mb-8"><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Tics</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
+                    <div class="mb-8"><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Répétitions</h2><ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px]"></ul></div>
                     <div id="ignored-section" class="hidden"><h2 class="text-[9px] font-bold uppercase text-red-400 mb-4">Ignorés</h2><ul id="ignored-list" class="flex flex-wrap gap-2 text-[10px]"></ul></div>
                     <div id="collaborators-section" class="hidden border-t border-slate-800 pt-6"><h2 class="text-[9px] font-bold uppercase text-indigo-400 mb-4">Membres</h2><ul id="collaborators-list" class="space-y-2 text-[11px]"></ul></div>
                 </div>
@@ -379,99 +415,124 @@
 
         const parasiteDictionary = ["du coup", "en fait", "voilà", "un petit peu", "euh", "globalement", "concrètement", "effectivement", "donc", "c'est-à-dire", "au final", "disons que", "typiquement", "clairement", "tout simplement", "en gros", "pour le coup", "un peu", "voilà quoi", "tu vois", "franchement", "honnêtement", "en réalité", "pour ainsi dire", "alors", "en quelque sorte", "justement", "au niveau de", "quelque part", "on va dire", "fondablement", "véritablement", "pour ma part", "en soi", "entre guillemets", "si vous voulez", "de base", "sur la fin"];
         const stopWords = ["je", "me", "moi", "tu", "te", "toi", "il", "elle", "on", "nous", "vous", "ils", "elles", "le", "la", "les", "un", "une", "des", "du", "de", "ce", "cet", "cette", "ces", "se", "soi", "lui", "leur", "y", "en", "mon", "ton", "son", "ma", "ta", "sa", "mes", "tes", "ses", "notre", "votre", "nos", "vos", "leurs", "qui", "que", "quoi", "dont", "où", "quel", "quels", "quelle", "quelles", "et", "ou", "mais", "est", "sont", "pour", "dans", "par", "avec", "pas", "ne", "si", "ici", "là", "ont", "aux", "très"];
-        
-        // ARC-EN-CIEL 12 COULEURS
         const bubblePalette = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#10b981', '#06b6d4', '#2563eb', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e'];
 
-        let activeFocusWord = null; 
-        let currentUser = null; 
-        let currentScriptId = null; 
-        let userRole = 'owner'; 
-        let ignoredRepeats = new Set(); 
-        let scriptListener = null; 
-        let currentStep = 1;
-        let bubbles = []; 
-        let comments = []; 
+        let activeFocusWord = null; let currentUser = null; let currentScriptId = null; 
+        let userRole = 'owner'; let ignoredRepeats = new Set(); let scriptListener = null; 
+        let currentStep = 1; let bubbles = []; let comments = []; 
+        let suggestTimer = null; let currentCaretIndex = 0;
 
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
-        const editorWrapper = document.getElementById('editor-wrapper');
-        const canvas = document.getElementById('canvas-container');
-        const timeline = document.getElementById('timeline-container');
+        const mirror = document.getElementById('textarea-mirror');
+        const suggestBtn = document.getElementById('suggest-btn-context');
         const bubbleInput = document.getElementById('bubble-input');
 
-        function updateWpmDisplay(v) { document.getElementById('wpm-value').innerText = v; }
-        function handleAuth() { if (currentUser) auth.signOut(); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+        // --- CARET TRACKING DE PRÉCISION ---
 
-        // --- RÔLES & SÉCURITÉ ---
+        function getCaretCoordinates() {
+            const index = textarea.selectionStart;
+            const textBefore = textarea.value.substring(0, index);
+            
+            // Sync styles with mirror
+            const style = getComputedStyle(textarea);
+            mirror.style.width = style.width;
+            mirror.style.padding = style.padding;
+            mirror.style.lineHeight = style.lineHeight;
+            mirror.style.fontSize = style.fontSize;
+            mirror.style.fontFamily = style.fontFamily;
+            
+            mirror.textContent = textBefore;
+            const span = document.createElement('span');
+            span.textContent = textarea.value.substring(index, index + 1) || '.';
+            mirror.appendChild(span);
 
-        function applyRoleSecurity() {
-            const isReadOnly = (userRole === 'viewers');
-            const isCommentOnly = (userRole === 'commenters');
+            const rect = textarea.getBoundingClientRect();
+            const spanRect = span.getBoundingClientRect();
             
-            // Un lecteur ou commentateur ne peut pas modifier le texte
-            textarea.readOnly = isReadOnly || isCommentOnly;
-            bubbleInput.disabled = isReadOnly || isCommentOnly;
-            document.getElementById('add-bubble-btn').disabled = isReadOnly || isCommentOnly;
-            
-            document.getElementById('role-display').innerText = userRole === 'owner' ? 'Propriétaire' : (userRole === 'editors' ? 'Éditeur' : (userRole === 'commenters' ? 'Commentateur' : 'Lecteur'));
+            return {
+                x: spanRect.left - rect.left,
+                y: spanRect.top - rect.top - textarea.scrollTop
+            };
         }
 
-        // --- SYSTÈME DE COMMENTAIRES (MIROIR) ---
-
-        textarea.addEventListener('mouseup', () => {
-            if (userRole === 'viewers') return;
-            const start = textarea.selectionStart;
-            const end = textarea.selectionEnd;
-            const btn = document.getElementById('comment-btn-floating');
-            if (start !== end) {
-                btn.style.display = 'block';
-                // Positionnement approximatif sous la sélection
-                btn.style.top = (event.clientY + 20) + "px";
-                btn.style.left = (event.clientX - 40) + "px";
-            } else {
-                btn.style.display = 'none';
-            }
+        textarea.addEventListener('click', handleContextSuggest);
+        textarea.addEventListener('keyup', handleContextSuggest);
+        textarea.addEventListener('scroll', () => {
+            highlightLayer.scrollTop = textarea.scrollTop;
+            suggestBtn.style.display = 'none';
         });
 
-        function openCommentPrompt() {
-            const suggestion = prompt("Votre suggestion :");
-            if (suggestion) {
-                const newComment = {
+        function handleContextSuggest() {
+            if (userRole === 'viewers') return;
+            suggestBtn.style.display = 'none';
+            clearTimeout(suggestTimer);
+            currentCaretIndex = textarea.selectionStart;
+
+            suggestTimer = setTimeout(() => {
+                const coords = getCaretCoordinates();
+                // Check bounds to avoid floating out of editor
+                if (coords.y > 0 && coords.y < textarea.clientHeight) {
+                    suggestBtn.style.display = 'flex';
+                    suggestBtn.style.top = (coords.y + textarea.offsetTop - 30) + "px";
+                    suggestBtn.style.left = (coords.x + textarea.offsetLeft) + "px";
+                }
+            }, 3000);
+        }
+
+        // --- GESTION SUGGESTIONS ---
+
+        function openSuggestionModal() {
+            if (userRole === 'viewers') return;
+            const modal = document.getElementById('suggestion-input-modal');
+            const coords = getCaretCoordinates();
+            modal.style.display = 'block';
+            modal.style.top = (coords.y + textarea.offsetTop + 20) + "px";
+            modal.style.left = (coords.x + textarea.offsetLeft) + "px";
+            document.getElementById('suggestion-text-field').focus();
+            suggestBtn.style.display = 'none';
+        }
+
+        function closeSuggestionModal() {
+            document.getElementById('suggestion-input-modal').style.display = 'none';
+            document.getElementById('suggestion-text-field').value = "";
+        }
+
+        function submitSuggestion() {
+            const val = document.getElementById('suggestion-text-field').value.trim();
+            if (val) {
+                const com = {
                     id: "c_" + Date.now(),
-                    index: textarea.selectionStart,
-                    text: suggestion,
+                    index: currentCaretIndex,
+                    text: val,
                     author: currentUser.uid,
                     authorName: currentUser.displayName || currentUser.email
                 };
-                comments.push(newComment);
-                document.getElementById('comment-btn-floating').style.display = 'none';
+                comments.push(com);
                 autoSave();
                 process();
             }
+            closeSuggestionModal();
         }
 
         function showComment(id, event) {
-            event.preventDefault();
             event.stopPropagation();
             const com = comments.find(c => c.id === id);
             if (!com) return;
 
-            const tooltip = document.getElementById('comment-tooltip');
+            const popup = document.getElementById('comment-popup');
             document.getElementById('comment-author').innerText = com.authorName;
             document.getElementById('comment-text').innerText = com.text;
             
             const delBtn = document.getElementById('comment-delete-btn');
             if (userRole === 'owner' || com.author === currentUser.uid) {
                 delBtn.style.display = 'block';
-                delBtn.onclick = () => { deleteComment(id); tooltip.style.display = 'none'; };
-            } else {
-                delBtn.style.display = 'none';
-            }
+                delBtn.onclick = () => { deleteComment(id); popup.style.display = 'none'; };
+            } else { delBtn.style.display = 'none'; }
 
-            tooltip.style.display = 'block';
-            tooltip.style.top = (event.clientY - 120) + "px";
-            tooltip.style.left = (event.clientX - 130) + "px";
+            popup.style.display = 'block';
+            popup.style.top = (event.clientY - 140) + "px";
+            popup.style.left = (event.clientX - 140) + "px";
         }
 
         function deleteComment(id) {
@@ -480,15 +541,7 @@
             process();
         }
 
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.comment-dot') && !e.target.closest('#comment-tooltip')) {
-                document.getElementById('comment-tooltip').style.display = 'none';
-            }
-        });
-
-        // --- SYNCHRONISATION WORKFLOW ---
-
-        bubbleInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') createBubbleFromInput(); });
+        // --- BROUILLON & CHRONOLOGIE (SYNCHRO) ---
 
         function createBubbleFromInput() {
             const text = bubbleInput.value.trim();
@@ -514,8 +567,7 @@
                 const el = document.createElement('div');
                 el.className = `bubble`;
                 el.id = b.id;
-                el.style.left = b.x + "px";
-                el.style.top = b.y + "px";
+                el.style.left = b.x + "px"; el.style.top = b.y + "px";
                 el.style.borderColor = b.color;
                 const paletteHtml = bubblePalette.map(c => `<div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor('${b.id}', '${c}')"></div>`).join('');
                 el.innerHTML = `
@@ -541,8 +593,7 @@
             let startX = e.clientX - el.offsetLeft;
             let startY = e.clientY - el.offsetTop;
             function doDrag(e) {
-                let x = e.clientX - startX;
-                let y = e.clientY - startY;
+                let x = e.clientX - startX; let y = e.clientY - startY;
                 el.style.left = x + "px"; el.style.top = y + "px";
                 const b = bubbles.find(b => b.id === id);
                 if (b) { b.x = x; b.y = y; }
@@ -628,19 +679,7 @@
             if (!isOpen) menu.classList.add('active');
         }
 
-        function setStep(step) {
-            currentStep = step;
-            document.querySelectorAll('.wf-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(`wf-tab-${step}`).classList.add('active');
-            const s1 = document.getElementById('step-1-view'), s2 = document.getElementById('step-2-view'), s3 = document.getElementById('step-3-view');
-            const mainCol = document.getElementById('main-column'), analysisCol = document.getElementById('analysis-column'), statsRow = document.getElementById('stats-row');
-            [s1, s2, s3].forEach(el => el.classList.add('hidden'));
-            if (step === 1) { s1.classList.remove('hidden'); mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12'); analysisCol.classList.add('hidden'); statsRow.classList.add('hidden'); renderDraft(); }
-            else if (step === 2) { s2.classList.remove('hidden'); mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12'); analysisCol.classList.add('hidden'); statsRow.classList.add('hidden'); renderTimeline(); }
-            else if (step === 3) { s3.classList.remove('hidden'); mainCol.classList.replace('lg:col-span-12', 'lg:col-span-8'); analysisCol.classList.remove('hidden'); statsRow.classList.remove('hidden'); process(); }
-        }
-
-        // --- ÉTAPE 3: ANALYSEUR ET RENDU PRÉCIS ---
+        // --- CORE ENGINE ---
 
         function process() {
             if (currentStep !== 3) return;
@@ -648,12 +687,10 @@
             const showP = document.getElementById('toggle-parasites').checked;
             const showR = document.getElementById('toggle-repeats').checked;
             const showM = document.getElementById('toggle-montage').checked;
-            editorWrapper.classList.toggle('show-parasites', showP);
-            editorWrapper.classList.toggle('show-repeats', showR);
-            editorWrapper.classList.toggle('show-montage', showM);
             
-            // Synchronisation du scroll entre textarea et highlight
-            highlightLayer.scrollTop = textarea.scrollTop;
+            highlightLayer.classList.toggle('show-parasites', showP);
+            highlightLayer.classList.toggle('show-repeats', showR);
+            highlightLayer.classList.toggle('show-montage', showM);
 
             let montageIndices = new Set();
             if (showM) {
@@ -696,13 +733,12 @@
                 let fMatch; while ((fMatch = fRegex.exec(text)) !== null) { for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i); }
             }
 
-            // Map des commentaires par index
+            // Map suggestions
             let commentMap = {};
             comments.forEach(c => { if(!commentMap[c.index]) commentMap[c.index] = []; commentMap[c.index].push(c); });
 
             let finalHtml = ""; let i = 0;
             while (i <= text.length) {
-                // Injection des pastilles cliquables
                 if (commentMap[i]) {
                     commentMap[i].forEach(com => {
                         finalHtml += `<span class="comment-dot" onclick="showComment('${com.id}', event)"></span>`;
@@ -720,7 +756,7 @@
                     finalHtml += `<mark class="${className}">`;
                     while (i < text.length && ((className === "montage" && montageIndices.has(i)) || (className === "focus-active" && focusIndices.has(i)) || (className === "parasite" && parasiteIndices.has(i)) || (className === "repeat" && badRepeatIndices.has(i)))) {
                         finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++;
-                        if (commentMap[i]) break; // On sort pour injecter la pastille au bon endroit
+                        if (commentMap[i]) break; 
                     }
                     finalHtml += `</mark>`;
                 } else { finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++; }
@@ -731,37 +767,23 @@
             document.getElementById('total-repeats').innerText = Object.keys(repeatCounts).length;
             document.getElementById('total-words').innerText = wordCount;
             document.getElementById('focus-display').innerText = activeFocusWord || "Aucun";
-            
             updateSidebars(parasiteCounts, repeatCounts);
             autoSave();
         }
 
-        let saveTimeout;
-        function autoSave() {
-            if (userRole === 'viewers' || userRole === 'commenters') return;
-            if (currentUser && currentScriptId) {
-                clearTimeout(saveTimeout);
-                saveTimeout = setTimeout(() => {
-                    db.collection('scripts').doc(currentScriptId).update({ 
-                        bubbles: bubbles,
-                        content: textarea.value, 
-                        comments: comments,
-                        ignoredWords: Array.from(ignoredRepeats), 
-                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
-                    })
-                    .then(() => { const s = document.getElementById('save-status'); s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 1000); });
-                }, 800);
-            }
+        function setStep(step) {
+            currentStep = step;
+            document.querySelectorAll('.wf-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`wf-tab-${step}`).classList.add('active');
+            const s1 = document.getElementById('step-1-view'), s2 = document.getElementById('step-2-view'), s3 = document.getElementById('step-3-view');
+            const mainCol = document.getElementById('main-column'), analysisCol = document.getElementById('analysis-column'), statsRow = document.getElementById('stats-row');
+            [s1, s2, s3].forEach(el => el.classList.add('hidden'));
+            if (step === 1) { s1.classList.remove('hidden'); mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12'); analysisCol.classList.add('hidden'); statsRow.classList.add('hidden'); renderDraft(); }
+            else if (step === 2) { s2.classList.remove('hidden'); mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12'); analysisCol.classList.add('hidden'); statsRow.classList.add('hidden'); renderTimeline(); }
+            else if (step === 3) { s3.classList.remove('hidden'); mainCol.classList.replace('lg:col-span-12', 'lg:col-span-8'); analysisCol.classList.remove('hidden'); statsRow.classList.remove('hidden'); process(); }
         }
 
-        function updateSidebars(pCounts, rCounts) {
-            const pList = document.getElementById('word-list'); const rList = document.getElementById('repeat-list');
-            pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="sidebar-item flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span>${w}</span><span style="color: var(--accent-color);">${c}</span></li>`).join('') || 'RAS';
-            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li class="sidebar-item flex justify-between items-center uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="flex-1 truncate">${w}</span><div class="flex items-center gap-2"><span class="text-amber-500">${c+1}x</span><button onclick="ignoreWord('${w}')" class="ignore-btn">✕</button></div></li>`).join('') || 'RAS';
-            if (ignoredRepeats.size > 0) { document.getElementById('ignored-section').classList.remove('hidden'); document.getElementById('ignored-list').innerHTML = Array.from(ignoredRepeats).map(w => `<li onclick="unignoreWord('${w}')" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer">#${w}</li>`).join(''); } else document.getElementById('ignored-section').classList.add('hidden');
-        }
-
-        // --- FIREBASE SYNC & AUTH ---
+        // --- FIREBASE SYNC ---
 
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
@@ -777,7 +799,7 @@
                 listenToSharedScripts();
             } else {
                 currentScriptId = null;
-                document.getElementById('auth-btn-text').innerText = "Se connecter";
+                document.getElementById('auth-btn-text').innerText = "Connexion";
                 document.getElementById('user-display').innerText = "Mode Local";
                 setStep(1);
             }
@@ -819,6 +841,14 @@
             });
         }
 
+        function applyRoleSecurity() {
+            const isRestricted = (userRole === 'viewers' || userRole === 'commenters');
+            textarea.readOnly = isRestricted;
+            bubbleInput.disabled = isRestricted;
+            document.getElementById('add-bubble-btn').disabled = isRestricted;
+            document.getElementById('role-display').innerText = userRole === 'owner' ? 'Propriétaire' : (userRole === 'editors' ? 'Éditeur' : (userRole === 'commenters' ? 'Commentateur' : 'Lecteur'));
+        }
+
         function listenToSharedScripts() {
             const email = currentUser.email;
             db.collection('scripts').where('editors', 'array-contains', email).onSnapshot(syncSharedTabs);
@@ -845,11 +875,29 @@
             loadScript(id);
         }
 
+        let saveTimeout;
+        function autoSave() {
+            if (userRole === 'viewers' || userRole === 'commenters') return;
+            if (currentUser && currentScriptId) {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    db.collection('scripts').doc(currentScriptId).update({ 
+                        bubbles: bubbles,
+                        content: textarea.value, 
+                        comments: comments,
+                        ignoredWords: Array.from(ignoredRepeats), 
+                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
+                    })
+                    .then(() => { const s = document.getElementById('save-status'); s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 1000); });
+                }, 800);
+            }
+        }
+
         async function generateInviteLink() {
             const role = document.getElementById('share-role').value;
             const inviteRef = await db.collection('invites').add({ scriptId: currentScriptId, role: role, createdBy: currentUser.email, used: false, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
             const inviteURL = `${window.location.origin}${window.location.pathname}?invite=${inviteRef.id}`;
-            await navigator.clipboard.writeText(inviteURL); alert("Lien unique copié !"); toggleShareModal();
+            await navigator.clipboard.writeText(inviteURL); alert("Lien copié !"); toggleShareModal();
         }
 
         async function consumeInvite(tokenId) {
@@ -858,8 +906,15 @@
                 const data = doc.data();
                 await db.collection('scripts').doc(data.scriptId).update({ [data.role]: firebase.firestore.FieldValue.arrayUnion(currentUser.email) });
                 await db.collection('invites').doc(tokenId).update({ used: true, usedBy: currentUser.email });
-                alert("Accès accordé !");
+                alert("Accès autorisé !");
             }
+        }
+
+        function updateSidebars(pCounts, rCounts) {
+            const pList = document.getElementById('word-list'); const rList = document.getElementById('repeat-list');
+            pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="sidebar-item flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span>${w}</span><span style="color: var(--accent-color);">${c}</span></li>`).join('') || 'RAS';
+            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li class="sidebar-item flex justify-between items-center uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="flex-1 truncate">${w}</span><div class="flex items-center gap-2"><span class="text-amber-500">${c+1}x</span><button onclick="ignoreWord('${w}')" class="ignore-btn">✕</button></div></li>`).join('') || 'RAS';
+            if (ignoredRepeats.size > 0) { document.getElementById('ignored-section').classList.remove('hidden'); document.getElementById('ignored-list').innerHTML = Array.from(ignoredRepeats).map(w => `<li onclick="unignoreWord('${w}')" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer">#${w}</li>`).join(''); } else document.getElementById('ignored-section').classList.add('hidden');
         }
 
         function updateCollaboratorsUI(data) {
@@ -894,7 +949,6 @@
                 document.getElementById('theme-picker').appendChild(b);
             });
             textarea.addEventListener('input', process);
-            textarea.addEventListener('scroll', () => highlightLayer.scrollTop = textarea.scrollTop);
             setStep(1);
         };
     </script>
