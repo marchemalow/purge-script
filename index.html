@@ -383,6 +383,7 @@
         function updateWpmDisplay(v) { document.getElementById('wpm-value').innerText = v; }
         function handleAuth() { if (currentUser) auth.signOut(); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
+        // GESTION FERMETURE MENUS AU CLIC EXTERIEUR
         window.addEventListener('click', (e) => {
             if (!e.target.closest('.color-picker-trigger') && !e.target.closest('.color-menu')) {
                 document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
@@ -430,14 +431,16 @@
         function createBubbleFromInput() {
             const text = bubbleInput.value.trim();
             if (!text) return;
-            const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#ef4444';
+            // Récupère la couleur d'accent actuelle du thème pour la nouvelle bulle
+            const currentAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#ef4444';
+            
             const newBubble = {
                 id: "b_" + Date.now(),
                 text: text,
                 x: 50 + Math.random() * 300,
                 y: 50 + Math.random() * 300,
                 order: bubbles.length,
-                color: accent
+                color: currentAccent
             };
             bubbles.push(newBubble);
             bubbleInput.value = "";
@@ -460,7 +463,7 @@
                     <div class="flex items-center justify-between border-t border-slate-700/50 pt-2">
                         <div class="relative">
                             <div class="color-picker-trigger" onclick="toggleColorMenu(event, '${b.id}_menu')">
-                                <svg class="w-3.5 h-3.5 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M14.06,9L15,9.94L5.92,19H5V18.08L14.06,9M17.66,3C17.41,3 17.15,3.1 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18.17,3.09 17.92,3 17.66,3M14.06,6.19L3,17.25V21H6.75L17.81,9.94L14.06,6.19Z"/></svg>
+                                <div class="w-3.5 h-3.5 rounded-full border border-white/20" style="background-color: ${b.color}"></div>
                             </div>
                             <div id="${b.id}_menu" class="color-menu">${paletteHtml}</div>
                         </div>
@@ -480,7 +483,9 @@
             e.stopPropagation();
             const menu = document.getElementById(menuId);
             const isOpen = menu.classList.contains('active');
+            // Ferme tous les autres menus
             document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
+            // Toggle celui-ci
             if (!isOpen) menu.classList.add('active');
         }
 
@@ -505,20 +510,29 @@
             const sorted = [...bubbles].sort((a, b) => a.order - b.order);
             sorted.forEach((b) => {
                 const block = document.createElement('div');
-                block.className = 'timeline-block'; block.draggable = true; block.dataset.id = b.id; block.style.borderColor = b.color;
+                block.className = 'timeline-block'; 
+                block.draggable = true; 
+                block.dataset.id = b.id; 
+                block.style.borderColor = b.color;
+                
                 const paletteHtml = bubblePalette.map(c => `<div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor('${b.id}', '${c}')"></div>`).join('');
+                
                 block.innerHTML = `
                     <div class="drag-handle"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 9h8v2H8zm0 4h8v2H8z"></path></svg></div>
                     <div class="relative">
-                        <div class="color-picker-trigger" onclick="toggleColorMenu(event, '${b.id}_tl_menu')"><div class="w-3.5 h-3.5 rounded-full" style="background-color: ${b.color}"></div></div>
+                        <div class="color-picker-trigger" onclick="toggleColorMenu(event, '${b.id}_tl_menu')">
+                            <div class="w-3.5 h-3.5 rounded-full border border-white/20" style="background-color: ${b.color}"></div>
+                        </div>
                         <div id="${b.id}_tl_menu" class="color-menu">${paletteHtml}</div>
                     </div>
                     <div class="flex-1 h-full py-3"><textarea class="sync-input editor-font" oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea></div>
                     <button onclick="deleteBubble('${b.id}')" class="text-slate-500 hover:text-red-400 ml-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>`;
+                
                 block.addEventListener('dragstart', () => block.classList.add('dragging'));
                 block.addEventListener('dragend', () => { block.classList.remove('dragging'); reorderTimeline(); });
                 timeline.appendChild(block);
             });
+            
             timeline.addEventListener('dragover', e => {
                 e.preventDefault();
                 const afterElement = getDragAfterElement(timeline, e.clientY);
@@ -544,12 +558,19 @@
         }
 
         function updateBubbleText(id, val) { const b = bubbles.find(b => b.id === id); if (b) b.text = val; autoSave(); }
+        
         function setBubbleColor(id, color) {
-            const b = bubbles.find(b => b.id === id); if (b) b.color = color;
-            document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
-            if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
-            autoSave();
+            const b = bubbles.find(b => b.id === id); 
+            if (b) {
+                b.color = color;
+                // Fermer le menu après sélection
+                document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
+                // Rafraîchir la vue courante
+                if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
+                autoSave();
+            }
         }
+        
         function deleteBubble(id) { bubbles = bubbles.filter(b => b.id !== id); currentStep === 1 ? renderDraft() : renderTimeline(); autoSave(); }
 
         // --- FIREBASE & COLLABORATION CORE ---
@@ -560,7 +581,6 @@
                 document.getElementById('auth-btn-text').innerText = "Déconnexion";
                 document.getElementById('user-display').innerText = user.displayName;
                 
-                // Correction visibilité bouton inviter
                 const shareBtn = document.getElementById('share-btn');
                 shareBtn.classList.remove('hidden');
                 shareBtn.style.display = 'flex';
@@ -569,7 +589,6 @@
                 document.getElementById('shared-scripts-container').classList.remove('hidden');
                 document.getElementById('projects-nav').classList.remove('hidden');
                 
-                // Charger le thème de l'user
                 const userDoc = await db.collection('users').doc(user.uid).get();
                 if (userDoc.exists && userDoc.data().preferredTheme) applyTheme(userDoc.data().preferredTheme, false);
 
@@ -611,7 +630,10 @@
                     if (document.activeElement !== textarea) { textarea.value = data.content || ""; process(); } 
                     else { const start = textarea.selectionStart; const end = textarea.selectionEnd; textarea.value = data.content || ""; textarea.setSelectionRange(start, end); process(); }
                 }
-                if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) { bubbles = data.bubbles || []; if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline(); }
+                if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) { 
+                    bubbles = data.bubbles || []; 
+                    if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline(); 
+                }
                 userRole = data.owner === currentUser.uid ? 'owner' : (data.editors?.includes(currentUser.email) ? 'editor' : 'viewer');
                 textarea.readOnly = (userRole === 'viewer');
                 const slotMatch = id.match(/_([1-4])$/); 
@@ -729,7 +751,7 @@
                         ignoredWords: Array.from(ignoredRepeats), 
                         lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
                     }).then(() => { const s = document.getElementById('save-status'); s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 1000); });
-                }, 400); // Réduit pour synchro plus "live"
+                }, 400); 
             } else { localStorage.setItem('purge-content', textarea.value); localStorage.setItem('purge-bubbles', JSON.stringify(bubbles)); }
         }
 
@@ -753,7 +775,7 @@
                 await db.collection('scripts').doc(currentScriptId).update({ [role]: firebase.firestore.FieldValue.arrayUnion(email) });
                 alert(`Autorisation accordée à ${email} !`);
                 emailInput.value = "";
-            } catch (e) { alert("Erreur lors du partage (Vérifiez vos droits)."); }
+            } catch (e) { alert("Erreur lors du partage."); }
         }
 
         async function generateInviteLink() {
@@ -775,7 +797,6 @@
                 
                 const inviteURL = `${window.location.origin}${window.location.pathname}?invite=${inviteRef.id}`;
                 
-                // --- Robust Copy to Clipboard ---
                 let copySuccess = false;
                 try {
                     await navigator.clipboard.writeText(inviteURL);
@@ -785,32 +806,21 @@
                     textArea.value = inviteURL;
                     document.body.appendChild(textArea);
                     textArea.select();
-                    try {
-                        document.execCommand('copy');
-                        copySuccess = true;
-                    } catch (e) {}
+                    try { document.execCommand('copy'); copySuccess = true; } catch (e) {}
                     document.body.removeChild(textArea);
                 }
 
                 if (copySuccess) {
                     const oldText = btnText.innerText;
                     const oldBg = btn.style.backgroundColor;
-                    
                     btnText.innerText = "Lien copié ! ✓";
-                    btn.style.backgroundColor = "#22c55e"; // Vert
-                    
+                    btn.style.backgroundColor = "#22c55e"; 
                     setTimeout(() => { 
                         btnText.innerText = oldText; 
                         btn.style.backgroundColor = oldBg || "var(--accent-color)"; 
                     }, 2500);
-                } else {
-                    alert("Lien généré mais la copie automatique a échoué : " + inviteURL);
-                }
-
-            } catch (e) { 
-                alert("Erreur de génération."); 
-                console.error(e);
-            }
+                } else { alert("Lien généré : " + inviteURL); }
+            } catch (e) { alert("Erreur de génération."); }
         }
 
         async function consumeInvite(tokenId) {
