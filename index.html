@@ -91,7 +91,7 @@
         }
         .timeline-block.dragging { opacity: 0.5; transform: scale(0.98); }
 
-        /* Color Picker Component - FIXED STABILITY */
+        /* Color Picker Component */
         .color-picker-trigger {
             width: 28px;
             height: 28px;
@@ -374,6 +374,7 @@
         let scriptListener = null; 
         let currentStep = 1;
         let bubbles = []; 
+        let isLocalChange = false; // --- CRITICAL FIX: PREVENT ECHO OVERWRITE ---
 
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
@@ -385,7 +386,7 @@
         function updateWpmDisplay(v) { document.getElementById('wpm-value').innerText = v; }
         function handleAuth() { if (currentUser) auth.signOut(); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
-        // GESTION FERMETURE MENUS AU CLIC EXTERIEUR - FIXED STABILITY
+        // GESTION FERMETURE MENUS AU CLIC EXTERIEUR
         window.addEventListener('click', (e) => {
             if (!e.target.closest('.color-picker-trigger') && !e.target.closest('.color-menu')) {
                 document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
@@ -433,7 +434,6 @@
         function createBubbleFromInput() {
             const text = bubbleInput.value.trim();
             if (!text) return;
-            // Récupère la couleur d'accent actuelle pour les nouveaux blocs
             const currentAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#ef4444';
             
             const newBubble = {
@@ -485,7 +485,6 @@
             e.stopPropagation();
             const menu = document.getElementById(menuId);
             const isOpen = menu.classList.contains('active');
-            // Fermer les autres menus
             document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
             if (!isOpen) menu.classList.add('active');
         }
@@ -572,7 +571,7 @@
         
         function deleteBubble(id) { bubbles = bubbles.filter(b => b.id !== id); currentStep === 1 ? renderDraft() : renderTimeline(); autoSave(); }
 
-        // --- FIREBASE & COLLABORATION CORE ---
+        // --- FIREBASE CORE ---
 
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
@@ -622,18 +621,20 @@
                 }
                 const data = doc.data();
                 
-                // --- FIXED COLLABORATIVE SYNC (CURSOR PRESERVATION) ---
+                // --- FIXED SYNC LOGIC: PROTECT LOCAL INPUT ---
                 if (data.content !== undefined && data.content !== textarea.value) {
-                    const start = textarea.selectionStart;
-                    const end = textarea.selectionEnd;
-                    const hasFocus = (document.activeElement === textarea);
-                    
-                    textarea.value = data.content || "";
-                    
-                    if (hasFocus) {
-                        textarea.setSelectionRange(start, end);
+                    // On ne met à jour le texte que si :
+                    // 1. On n'a pas le focus (pas en train de taper)
+                    // 2. OU si le changement ne vient pas de nous (isLocalChange est false)
+                    if (document.activeElement !== textarea || !isLocalChange) {
+                        const start = textarea.selectionStart;
+                        const end = textarea.selectionEnd;
+                        textarea.value = data.content || "";
+                        if (document.activeElement === textarea) {
+                            textarea.setSelectionRange(start, end);
+                        }
+                        process();
                     }
-                    process();
                 }
 
                 if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) { 
@@ -756,7 +757,10 @@
                         bubbles: bubbles, content: textarea.value, 
                         ignoredWords: Array.from(ignoredRepeats), 
                         lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
-                    }).then(() => { const s = document.getElementById('save-status'); s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 1000); });
+                    }).then(() => { 
+                        isLocalChange = false; // Reset local flag once saved
+                        const s = document.getElementById('save-status'); s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 1000); 
+                    });
                 }, 400); 
             } else { 
                 localStorage.setItem('purge-content', textarea.value); 
@@ -818,10 +822,7 @@
                     const oldText = btnText.innerText;
                     btnText.innerText = "Lien copié ! ✓";
                     btn.style.backgroundColor = "#22c55e"; 
-                    setTimeout(() => { 
-                        btnText.innerText = oldText; 
-                        btn.style.backgroundColor = "var(--accent-color)"; 
-                    }, 2500);
+                    setTimeout(() => { btnText.innerText = oldText; btn.style.backgroundColor = "var(--accent-color)"; }, 2500);
                 } else { alert("Lien généré : " + inviteURL); }
             } catch (e) { alert("Erreur de génération."); }
         }
@@ -862,17 +863,11 @@
         async function removeCollaborator(e, r) { if (confirm(`Retirer ${e} ?`)) await db.collection('scripts').doc(currentScriptId).update({ [r]: firebase.firestore.FieldValue.arrayRemove(e) }); }
         async function renameCurrentProject() { const n = prompt("Nouveau nom du projet :"); if(n) await db.collection('scripts').doc(currentScriptId).update({ title: n }); }
 
-        // --- THEME MANAGEMENT ---
-
         function applyTheme(color, shouldSave = true) {
             document.documentElement.style.setProperty('--accent-color', color); 
             document.documentElement.style.setProperty('--accent-soft', color + '26');
             localStorage.setItem('purge-theme', color);
-            
-            if (shouldSave && currentUser) {
-                db.collection('users').doc(currentUser.uid).set({ preferredTheme: color }, { merge: true });
-            }
-
+            if (shouldSave && currentUser) db.collection('users').doc(currentUser.uid).set({ preferredTheme: color }, { merge: true });
             process(); 
             if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
         }
@@ -887,7 +882,7 @@
             });
             const savedTheme = localStorage.getItem('purge-theme');
             if (savedTheme) applyTheme(savedTheme, false);
-            textarea.addEventListener('input', process);
+            textarea.addEventListener('input', () => { isLocalChange = true; process(); });
             textarea.addEventListener('scroll', () => highlightLayer.scrollTop = textarea.scrollTop);
             setStep(1);
         };
