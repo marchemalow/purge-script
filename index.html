@@ -107,7 +107,7 @@
         .color-picker-trigger:hover { background: rgba(255,255,255,0.1); }
         
         .color-menu {
-            display: none; /* Toujours caché par défaut, pas de survol */
+            display: none; 
             position: absolute;
             background: #1e293b;
             border: 1px solid #334155;
@@ -385,7 +385,7 @@
         function updateWpmDisplay(v) { document.getElementById('wpm-value').innerText = v; }
         function handleAuth() { if (currentUser) auth.signOut(); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
-        // GESTION FERMETURE MENUS AU CLIC EXTERIEUR - FIXED
+        // GESTION FERMETURE MENUS AU CLIC EXTERIEUR - FIXED STABILITY
         window.addEventListener('click', (e) => {
             if (!e.target.closest('.color-picker-trigger') && !e.target.closest('.color-menu')) {
                 document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
@@ -433,7 +433,7 @@
         function createBubbleFromInput() {
             const text = bubbleInput.value.trim();
             if (!text) return;
-            // Récupère la couleur d'accent actuelle du thème pour la nouvelle bulle - FIXED PERSISTANCE
+            // Récupère la couleur d'accent actuelle pour les nouveaux blocs
             const currentAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#ef4444';
             
             const newBubble = {
@@ -485,9 +485,8 @@
             e.stopPropagation();
             const menu = document.getElementById(menuId);
             const isOpen = menu.classList.contains('active');
-            // Ferme tous les autres menus d'abord
+            // Fermer les autres menus
             document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
-            // Toggle celui-ci
             if (!isOpen) menu.classList.add('active');
         }
 
@@ -565,9 +564,7 @@
             const b = bubbles.find(b => b.id === id); 
             if (b) {
                 b.color = color;
-                // Fermer le menu après sélection
                 document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
-                // Rafraîchir la vue courante
                 if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
                 autoSave();
             }
@@ -582,18 +579,14 @@
             if (user) {
                 document.getElementById('auth-btn-text').innerText = "Déconnexion";
                 document.getElementById('user-display').innerText = user.displayName;
-                
                 const shareBtn = document.getElementById('share-btn');
                 shareBtn.classList.remove('hidden');
                 shareBtn.style.display = 'flex';
                 shareBtn.style.backgroundColor = "var(--accent-color)";
-
                 document.getElementById('shared-scripts-container').classList.remove('hidden');
                 document.getElementById('projects-nav').classList.remove('hidden');
-                
                 const userDoc = await db.collection('users').doc(user.uid).get();
                 if (userDoc.exists && userDoc.data().preferredTheme) applyTheme(userDoc.data().preferredTheme, false);
-
                 const urlParams = new URLSearchParams(window.location.search);
                 const inviteToken = urlParams.get('invite');
                 if (inviteToken) { await consumeInvite(inviteToken); window.history.replaceState({}, document.title, window.location.pathname); }
@@ -629,19 +622,18 @@
                 }
                 const data = doc.data();
                 
-                // FIXED: GESTION DE LA SYNCHRONISATION SANS EFFACEMENT ET SANS SAUT DE CURSEUR
+                // --- FIXED COLLABORATIVE SYNC (CURSOR PRESERVATION) ---
                 if (data.content !== undefined && data.content !== textarea.value) {
-                    if (document.activeElement !== textarea) { 
-                        textarea.value = data.content || ""; 
-                        process(); 
-                    } else { 
-                        // Préserver le curseur si on est en train d'écrire
-                        const start = textarea.selectionStart; 
-                        const end = textarea.selectionEnd; 
-                        textarea.value = data.content || ""; 
-                        textarea.setSelectionRange(start, end); 
-                        process(); 
+                    const start = textarea.selectionStart;
+                    const end = textarea.selectionEnd;
+                    const hasFocus = (document.activeElement === textarea);
+                    
+                    textarea.value = data.content || "";
+                    
+                    if (hasFocus) {
+                        textarea.setSelectionRange(start, end);
                     }
+                    process();
                 }
 
                 if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) { 
@@ -766,7 +758,10 @@
                         lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
                     }).then(() => { const s = document.getElementById('save-status'); s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 1000); });
                 }, 400); 
-            } else { localStorage.setItem('purge-content', textarea.value); localStorage.setItem('purge-bubbles', JSON.stringify(bubbles)); }
+            } else { 
+                localStorage.setItem('purge-content', textarea.value); 
+                localStorage.setItem('purge-bubbles', JSON.stringify(bubbles)); 
+            }
         }
 
         function updateSidebars(pCounts, rCounts) {
@@ -795,11 +790,9 @@
         async function generateInviteLink() {
             if (!currentUser) return alert("Connectez-vous pour générer un lien d'invitation.");
             if (!currentScriptId) return alert("Aucun projet sélectionné.");
-            
             const btn = document.getElementById('gen-link-btn');
             const btnText = document.getElementById('gen-btn-text');
             const role = document.getElementById('share-role').value;
-            
             try {
                 const inviteRef = await db.collection('invites').add({ 
                     scriptId: currentScriptId, 
@@ -808,9 +801,7 @@
                     used: false, 
                     createdAt: firebase.firestore.FieldValue.serverTimestamp() 
                 });
-                
                 const inviteURL = `${window.location.origin}${window.location.pathname}?invite=${inviteRef.id}`;
-                
                 let copySuccess = false;
                 try {
                     await navigator.clipboard.writeText(inviteURL);
@@ -823,15 +814,13 @@
                     try { document.execCommand('copy'); copySuccess = true; } catch (e) {}
                     document.body.removeChild(textArea);
                 }
-
                 if (copySuccess) {
                     const oldText = btnText.innerText;
-                    const oldBg = btn.style.backgroundColor;
                     btnText.innerText = "Lien copié ! ✓";
                     btn.style.backgroundColor = "#22c55e"; 
                     setTimeout(() => { 
                         btnText.innerText = oldText; 
-                        btn.style.backgroundColor = oldBg || "var(--accent-color)"; 
+                        btn.style.backgroundColor = "var(--accent-color)"; 
                     }, 2500);
                 } else { alert("Lien généré : " + inviteURL); }
             } catch (e) { alert("Erreur de génération."); }
