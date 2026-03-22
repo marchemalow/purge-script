@@ -91,7 +91,7 @@
         }
         .timeline-block.dragging { opacity: 0.5; transform: scale(0.98); }
 
-        /* Color Picker Component */
+        /* Color Picker Component - FIXED MODE CLIC */
         .color-picker-trigger {
             width: 28px;
             height: 28px;
@@ -374,7 +374,6 @@
         let scriptListener = null; 
         let currentStep = 1;
         let bubbles = []; 
-        let isLocalChange = false; // --- CRITICAL FIX: PREVENT ECHO OVERWRITE ---
 
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
@@ -386,7 +385,7 @@
         function updateWpmDisplay(v) { document.getElementById('wpm-value').innerText = v; }
         function handleAuth() { if (currentUser) auth.signOut(); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
-        // GESTION FERMETURE MENUS AU CLIC EXTERIEUR
+        // GESTION FERMETURE MENUS
         window.addEventListener('click', (e) => {
             if (!e.target.closest('.color-picker-trigger') && !e.target.closest('.color-menu')) {
                 document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
@@ -571,7 +570,7 @@
         
         function deleteBubble(id) { bubbles = bubbles.filter(b => b.id !== id); currentStep === 1 ? renderDraft() : renderTimeline(); autoSave(); }
 
-        // --- FIREBASE CORE ---
+        // --- FIREBASE COLLABORATION ---
 
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
@@ -621,20 +620,18 @@
                 }
                 const data = doc.data();
                 
-                // --- FIXED SYNC LOGIC: PROTECT LOCAL INPUT ---
+                // --- CRITICAL SYNC FIX: CARET PRESERVATION ---
                 if (data.content !== undefined && data.content !== textarea.value) {
-                    // On ne met à jour le texte que si :
-                    // 1. On n'a pas le focus (pas en train de taper)
-                    // 2. OU si le changement ne vient pas de nous (isLocalChange est false)
-                    if (document.activeElement !== textarea || !isLocalChange) {
-                        const start = textarea.selectionStart;
-                        const end = textarea.selectionEnd;
-                        textarea.value = data.content || "";
-                        if (document.activeElement === textarea) {
-                            textarea.setSelectionRange(start, end);
-                        }
-                        process();
+                    const start = textarea.selectionStart;
+                    const end = textarea.selectionEnd;
+                    const isFocused = document.activeElement === textarea;
+
+                    textarea.value = data.content || "";
+                    
+                    if (isFocused) {
+                        textarea.setSelectionRange(start, end);
                     }
+                    process();
                 }
 
                 if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) { 
@@ -758,10 +755,9 @@
                         ignoredWords: Array.from(ignoredRepeats), 
                         lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
                     }).then(() => { 
-                        isLocalChange = false; // Reset local flag once saved
                         const s = document.getElementById('save-status'); s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 1000); 
                     });
-                }, 400); 
+                }, 250); // Plus rapide pour éviter les conflits
             } else { 
                 localStorage.setItem('purge-content', textarea.value); 
                 localStorage.setItem('purge-bubbles', JSON.stringify(bubbles)); 
@@ -882,7 +878,7 @@
             });
             const savedTheme = localStorage.getItem('purge-theme');
             if (savedTheme) applyTheme(savedTheme, false);
-            textarea.addEventListener('input', () => { isLocalChange = true; process(); });
+            textarea.addEventListener('input', process);
             textarea.addEventListener('scroll', () => highlightLayer.scrollTop = textarea.scrollTop);
             setStep(1);
         };
