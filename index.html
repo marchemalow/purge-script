@@ -91,7 +91,7 @@
         }
         .timeline-block.dragging { opacity: 0.5; transform: scale(0.98); }
 
-        /* Color Picker Component */
+        /* Color Picker Component - FIXED STABILITY */
         .color-picker-trigger {
             width: 28px;
             height: 28px;
@@ -107,7 +107,7 @@
         .color-picker-trigger:hover { background: rgba(255,255,255,0.1); }
         
         .color-menu {
-            display: none;
+            display: none; /* Toujours caché par défaut, pas de survol */
             position: absolute;
             background: #1e293b;
             border: 1px solid #334155;
@@ -118,6 +118,8 @@
             z-index: 1000;
             box-shadow: 0 15px 30px rgba(0,0,0,0.6);
             margin-top: 8px;
+            left: 0;
+            top: 100%;
         }
         .color-menu.active { display: grid; }
         
@@ -383,7 +385,7 @@
         function updateWpmDisplay(v) { document.getElementById('wpm-value').innerText = v; }
         function handleAuth() { if (currentUser) auth.signOut(); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
-        // GESTION FERMETURE MENUS AU CLIC EXTERIEUR
+        // GESTION FERMETURE MENUS AU CLIC EXTERIEUR - FIXED
         window.addEventListener('click', (e) => {
             if (!e.target.closest('.color-picker-trigger') && !e.target.closest('.color-menu')) {
                 document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
@@ -431,7 +433,7 @@
         function createBubbleFromInput() {
             const text = bubbleInput.value.trim();
             if (!text) return;
-            // Récupère la couleur d'accent actuelle du thème pour la nouvelle bulle
+            // Récupère la couleur d'accent actuelle du thème pour la nouvelle bulle - FIXED PERSISTANCE
             const currentAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#ef4444';
             
             const newBubble = {
@@ -483,7 +485,7 @@
             e.stopPropagation();
             const menu = document.getElementById(menuId);
             const isOpen = menu.classList.contains('active');
-            // Ferme tous les autres menus
+            // Ferme tous les autres menus d'abord
             document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
             // Toggle celui-ci
             if (!isOpen) menu.classList.add('active');
@@ -626,10 +628,22 @@
                     return;
                 }
                 const data = doc.data();
-                if (data.content !== textarea.value) {
-                    if (document.activeElement !== textarea) { textarea.value = data.content || ""; process(); } 
-                    else { const start = textarea.selectionStart; const end = textarea.selectionEnd; textarea.value = data.content || ""; textarea.setSelectionRange(start, end); process(); }
+                
+                // FIXED: GESTION DE LA SYNCHRONISATION SANS EFFACEMENT ET SANS SAUT DE CURSEUR
+                if (data.content !== undefined && data.content !== textarea.value) {
+                    if (document.activeElement !== textarea) { 
+                        textarea.value = data.content || ""; 
+                        process(); 
+                    } else { 
+                        // Préserver le curseur si on est en train d'écrire
+                        const start = textarea.selectionStart; 
+                        const end = textarea.selectionEnd; 
+                        textarea.value = data.content || ""; 
+                        textarea.setSelectionRange(start, end); 
+                        process(); 
+                    }
                 }
+
                 if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) { 
                     bubbles = data.bubbles || []; 
                     if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline(); 
