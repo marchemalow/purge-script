@@ -385,7 +385,7 @@
         function updateWpmDisplay(v) { document.getElementById('wpm-value').innerText = v; }
         function handleAuth() { if (currentUser) auth.signOut(); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
-        // GESTION FERMETURE MENUS
+        // GESTION FERMETURE MENUS AU CLIC EXTERIEUR - FIXED
         window.addEventListener('click', (e) => {
             if (!e.target.closest('.color-picker-trigger') && !e.target.closest('.color-menu')) {
                 document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
@@ -500,8 +500,14 @@
                 const b = bubbles.find(b => b.id === id);
                 if(b) { b.x = x; b.y = y; }
             }
-            function stopDrag() { document.removeEventListener('mousemove', doDrag); document.removeEventListener('mouseup', stopDrag); autoSave(); }
-            document.addEventListener('mousemove', doDrag); document.addEventListener('mouseup', stopDrag);
+            // FIXED LAG: Pas de sauvegarde ni de process pendant le drag, seulement au relâchement
+            function stopDrag() { 
+                document.removeEventListener('mousemove', doDrag); 
+                document.removeEventListener('mouseup', stopDrag); 
+                autoSave(); 
+            }
+            document.addEventListener('mousemove', doDrag); 
+            document.addEventListener('mouseup', stopDrag);
         }
 
         function renderTimeline() {
@@ -620,7 +626,8 @@
                 }
                 const data = doc.data();
                 
-                // --- CRITICAL SYNC FIX: CARET PRESERVATION ---
+                // --- FIXED SYNC FIX: CARET PRESERVATION ---
+                // Seul le texte est fusionné intelligemment ici
                 if (data.content !== undefined && data.content !== textarea.value) {
                     const start = textarea.selectionStart;
                     const end = textarea.selectionEnd;
@@ -757,7 +764,7 @@
                     }).then(() => { 
                         const s = document.getElementById('save-status'); s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 1000); 
                     });
-                }, 250); // Plus rapide pour éviter les conflits
+                }, 250); // Plus rapide pour réactivité
             } else { 
                 localStorage.setItem('purge-content', textarea.value); 
                 localStorage.setItem('purge-bubbles', JSON.stringify(bubbles)); 
