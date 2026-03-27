@@ -1,3 +1,5 @@
+--- START OF FILE Paste March 27, 2026 - 2:15PM ---
+
 <!DOCTYPE html>
 <html lang="fr" class="dark">
 <head>
@@ -58,6 +60,7 @@
             user-select: none;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
             z-index: 10;
+            will-change: top, left; /* Optimisation GPU */
         }
         .bubble:active { cursor: grabbing; }
 
@@ -488,24 +491,37 @@
             if (!isOpen) menu.classList.add('active');
         }
 
+        // --- FONCTION DRAG OPTIMISÉE (FLUIDITÉ 60FPS) ---
         function initDrag(e, id, el) {
+            e.preventDefault(); // Empêche les bugs de sélection de texte
             let startX = e.clientX - el.offsetLeft;
             let startY = e.clientY - el.offsetTop;
+            let rafId = null;
+
             function doDrag(e) {
-                let x = e.clientX - startX;
-                let y = e.clientY - startY;
-                x = Math.max(0, Math.min(x, canvas.clientWidth - el.offsetWidth));
-                y = Math.max(0, Math.min(y, canvas.clientHeight - el.offsetHeight));
-                el.style.left = x + "px"; el.style.top = y + "px";
-                const b = bubbles.find(b => b.id === id);
-                if(b) { b.x = x; b.y = y; }
+                // Utilisation de requestAnimationFrame pour synchroniser avec l'écran
+                if (rafId) cancelAnimationFrame(rafId);
+                rafId = requestAnimationFrame(() => {
+                    let x = e.clientX - startX;
+                    let y = e.clientY - startY;
+                    x = Math.max(0, Math.min(x, canvas.clientWidth - el.offsetWidth));
+                    y = Math.max(0, Math.min(y, canvas.clientHeight - el.offsetHeight));
+                    
+                    el.style.left = x + "px"; 
+                    el.style.top = y + "px";
+                    
+                    const b = bubbles.find(b => b.id === id);
+                    if(b) { b.x = x; b.y = y; }
+                });
             }
-            // FIXED LAG: Pas de sauvegarde ni de process pendant le drag, seulement au relâchement
+
             function stopDrag() { 
+                if (rafId) cancelAnimationFrame(rafId);
                 document.removeEventListener('mousemove', doDrag); 
                 document.removeEventListener('mouseup', stopDrag); 
                 autoSave(); 
             }
+            
             document.addEventListener('mousemove', doDrag); 
             document.addEventListener('mouseup', stopDrag);
         }
@@ -626,18 +642,12 @@
                 }
                 const data = doc.data();
                 
-                // --- FIXED SYNC FIX: CARET PRESERVATION ---
-                // Seul le texte est fusionné intelligemment ici
                 if (data.content !== undefined && data.content !== textarea.value) {
                     const start = textarea.selectionStart;
                     const end = textarea.selectionEnd;
                     const isFocused = document.activeElement === textarea;
-
                     textarea.value = data.content || "";
-                    
-                    if (isFocused) {
-                        textarea.setSelectionRange(start, end);
-                    }
+                    if (isFocused) { textarea.setSelectionRange(start, end); }
                     process();
                 }
 
@@ -764,7 +774,7 @@
                     }).then(() => { 
                         const s = document.getElementById('save-status'); s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 1000); 
                     });
-                }, 250); // Plus rapide pour réactivité
+                }, 400); 
             } else { 
                 localStorage.setItem('purge-content', textarea.value); 
                 localStorage.setItem('purge-bubbles', JSON.stringify(bubbles)); 
