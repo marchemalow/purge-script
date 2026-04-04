@@ -58,8 +58,10 @@
             user-select: none;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
             z-index: 10;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
         .bubble:active { cursor: grabbing; }
+        .bubble.is-dragging { opacity: 0.9; box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.7); z-index: 1000 !important; }
 
         /* Timeline Blocks (Step 2) */
         #timeline-container {
@@ -115,7 +117,7 @@
             border-radius: 1rem;
             grid-template-columns: repeat(4, 1fr);
             gap: 6px;
-            z-index: 2000;
+            z-index: 2100;
             box-shadow: 0 15px 30px rgba(0,0,0,0.6);
             margin-top: 8px;
             left: 0;
@@ -384,7 +386,6 @@
 
         // --- GESTION DES CLICS GLOBAUX ---
         window.addEventListener('click', (e) => {
-            // Ferme les menus de couleur si clic à l'extérieur
             if (!e.target.closest('.color-picker-trigger') && !e.target.closest('.color-menu')) {
                 document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
             }
@@ -448,13 +449,14 @@
         }
 
         function toggleColorMenu(e, menuId) {
-            e.stopPropagation(); // EMPÊCHE LA FERMETURE IMMÉDIATE
+            e.stopPropagation();
             const menu = document.getElementById(menuId);
             const wasActive = menu.classList.contains('active');
             document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
             if (!wasActive) menu.classList.add('active');
         }
 
+        // --- NOUVEAU RENDER DRAFT ---
         function renderDraft() {
             canvas.innerHTML = "";
             bubbles.forEach(b => {
@@ -485,22 +487,24 @@
                         </button>
                     </div>`;
 
-                // Système de Drag repensé
+                // LOGIQUE DRAG AMÉLIORÉE
                 el.addEventListener('mousedown', (e) => {
-                    // Si on clique sur un bouton, un menu ou un textarea, on ne drag pas
                     if (e.target.closest('button') || e.target.closest('.color-picker-trigger') || e.target.closest('.color-menu') || e.target.closest('textarea')) return;
                     
+                    e.preventDefault();
                     highestZ++;
+                    el.classList.add('is-dragging');
                     el.style.zIndex = highestZ;
 
-                    const startX = e.clientX - el.offsetLeft;
-                    const startY = e.clientY - el.offsetTop;
+                    const rect = el.getBoundingClientRect();
+                    const offsetX = e.clientX - rect.left;
+                    const offsetY = e.clientY - rect.top;
 
-                    function onMouseMove(e) {
-                        let newX = e.clientX - startX;
-                        let newY = e.clientY - startY;
-                        
-                        // Limites du canvas
+                    function onMouseMove(moveEvent) {
+                        const canvasRect = canvas.getBoundingClientRect();
+                        let newX = moveEvent.clientX - canvasRect.left - offsetX;
+                        let newY = moveEvent.clientY - canvasRect.top - offsetY;
+
                         newX = Math.max(0, Math.min(newX, canvas.clientWidth - el.offsetWidth));
                         newY = Math.max(0, Math.min(newY, canvas.clientHeight - el.offsetHeight));
 
@@ -512,6 +516,7 @@
                     }
 
                     function onMouseUp() {
+                        el.classList.remove('is-dragging');
                         document.removeEventListener('mousemove', onMouseMove);
                         document.removeEventListener('mouseup', onMouseUp);
                         autoSave();
@@ -525,7 +530,7 @@
             });
         }
 
-        // --- GESTION TIMELINE (ONGLET 2) ---
+        // --- NOUVEAU RENDER TIMELINE ---
         function renderTimeline() {
             timeline.innerHTML = "";
             const sorted = [...bubbles].sort((a, b) => a.order - b.order);
@@ -551,8 +556,14 @@
                     <div class="flex-1 h-full py-3"><textarea class="sync-input editor-font" oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea></div>
                     <button onclick="deleteBubble('${b.id}')" class="text-slate-500 hover:text-red-400 ml-2 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>`;
                 
-                block.addEventListener('dragstart', () => block.classList.add('dragging'));
-                block.addEventListener('dragend', () => { block.classList.remove('dragging'); reorderTimeline(); });
+                block.addEventListener('dragstart', (e) => {
+                    if(e.target.closest('.color-menu')) return e.preventDefault();
+                    block.classList.add('dragging');
+                });
+                block.addEventListener('dragend', () => { 
+                    block.classList.remove('dragging'); 
+                    reorderTimeline(); 
+                });
                 timeline.appendChild(block);
             });
             
@@ -560,7 +571,10 @@
                 e.preventDefault();
                 const afterElement = getDragAfterElement(timeline, e.clientY);
                 const dragging = document.querySelector('.dragging');
-                if (dragging) { if (afterElement == null) timeline.appendChild(dragging); else timeline.insertBefore(dragging, afterElement); }
+                if (dragging) { 
+                    if (afterElement == null) timeline.appendChild(dragging); 
+                    else timeline.insertBefore(dragging, afterElement); 
+                }
             });
         }
 
@@ -576,26 +590,38 @@
 
         function reorderTimeline() {
             const blocks = [...timeline.querySelectorAll('.timeline-block')];
-            blocks.forEach((block, index) => { const b = bubbles.find(b => b.id === block.dataset.id); if (b) b.order = index; });
+            blocks.forEach((block, index) => { 
+                const b = bubbles.find(b => b.id === block.dataset.id); 
+                if (b) b.order = index; 
+            });
             autoSave();
         }
 
-        function updateBubbleText(id, val) { const b = bubbles.find(b => b.id === id); if (b) b.text = val; autoSave(); }
+        function updateBubbleText(id, val) { 
+            const b = bubbles.find(b => b.id === id); 
+            if (b) b.text = val; 
+            autoSave(); 
+        }
         
         function setBubbleColor(e, id, color) {
-            e.stopPropagation();
+            e.stopPropagation(); // ÉVITE DE FERMER LE MENU IMMÉDIATEMENT
             const b = bubbles.find(b => b.id === id); 
             if (b) {
                 b.color = color;
                 document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
-                if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
+                if(currentStep === 1) renderDraft(); 
+                else if(currentStep === 2) renderTimeline();
                 autoSave();
             }
         }
         
-        function deleteBubble(id) { bubbles = bubbles.filter(b => b.id !== id); currentStep === 1 ? renderDraft() : renderTimeline(); autoSave(); }
+        function deleteBubble(id) { 
+            bubbles = bubbles.filter(b => b.id !== id); 
+            currentStep === 1 ? renderDraft() : renderTimeline(); 
+            autoSave(); 
+        }
 
-        // --- FIREBASE & CORE ---
+        // --- FIREBASE & CORE (INCHANGÉ) ---
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
             if (user) {
