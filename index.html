@@ -605,45 +605,75 @@
         
         function deleteBubble(id) { bubbles = bubbles.filter(b => b.id !== id); currentStep === 1 ? renderDraft() : renderTimeline(); autoSave(); }
 
-        function loadScript(id) {
+function loadScript(id) {
             if (scriptListener) scriptListener();
             currentScriptId = id;
+            const textarea = document.getElementById('editor-textarea');
+
             scriptListener = db.collection('scripts').doc(id).onSnapshot(doc => {
                 if (!doc.exists) {
+                    // Création automatique si le projet n'existe pas (uniquement pour l'owner)
                     if (id.startsWith(currentUser.uid)) { 
-                        db.collection('scripts').doc(id).set({ content: "", bubbles: [], title: `Projet ${id.split('_')[1]}`, owner: currentUser.uid, ownerEmail: currentUser.email, editors: [], viewers: [], ignoredWords: [], lastUpdated: firebase.firestore.FieldValue.serverTimestamp() }); 
+                        db.collection('scripts').doc(id).set({ 
+                            content: "", 
+                            bubbles: [], 
+                            title: `Projet ${id.split('_')[1]}`, 
+                            owner: currentUser.uid, 
+                            ownerEmail: currentUser.email, 
+                            editors: [], 
+                            viewers: [], 
+                            ignoredWords: [], 
+                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
+                        }); 
                     }
                     return;
                 }
-                const data = doc.data();
                 
-                isSyncing = true; 
+                const data = doc.data();
 
-                if (data.content !== undefined && data.content !== textarea.value) {
-                    const start = textarea.selectionStart; const end = textarea.selectionEnd;
-                    textarea.value = data.content || "";
-                    if (document.activeElement === textarea) textarea.setSelectionRange(start, end);
-                }
-
-                const newBubblesStr = JSON.stringify(data.bubbles || []);
-                if (newBubblesStr !== JSON.stringify(bubbles)) { 
-                    bubbles = data.bubbles || []; 
-                    if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline(); 
-                }
-
+                // 1. Détermination du rôle avant toute action
                 userRole = data.owner === currentUser.uid ? 'owner' : (data.editors?.includes(currentUser.email) ? 'editor' : 'viewer');
                 textarea.readOnly = (userRole === 'viewer');
-                
+
+                // 2. VERROU ANTI-BOUCLE pour le texte
+                // On ne met à jour que si le contenu est différent du texte local
+                if (data.content !== undefined && data.content !== textarea.value) {
+                    isSyncing = true; // Empêche l'autoSave de se déclencher pendant la mise à jour
+                    const start = textarea.selectionStart; 
+                    const end = textarea.selectionEnd;
+                    
+                    textarea.value = data.content || "";
+                    
+                    if (document.activeElement === textarea) textarea.setSelectionRange(start, end);
+                    
+                    debouncedProcess();
+                    // On relâche le verrou après un mini délai pour laisser passer l'event 'input'
+                    setTimeout(() => { isSyncing = false; }, 100);
+                }
+
+                // 3. Mise à jour des bulles (seulement si on n'est pas en train d'en déplacer une)
+                if (!isDragging) {
+                    const newBubblesStr = JSON.stringify(data.bubbles || []);
+                    if (newBubblesStr !== JSON.stringify(bubbles)) { 
+                        bubbles = data.bubbles || []; 
+                        if(currentStep === 1) renderDraft(); 
+                        else if(currentStep === 2) renderTimeline(); 
+                    }
+                }
+
+                // 4. Mise à jour de l'interface (titres des onglets, etc.)
                 const slotMatch = id.match(/_([1-4])$/); 
                 if (slotMatch && userRole === 'owner') { 
                     const tab = document.getElementById(`p-tab-${slotMatch[1]}`); 
                     if (tab) tab.textContent = data.title; 
                 }
+                
                 if (userRole === 'owner') updateCollaboratorsUI(data);
                 ignoredRepeats = new Set(data.ignoredWords || []);
-                debouncedProcess();
-
-                isSyncing = false;
+                
+            }, err => {
+                console.error("Erreur d'accès :", err);
+                alert("Accès refusé. Vérifie tes permissions.");
             });
         }
 
