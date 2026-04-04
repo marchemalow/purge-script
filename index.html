@@ -48,7 +48,7 @@
         /* Bubbles (Draft) */
         .bubble {
             position: absolute;
-            min-width: 200px;
+            min-width: 220px;
             max-width: 300px;
             padding: 1rem;
             background: #1e293b;
@@ -58,7 +58,6 @@
             user-select: none;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
             z-index: 10;
-            will-change: top, left; /* Optimisation GPU */
         }
         .bubble:active { cursor: grabbing; }
 
@@ -92,7 +91,7 @@
         }
         .timeline-block.dragging { opacity: 0.5; transform: scale(0.98); }
 
-        /* Color Picker Component - FIXED MODE CLIC */
+        /* Color Picker Component */
         .color-picker-trigger {
             width: 28px;
             height: 28px;
@@ -116,7 +115,7 @@
             border-radius: 1rem;
             grid-template-columns: repeat(4, 1fr);
             gap: 6px;
-            z-index: 1000;
+            z-index: 2000;
             box-shadow: 0 15px 30px rgba(0,0,0,0.6);
             margin-top: 8px;
             left: 0;
@@ -178,7 +177,7 @@
         input:checked + .slider { background-color: var(--accent-color); }
         input:checked + .slider:before { transform: translateX(14px); }
 
-        #share-modal { display: none !important; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        #share-modal { display: none !important; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
         .modal-content { background: #1e293b; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 440px; color: white; border: 1px solid #334155; }
         .project-tab.active { color: white; background-color: var(--accent-color) !important; }
 
@@ -190,7 +189,7 @@
 
         .drag-handle { cursor: grab; color: #475569; }
         .sync-input { background: transparent; border: none; outline: none; color: white; width: 100%; font-weight: 500; height: 100%; resize: none; overflow: hidden; }
-        .bubble-input-field { background: transparent; border: none; outline: none; color: white; width: 100%; font-size: 11px; font-weight: 600; }
+        .bubble-input-field { background: transparent; border: none; outline: none; color: white; width: 100%; font-size: 11px; font-weight: 600; min-height: 40px; resize: none; }
     </style>
 </head>
 <body class="antialiased">
@@ -202,7 +201,6 @@
             <p class="text-xs text-slate-400 mb-6">Invitez des collaborateurs par email ou via un lien unique.</p>
             
             <div class="space-y-4 mb-6">
-                <!-- Par Email -->
                 <div>
                     <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Ajouter par Email</label>
                     <div class="flex gap-2">
@@ -210,8 +208,6 @@
                         <button onclick="shareByEmail()" class="px-4 bg-slate-700 hover:bg-slate-600 rounded-xl font-bold text-xs transition">Ajouter</button>
                     </div>
                 </div>
-
-                <!-- Par Lien -->
                 <div>
                     <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Permission du lien</label>
                     <select id="share-role" class="w-full p-3 rounded-xl border bg-slate-900 border-slate-700 outline-none text-white text-sm mb-3">
@@ -223,7 +219,6 @@
                     </button>
                 </div>
             </div>
-            
             <button onclick="toggleShareModal()" class="w-full py-3 rounded-2xl font-bold text-xs text-slate-500 hover:bg-slate-800 transition">Fermer</button>
         </div>
     </div>
@@ -299,7 +294,7 @@
                     <div id="canvas-container" class="shadow-2xl"></div>
                     <div class="flex gap-3 bg-slate-900/50 p-4 rounded-3xl border border-slate-800 max-w-2xl mx-auto w-full">
                         <input type="text" id="bubble-input" class="flex-1 bg-slate-800 border border-slate-700 rounded-2xl px-6 py-3 text-white placeholder-slate-500 font-medium outline-none focus:border-indigo-500" placeholder="Une idée ? Tapez Entrée...">
-                        <button onclick="createBubbleFromInput()" class="bg-indigo-500 text-white p-4 rounded-2xl hover:bg-indigo-600 transition" style="background-color: var(--accent-color);">
+                        <button onclick="createBubbleFromInput()" class="text-white p-4 rounded-2xl hover:brightness-110 transition" style="background-color: var(--accent-color);">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                         </button>
                     </div>
@@ -375,6 +370,7 @@
         let scriptListener = null; 
         let currentStep = 1;
         let bubbles = []; 
+        let highestZ = 100;
 
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
@@ -386,8 +382,9 @@
         function updateWpmDisplay(v) { document.getElementById('wpm-value').innerText = v; }
         function handleAuth() { if (currentUser) auth.signOut(); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
-        // GESTION FERMETURE MENUS AU CLIC EXTERIEUR - FIXED
+        // --- GESTION DES CLICS GLOBAUX ---
         window.addEventListener('click', (e) => {
+            // Ferme les menus de couleur si clic à l'extérieur
             if (!e.target.closest('.color-picker-trigger') && !e.target.closest('.color-menu')) {
                 document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
             }
@@ -428,7 +425,7 @@
             }
         }
 
-        // --- GESTION DES BULLES ---
+        // --- GESTION DES BULLES (ONGLET 1) ---
         bubbleInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') createBubbleFromInput(); });
 
         function createBubbleFromInput() {
@@ -439,8 +436,8 @@
             const newBubble = {
                 id: "b_" + Date.now(),
                 text: text,
-                x: 50 + Math.random() * 300,
-                y: 50 + Math.random() * 300,
+                x: 50 + Math.random() * 100,
+                y: 50 + Math.random() * 100,
                 order: bubbles.length,
                 color: currentAccent
             };
@@ -448,6 +445,14 @@
             bubbleInput.value = "";
             renderDraft();
             autoSave();
+        }
+
+        function toggleColorMenu(e, menuId) {
+            e.stopPropagation(); // EMPÊCHE LA FERMETURE IMMÉDIATE
+            const menu = document.getElementById(menuId);
+            const wasActive = menu.classList.contains('active');
+            document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
+            if (!wasActive) menu.classList.add('active');
         }
 
         function renderDraft() {
@@ -459,9 +464,15 @@
                 el.style.left = b.x + "px";
                 el.style.top = b.y + "px";
                 el.style.borderColor = b.color;
-                const paletteHtml = bubblePalette.map(c => `<div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor('${b.id}', '${c}')"></div>`).join('');
+                
+                const paletteHtml = bubblePalette.map(c => `
+                    <div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor(event, '${b.id}', '${c}')"></div>
+                `).join('');
+
                 el.innerHTML = `
-                    <div class="mb-3"><textarea class="bubble-input-field" oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea></div>
+                    <div class="mb-3">
+                        <textarea class="bubble-input-field" oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea>
+                    </div>
                     <div class="flex items-center justify-between border-t border-slate-700/50 pt-2">
                         <div class="relative">
                             <div class="color-picker-trigger" onclick="toggleColorMenu(event, '${b.id}_menu')">
@@ -469,61 +480,52 @@
                             </div>
                             <div id="${b.id}_menu" class="color-menu">${paletteHtml}</div>
                         </div>
-                        <button onclick="deleteBubble('${b.id}')" class="text-slate-500 hover:text-red-400">
+                        <button onclick="deleteBubble('${b.id}')" class="text-slate-500 hover:text-red-400 transition">
                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                     </div>`;
+
+                // Système de Drag repensé
                 el.addEventListener('mousedown', (e) => {
+                    // Si on clique sur un bouton, un menu ou un textarea, on ne drag pas
                     if (e.target.closest('button') || e.target.closest('.color-picker-trigger') || e.target.closest('.color-menu') || e.target.closest('textarea')) return;
-                    initDrag(e, b.id, el);
+                    
+                    highestZ++;
+                    el.style.zIndex = highestZ;
+
+                    const startX = e.clientX - el.offsetLeft;
+                    const startY = e.clientY - el.offsetTop;
+
+                    function onMouseMove(e) {
+                        let newX = e.clientX - startX;
+                        let newY = e.clientY - startY;
+                        
+                        // Limites du canvas
+                        newX = Math.max(0, Math.min(newX, canvas.clientWidth - el.offsetWidth));
+                        newY = Math.max(0, Math.min(newY, canvas.clientHeight - el.offsetHeight));
+
+                        el.style.left = newX + "px";
+                        el.style.top = newY + "px";
+                        
+                        b.x = newX;
+                        b.y = newY;
+                    }
+
+                    function onMouseUp() {
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                        autoSave();
+                    }
+
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
                 });
+
                 canvas.appendChild(el);
             });
         }
 
-        function toggleColorMenu(e, menuId) {
-            e.stopPropagation();
-            const menu = document.getElementById(menuId);
-            const isOpen = menu.classList.contains('active');
-            document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
-            if (!isOpen) menu.classList.add('active');
-        }
-
-        // --- FONCTION DRAG OPTIMISÉE (FLUIDITÉ 60FPS) ---
-        function initDrag(e, id, el) {
-            e.preventDefault(); // Empêche les bugs de sélection de texte
-            let startX = e.clientX - el.offsetLeft;
-            let startY = e.clientY - el.offsetTop;
-            let rafId = null;
-
-            function doDrag(e) {
-                // Utilisation de requestAnimationFrame pour synchroniser avec l'écran
-                if (rafId) cancelAnimationFrame(rafId);
-                rafId = requestAnimationFrame(() => {
-                    let x = e.clientX - startX;
-                    let y = e.clientY - startY;
-                    x = Math.max(0, Math.min(x, canvas.clientWidth - el.offsetWidth));
-                    y = Math.max(0, Math.min(y, canvas.clientHeight - el.offsetHeight));
-                    
-                    el.style.left = x + "px"; 
-                    el.style.top = y + "px";
-                    
-                    const b = bubbles.find(b => b.id === id);
-                    if(b) { b.x = x; b.y = y; }
-                });
-            }
-
-            function stopDrag() { 
-                if (rafId) cancelAnimationFrame(rafId);
-                document.removeEventListener('mousemove', doDrag); 
-                document.removeEventListener('mouseup', stopDrag); 
-                autoSave(); 
-            }
-            
-            document.addEventListener('mousemove', doDrag); 
-            document.addEventListener('mouseup', stopDrag);
-        }
-
+        // --- GESTION TIMELINE (ONGLET 2) ---
         function renderTimeline() {
             timeline.innerHTML = "";
             const sorted = [...bubbles].sort((a, b) => a.order - b.order);
@@ -534,7 +536,9 @@
                 block.dataset.id = b.id; 
                 block.style.borderColor = b.color;
                 
-                const paletteHtml = bubblePalette.map(c => `<div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor('${b.id}', '${c}')"></div>`).join('');
+                const paletteHtml = bubblePalette.map(c => `
+                    <div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor(event, '${b.id}', '${c}')"></div>
+                `).join('');
                 
                 block.innerHTML = `
                     <div class="drag-handle"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 9h8v2H8zm0 4h8v2H8z"></path></svg></div>
@@ -545,7 +549,7 @@
                         <div id="${b.id}_tl_menu" class="color-menu">${paletteHtml}</div>
                     </div>
                     <div class="flex-1 h-full py-3"><textarea class="sync-input editor-font" oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea></div>
-                    <button onclick="deleteBubble('${b.id}')" class="text-slate-500 hover:text-red-400 ml-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>`;
+                    <button onclick="deleteBubble('${b.id}')" class="text-slate-500 hover:text-red-400 ml-2 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>`;
                 
                 block.addEventListener('dragstart', () => block.classList.add('dragging'));
                 block.addEventListener('dragend', () => { block.classList.remove('dragging'); reorderTimeline(); });
@@ -578,7 +582,8 @@
 
         function updateBubbleText(id, val) { const b = bubbles.find(b => b.id === id); if (b) b.text = val; autoSave(); }
         
-        function setBubbleColor(id, color) {
+        function setBubbleColor(e, id, color) {
+            e.stopPropagation();
             const b = bubbles.find(b => b.id === id); 
             if (b) {
                 b.color = color;
@@ -590,8 +595,7 @@
         
         function deleteBubble(id) { bubbles = bubbles.filter(b => b.id !== id); currentStep === 1 ? renderDraft() : renderTimeline(); autoSave(); }
 
-        // --- FIREBASE COLLABORATION ---
-
+        // --- FIREBASE & CORE ---
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
             if (user) {
@@ -600,7 +604,6 @@
                 const shareBtn = document.getElementById('share-btn');
                 shareBtn.classList.remove('hidden');
                 shareBtn.style.display = 'flex';
-                shareBtn.style.backgroundColor = "var(--accent-color)";
                 document.getElementById('shared-scripts-container').classList.remove('hidden');
                 document.getElementById('projects-nav').classList.remove('hidden');
                 const userDoc = await db.collection('users').doc(user.uid).get();
@@ -695,7 +698,6 @@
             loadScript(id);
         }
 
-        // --- ANALYSEUR ---
         function process() {
             const text = textarea.value;
             const showP = document.getElementById('toggle-parasites').checked;
@@ -786,8 +788,6 @@
             if (ignoredRepeats.size > 0) { document.getElementById('ignored-section').classList.remove('hidden'); document.getElementById('ignored-list').innerHTML = Array.from(ignoredRepeats).map(w => `<li onclick="unignoreWord('${w}')" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer">#${w}</li>`).join(''); } else document.getElementById('ignored-section').classList.add('hidden');
         }
 
-        // --- PARTAGE ---
-
         async function shareByEmail() {
             if (!currentUser) return alert("Connectez-vous pour inviter des collaborateurs.");
             if (!currentScriptId) return alert("Aucun projet chargé.");
@@ -804,37 +804,17 @@
 
         async function generateInviteLink() {
             if (!currentUser) return alert("Connectez-vous pour générer un lien d'invitation.");
-            if (!currentScriptId) return alert("Aucun projet sélectionné.");
             const btn = document.getElementById('gen-link-btn');
             const btnText = document.getElementById('gen-btn-text');
             const role = document.getElementById('share-role').value;
             try {
-                const inviteRef = await db.collection('invites').add({ 
-                    scriptId: currentScriptId, 
-                    role: role, 
-                    createdBy: currentUser.email, 
-                    used: false, 
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp() 
-                });
+                const inviteRef = await db.collection('invites').add({ scriptId: currentScriptId, role: role, createdBy: currentUser.email, used: false, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
                 const inviteURL = `${window.location.origin}${window.location.pathname}?invite=${inviteRef.id}`;
-                let copySuccess = false;
-                try {
-                    await navigator.clipboard.writeText(inviteURL);
-                    copySuccess = true;
-                } catch (err) {
-                    const textArea = document.createElement("textarea");
-                    textArea.value = inviteURL;
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    try { document.execCommand('copy'); copySuccess = true; } catch (e) {}
-                    document.body.removeChild(textArea);
-                }
-                if (copySuccess) {
-                    const oldText = btnText.innerText;
-                    btnText.innerText = "Lien copié ! ✓";
-                    btn.style.backgroundColor = "#22c55e"; 
-                    setTimeout(() => { btnText.innerText = oldText; btn.style.backgroundColor = "var(--accent-color)"; }, 2500);
-                } else { alert("Lien généré : " + inviteURL); }
+                await navigator.clipboard.writeText(inviteURL);
+                const oldText = btnText.innerText;
+                btnText.innerText = "Lien copié ! ✓";
+                btn.style.backgroundColor = "#22c55e"; 
+                setTimeout(() => { btnText.innerText = oldText; btn.style.backgroundColor = "var(--accent-color)"; }, 2500);
             } catch (e) { alert("Erreur de génération."); }
         }
 
