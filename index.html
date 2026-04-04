@@ -45,7 +45,7 @@
             touch-action: none;
         }
 
-        /* Bubbles (Draft) */
+        /* Bubbles */
         .bubble {
             position: absolute;
             min-width: 220px;
@@ -62,7 +62,7 @@
         .bubble:active { cursor: grabbing; }
         .bubble.is-dragging { opacity: 0.8; cursor: grabbing; z-index: 1000 !important; }
 
-        /* Timeline Blocks (Step 2) */
+        /* Timeline Blocks */
         #timeline-container {
             display: flex;
             flex-direction: column;
@@ -132,7 +132,7 @@
         }
         .color-dot-btn:hover { transform: scale(1.3); }
 
-        /* Step 3 Styling */
+        /* Editor Styling */
         .editor-container { 
             position: relative; 
             min-height: 600px; 
@@ -172,7 +172,7 @@
         input:checked + .slider { background-color: var(--accent-color); }
         input:checked + .slider:before { transform: translateX(14px); }
 
-        #share-modal { display: none !important; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        #share-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
         .modal-content { background: #1e293b; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 440px; color: white; border: 1px solid #334155; }
         .project-tab.active { color: white; background-color: var(--accent-color) !important; }
 
@@ -237,7 +237,7 @@
         </header>
 
         <!-- NAVIGATION PROJETS -->
-        <div id="projects-nav" class="hidden flex items-center justify-between bg-slate-800/50 p-2 rounded-2xl border border-slate-700 mb-6 shadow-sm">
+        <div id="projects-nav" class="hidden items-center justify-between bg-slate-800/50 p-2 rounded-2xl border border-slate-700 mb-6 shadow-sm">
             <div class="flex gap-2 overflow-x-auto scroll-custom" id="tabs-container">
                 <button onclick="switchProject(1)" id="p-tab-1" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 1</button>
                 <button onclick="switchProject(2)" id="p-tab-2" class="project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition">Projet 2</button>
@@ -257,7 +257,7 @@
         </div>
 
         <!-- STATS -->
-        <div id="stats-row" class="hidden grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+        <div id="stats-row" class="hidden grid-cols-2 md:grid-cols-5 gap-3 mb-6">
             <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm">
                 <p class="text-slate-500 text-[8px] font-bold uppercase mb-1 truncate">Tics</p>
                 <p id="total-parasites" class="text-lg font-extrabold" style="color: var(--accent-color);">0</p>
@@ -304,19 +304,19 @@
                     <div class="bg-slate-800/40 p-4 rounded-2xl border border-slate-700 shadow-sm flex flex-wrap items-center gap-6 text-[10px] font-bold uppercase">
                         <div class="flex items-center gap-4 flex-1">
                             <span class="text-slate-500">Débit :</span>
-                            <input type="range" id="wpm-slider" min="100" max="250" value="150" class="flex-1" style="accent-color: var(--accent-color);" oninput="updateWpmDisplay(this.value); process();">
+                            <input type="range" id="wpm-slider" min="100" max="250" value="150" class="flex-1" style="accent-color: var(--accent-color);" oninput="updateWpmDisplay(this.value); debouncedProcess();">
                             <span id="wpm-value" class="w-12 text-right" style="color: var(--accent-color);">150</span>
                         </div>
                         <div class="flex gap-4 border-l border-slate-700 pl-6">
-                            <div class="flex items-center gap-2"><span>Tics</span><label class="switch"><input type="checkbox" id="toggle-parasites" checked onchange="process()"><span class="slider"></span></label></div>
-                            <div class="flex items-center gap-2"><span>Répé.</span><label class="switch"><input type="checkbox" id="toggle-repeats" checked onchange="process()"><span class="slider"></span></label></div>
-                            <div class="flex items-center gap-2"><span>Mont.</span><label class="switch"><input type="checkbox" id="toggle-montage" checked onchange="process()"><span class="slider"></span></label></div>
+                            <div class="flex items-center gap-2"><span>Tics</span><label class="switch"><input type="checkbox" id="toggle-parasites" checked onchange="debouncedProcess()"><span class="slider"></span></label></div>
+                            <div class="flex items-center gap-2"><span>Répé.</span><label class="switch"><input type="checkbox" id="toggle-repeats" checked onchange="debouncedProcess()"><span class="slider"></span></label></div>
+                            <div class="flex items-center gap-2"><span>Mont.</span><label class="switch"><input type="checkbox" id="toggle-montage" checked onchange="debouncedProcess()"><span class="slider"></span></label></div>
                         </div>
                     </div>
 
                     <div id="editor-wrapper" class="editor-container shadow-sm overflow-hidden show-parasites show-repeats show-montage">
                         <div id="highlight-layer" class="sync-text editor-font"></div>
-                        <textarea id="textarea" class="sync-text editor-font" placeholder="Rédigez votre script final ici..." spellcheck="false" oninput="autoSave(); process();"></textarea>
+                        <textarea id="textarea" class="sync-text editor-font" placeholder="Rédigez votre script final ici..." spellcheck="false" oninput="autoSave(); debouncedProcess();"></textarea>
                     </div>
                     
                     <div class="flex gap-4">
@@ -327,7 +327,7 @@
             </div>
 
             <!-- ASIDE ANALYSE -->
-            <div id="analysis-column" class="lg:col-span-4 hidden space-y-6">
+            <div id="analysis-column" class="hidden lg:col-span-4 space-y-6">
                 <div class="bg-slate-900 text-white p-7 rounded-[2rem] shadow-xl space-y-8 border border-slate-800" id="analysis-card">
                     <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Tics de langage</h2><ul id="word-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px] scroll-custom"></ul></div>
                     <div><h2 class="text-[9px] font-bold uppercase text-slate-600 mb-4 tracking-widest">Répétitions proches</h2><ul id="repeat-list" class="space-y-1 max-h-40 overflow-y-auto pr-2 text-[11px] scroll-custom"></ul></div>
@@ -352,11 +352,10 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        const parasiteDictionary = ["du coup", "en fait", "voilà", "un petit peu", "euh", "globalement", "concrètement", "effectivement", "donc", "c'est-à-dire", "au final", "disons que", "typiquement", "clairement", "tout simplement", "en gros", "pour le coup", "un peu", "voilà quoi", "tu vois", "franchement", "honnêtement", "en réalité", "pour ainsi dire", "alors", "en quelque sorte", "justement", "au niveau de", "quelque part", "on va dire", "fondablement", "véritablement", "pour ma part", "en soi", "entre guillemets", "si vous voulez", "de base", "sur la fin"];
+        const parasiteDictionary = ["du coup", "en fait", "voilà", "un petit peu", "euh", "globalement", "concrètement", "effectivement", "donc", "c'est-à-dire", "au final", "disons que", "typiquement", "clairement", "tout simplement", "en gros", "pour le coup", "un peu", "voilà quoi", "tu vois", "franchement", "honnêtement", "en réalité", "pour ainsi dire", "alors", "en quelque sorte", "justement", "au niveau de", "quelque part", "on va dire", "fondamentalement", "véritablement", "pour ma part", "en soi", "entre guillemets", "si vous voulez", "de base", "sur la fin"];
         const stopWords = ["je", "me", "moi", "tu", "te", "toi", "il", "elle", "on", "nous", "vous", "ils", "elles", "le", "la", "les", "un", "une", "des", "du", "de", "ce", "cet", "cette", "ces", "se", "soi", "lui", "leur", "y", "en", "mon", "ton", "son", "ma", "ta", "sa", "mes", "tes", "ses", "notre", "votre", "nos", "vos", "leurs", "qui", "que", "quoi", "dont", "où", "quel", "quels", "quelle", "quelles", "et", "ou", "mais", "est", "sont", "pour", "dans", "par", "avec", "pas", "ne", "si", "ici", "là", "ont", "aux", "très"];
         const bubblePalette = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#10b981', '#06b6d4', '#2563eb', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e'];
 
-        // --- VARIABLES D'ÉTAT ---
         let isSyncing = false; 
         let activeFocusWord = null; 
         let currentUser = null; 
@@ -368,6 +367,7 @@
         let bubbles = []; 
         let highestZ = 100;
         let saveTimeout;
+        let processTimeout;
 
         const textarea = document.getElementById('textarea');
         const highlightLayer = document.getElementById('highlight-layer');
@@ -376,15 +376,24 @@
         const timeline = document.getElementById('timeline-container');
         const bubbleInput = document.getElementById('bubble-input');
 
+        const esc = (s) => {
+            if (!s) return "";
+            return s.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        };
+
         function updateWpmDisplay(v) { document.getElementById('wpm-value').innerText = v; }
         function handleAuth() { if (currentUser) auth.signOut(); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
-        // --- GESTION DES CLICS GLOBAUX ---
         window.addEventListener('click', (e) => {
             if (!e.target.closest('.color-picker-trigger') && !e.target.closest('.color-menu')) {
                 document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
             }
         });
+
+        function debouncedProcess() {
+            clearTimeout(processTimeout);
+            processTimeout = setTimeout(process, 100);
+        }
 
         function setStep(step) {
             currentStep = step;
@@ -402,26 +411,29 @@
 
             if (step === 1) {
                 s1.classList.remove('hidden');
-                mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12');
+                mainCol.classList.remove('lg:col-span-8');
+                mainCol.classList.add('lg:col-span-12');
                 analysisCol.classList.add('hidden');
                 statsRow.classList.add('hidden');
                 renderDraft();
             } else if (step === 2) {
                 s2.classList.remove('hidden');
-                mainCol.classList.replace('lg:col-span-8', 'lg:col-span-12');
+                mainCol.classList.remove('lg:col-span-8');
+                mainCol.classList.add('lg:col-span-12');
                 analysisCol.classList.add('hidden');
                 statsRow.classList.add('hidden');
                 renderTimeline();
             } else if (step === 3) {
                 s3.classList.remove('hidden');
-                mainCol.classList.replace('lg:col-span-12', 'lg:col-span-8');
+                mainCol.classList.remove('lg:col-span-12');
+                mainCol.classList.add('lg:col-span-8');
                 analysisCol.classList.remove('hidden');
                 statsRow.classList.remove('hidden');
-                process();
+                statsRow.classList.add('grid');
+                debouncedProcess();
             }
         }
 
-        // --- GESTION DES BULLES (ONGLET 1) ---
         bubbleInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') createBubbleFromInput(); });
 
         function createBubbleFromInput() {
@@ -458,7 +470,7 @@
 
                 el.innerHTML = `
                     <div class="mb-3">
-                        <textarea class="bubble-input-field" oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea>
+                        <textarea class="bubble-input-field">${esc(b.text)}</textarea>
                     </div>
                     <div class="flex items-center justify-between border-t border-slate-700/50 pt-2">
                         <div class="relative">
@@ -472,43 +484,57 @@
                         </button>
                     </div>`;
 
-                el.addEventListener('mousedown', (e) => {
+                const txt = el.querySelector('textarea');
+                txt.addEventListener('input', (e) => updateBubbleText(b.id, e.target.value));
+
+                const startDragging = (e) => {
                     if (e.target.closest('textarea') || e.target.closest('button') || e.target.closest('.color-picker-trigger') || e.target.closest('.color-menu')) return;
                     
-                    e.preventDefault();
                     highestZ++;
                     el.style.zIndex = highestZ;
                     el.classList.add('is-dragging');
 
                     const canvasRect = canvas.getBoundingClientRect();
-                    const bubbleRect = el.getBoundingClientRect();
-                    const offsetX = e.clientX - bubbleRect.left;
-                    const offsetY = e.clientY - bubbleRect.top;
+                    const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+                    
+                    const offsetX = clientX - el.getBoundingClientRect().left;
+                    const offsetY = clientY - el.getBoundingClientRect().top;
 
-                    function onMouseMove(me) {
-                        let nx = me.clientX - canvasRect.left - offsetX;
-                        let ny = me.clientY - canvasRect.top - offsetY;
+                    const onMove = (me) => {
+                        const mX = me.type.includes('touch') ? me.touches[0].clientX : me.clientX;
+                        const mY = me.type.includes('touch') ? me.touches[0].clientY : me.clientY;
+                        
+                        let nx = mX - canvasRect.left - offsetX;
+                        let ny = mY - canvasRect.top - offsetY;
                         nx = Math.max(0, Math.min(nx, canvas.clientWidth - el.offsetWidth));
                         ny = Math.max(0, Math.min(ny, canvas.clientHeight - el.offsetHeight));
                         el.style.left = nx + "px";
                         el.style.top = ny + "px";
                         b.x = nx; b.y = ny;
-                    }
+                    };
 
-                    function onMouseUp() {
+                    const onUp = () => {
                         el.classList.remove('is-dragging');
-                        document.removeEventListener('mousemove', onMouseMove);
-                        document.removeEventListener('mouseup', onMouseUp);
+                        document.removeEventListener('mousemove', onMove);
+                        document.removeEventListener('mouseup', onUp);
+                        document.removeEventListener('touchmove', onMove);
+                        document.removeEventListener('touchend', onUp);
                         autoSave();
-                    }
-                    document.addEventListener('mousemove', onMouseMove);
-                    document.addEventListener('mouseup', onMouseUp);
-                });
+                    };
+                    
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onUp);
+                    document.addEventListener('touchmove', onMove, { passive: false });
+                    document.addEventListener('touchend', onUp);
+                };
+
+                el.addEventListener('mousedown', startDragging);
+                el.addEventListener('touchstart', startDragging, { passive: false });
                 canvas.appendChild(el);
             });
         }
 
-        // --- GESTION TIMELINE (ONGLET 2) ---
         function renderTimeline() {
             timeline.innerHTML = "";
             const sorted = [...bubbles].sort((a, b) => a.order - b.order);
@@ -527,23 +553,26 @@
                         </div>
                         <div id="${b.id}_tl_menu" class="color-menu">${paletteHtml}</div>
                     </div>
-                    <div class="flex-1 h-full py-3"><textarea class="sync-input editor-font" oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea></div>
+                    <div class="flex-1 h-full py-3"><textarea class="sync-input editor-font">${esc(b.text)}</textarea></div>
                     <button onclick="deleteBubble('${b.id}')" class="text-slate-500 hover:text-red-400 ml-2 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>`;
                 
+                const txt = block.querySelector('textarea');
+                txt.addEventListener('input', (e) => updateBubbleText(b.id, e.target.value));
+
                 const handle = block.querySelector('.drag-handle');
                 handle.addEventListener('dragstart', () => block.classList.add('dragging'));
                 handle.addEventListener('dragend', () => { block.classList.remove('dragging'); reorderTimeline(); });
                 timeline.appendChild(block);
             });
-            
-            timeline.addEventListener('dragover', e => {
-                e.preventDefault();
-                const dragging = document.querySelector('.dragging');
-                if(!dragging) return;
-                const afterElement = getDragAfterElement(timeline, e.clientY);
-                if (afterElement == null) timeline.appendChild(dragging); else timeline.insertBefore(dragging, afterElement);
-            });
         }
+
+        timeline.addEventListener('dragover', e => {
+            e.preventDefault();
+            const dragging = document.querySelector('.dragging');
+            if(!dragging) return;
+            const afterElement = getDragAfterElement(timeline, e.clientY);
+            if (afterElement == null) timeline.appendChild(dragging); else timeline.insertBefore(dragging, afterElement);
+        });
 
         function getDragAfterElement(container, y) {
             const draggableElements = [...container.querySelectorAll('.timeline-block:not(.dragging)')];
@@ -576,7 +605,6 @@
         
         function deleteBubble(id) { bubbles = bubbles.filter(b => b.id !== id); currentStep === 1 ? renderDraft() : renderTimeline(); autoSave(); }
 
-        // --- FIREBASE CORE ---
         function loadScript(id) {
             if (scriptListener) scriptListener();
             currentScriptId = id;
@@ -589,7 +617,7 @@
                 }
                 const data = doc.data();
                 
-                isSyncing = true; // --- VERROU DE SYNCHRO ---
+                isSyncing = true; 
 
                 if (data.content !== undefined && data.content !== textarea.value) {
                     const start = textarea.selectionStart; const end = textarea.selectionEnd;
@@ -605,13 +633,17 @@
 
                 userRole = data.owner === currentUser.uid ? 'owner' : (data.editors?.includes(currentUser.email) ? 'editor' : 'viewer');
                 textarea.readOnly = (userRole === 'viewer');
+                
                 const slotMatch = id.match(/_([1-4])$/); 
-                if (slotMatch && userRole === 'owner') { const tab = document.getElementById(`p-tab-${slotMatch[1]}`); if (tab) tab.innerText = data.title; }
+                if (slotMatch && userRole === 'owner') { 
+                    const tab = document.getElementById(`p-tab-${slotMatch[1]}`); 
+                    if (tab) tab.textContent = data.title; 
+                }
                 if (userRole === 'owner') updateCollaboratorsUI(data);
                 ignoredRepeats = new Set(data.ignoredWords || []);
-                process();
+                debouncedProcess();
 
-                isSyncing = false; // --- FIN VERROU ---
+                isSyncing = false;
             });
         }
 
@@ -625,7 +657,7 @@
                     lastUpdated: firebase.firestore.FieldValue.serverTimestamp() 
                 }).then(() => { 
                     const s = document.getElementById('save-status'); s.style.opacity = '1'; setTimeout(() => s.style.opacity = '0', 1000); 
-                });
+                }).catch(err => console.error("Erreur de sauvegarde:", err));
             }, 400); 
         }
 
@@ -634,13 +666,15 @@
             if (user) {
                 document.getElementById('auth-btn-text').innerText = "Déconnexion";
                 document.getElementById('user-display').innerText = user.displayName;
-                const shareBtn = document.getElementById('share-btn');
-                shareBtn.classList.remove('hidden');
-                shareBtn.style.display = 'flex';
+                document.getElementById('share-btn').classList.remove('hidden');
+                document.getElementById('share-btn').style.display = 'flex';
                 document.getElementById('shared-scripts-container').classList.remove('hidden');
                 document.getElementById('projects-nav').classList.remove('hidden');
+                document.getElementById('projects-nav').style.display = 'flex';
+                
                 const userDoc = await db.collection('users').doc(user.uid).get();
                 if (userDoc.exists && userDoc.data().preferredTheme) applyTheme(userDoc.data().preferredTheme, false);
+                
                 const urlParams = new URLSearchParams(window.location.search);
                 const inviteToken = urlParams.get('invite');
                 if (inviteToken) { await consumeInvite(inviteToken); window.history.replaceState({}, document.title, window.location.pathname); }
@@ -651,6 +685,7 @@
                 document.getElementById('auth-btn-text').innerText = "Se connecter";
                 document.getElementById('user-display').innerText = "Mode Local";
                 document.getElementById('share-btn').style.display = 'none';
+                document.getElementById('projects-nav').style.display = 'none';
                 textarea.value = localStorage.getItem('purge-content') || "";
                 bubbles = JSON.parse(localStorage.getItem('purge-bubbles')) || [];
                 setStep(1);
@@ -659,9 +694,16 @@
 
         async function switchProject(index) {
             if (!currentUser) return;
-            document.querySelectorAll('.project-tab').forEach(t => { t.classList.remove('active'); t.style.backgroundColor = "transparent"; });
+            document.querySelectorAll('.project-tab').forEach(t => { 
+                t.classList.remove('active'); 
+                t.style.backgroundColor = "transparent"; 
+            });
             const activeTab = document.getElementById(`p-tab-${index}`);
-            if(activeTab) { activeTab.classList.add('active'); activeTab.style.backgroundColor = "var(--accent-color)"; loadScript(`${currentUser.uid}_${index}`); }
+            if(activeTab) { 
+                activeTab.classList.add('active'); 
+                activeTab.style.backgroundColor = "var(--accent-color)"; 
+                loadScript(`${currentUser.uid}_${index}`); 
+            }
         }
 
         function listenToSharedScripts() {
@@ -672,20 +714,26 @@
         function syncSharedTabs(snap) {
             const tabsContainer = document.getElementById('tabs-container');
             const sharedList = document.getElementById('shared-list');
+            
+            document.querySelectorAll('[id^="p-tab-shared-"]').forEach(el => el.remove());
             sharedList.innerHTML = "";
+            
             snap.forEach(doc => {
                 const data = doc.data();
                 const tabId = `p-tab-shared-${doc.id}`;
+                
                 const li = document.createElement('li');
                 li.className = `p-3 bg-slate-800/50 border border-slate-700 rounded-xl cursor-pointer hover:bg-indigo-900/40 transition flex justify-between items-center mb-2`;
-                li.innerHTML = `<span class="truncate text-[10px] font-bold uppercase">${data.title}</span>`;
+                li.innerHTML = `<span class="truncate text-[10px] font-bold uppercase">${esc(data.title)}</span>`;
                 li.onclick = () => openSharedProject(doc.id);
                 sharedList.appendChild(li);
-                if (!document.getElementById(tabId)) {
-                    const btn = document.createElement('button');
-                    btn.id = tabId; btn.className = "project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition";
-                    btn.innerText = `🤝 ${data.title}`; btn.onclick = () => openSharedProject(doc.id); tabsContainer.appendChild(btn);
-                }
+
+                const btn = document.createElement('button');
+                btn.id = tabId; 
+                btn.className = "project-tab px-4 py-2 rounded-xl text-[10px] font-bold uppercase transition";
+                btn.textContent = `🤝 ${data.title}`; 
+                btn.onclick = () => openSharedProject(doc.id); 
+                tabsContainer.appendChild(btn);
             });
         }
 
@@ -696,7 +744,6 @@
             loadScript(id);
         }
 
-        // --- ANALYSEUR ---
         function process() {
             const text = textarea.value;
             const showP = document.getElementById('toggle-parasites').checked;
@@ -705,8 +752,16 @@
             editorWrapper.classList.toggle('show-parasites', showP);
             editorWrapper.classList.toggle('show-repeats', showR);
             editorWrapper.classList.toggle('show-montage', showM);
+            
             let montageIndices = new Set();
-            if (showM) { const montageRegex = /\[.*?\]/g; let mMatch; while ((mMatch = montageRegex.exec(text)) !== null) { for (let i = 0; i < mMatch[0].length; i++) montageIndices.add(mMatch.index + i); } }
+            if (showM) { 
+                const montageRegex = /\[.*?\]/g; 
+                let mMatch; 
+                while ((mMatch = montageRegex.exec(text)) !== null) { 
+                    for (let i = 0; i < mMatch[0].length; i++) montageIndices.add(mMatch.index + i); 
+                } 
+            }
+            
             let parasiteIndices = new Set(); let parasiteCounts = {}; let totalParasites = 0;
             parasiteDictionary.forEach(word => {
                 const regex = new RegExp(`\\b(${word})\\b`, 'gi'); let match; while ((match = regex.exec(text)) !== null) {
@@ -728,14 +783,17 @@
                 }
             }
             const wpm = parseInt(document.getElementById('wpm-slider').value) || 150;
-            const wordCount = (text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || []).length;
+            const wordsArr = text.match(/[a-zA-Zàâäéèêëîïôöûüùç]+/g) || [];
+            const wordCount = wordsArr.length;
             const totalSeconds = Math.round((wordCount / wpm) * 60);
             document.getElementById('duration-display').innerText = `${Math.floor(totalSeconds / 60)}m ${totalSeconds % 60}s`;
+            
             let focusIndices = new Set();
             if (activeFocusWord) {
                 const escaped = activeFocusWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 const fRegex = new RegExp(`\\b(${escaped})\\b`, 'gi'); let fMatch; while ((fMatch = fRegex.exec(text)) !== null) { for (let i = 0; i < fMatch[0].length; i++) focusIndices.add(fMatch.index + i); }
             }
+            
             let finalHtml = ""; let i = 0;
             while (i < text.length) {
                 let className = "";
@@ -743,13 +801,19 @@
                 else if (focusIndices.has(i)) className = "focus-active";
                 else if (parasiteIndices.has(i)) className = "parasite";
                 else if (badRepeatIndices.has(i)) className = "repeat";
+                
                 if (className) {
                     finalHtml += `<mark class="${className}">`;
-                    while (i < text.length && ((className === "montage" && montageIndices.has(i)) || (className === "focus-active" && focusIndices.has(i)) || (className === "parasite" && parasiteIndices.has(i)) || (className === "repeat" && badRepeatIndices.has(i)))) {
-                        finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++;
+                    while (i < text.length && (
+                        (className === "montage" && montageIndices.has(i)) || 
+                        (className === "focus-active" && focusIndices.has(i)) || 
+                        (className === "parasite" && parasiteIndices.has(i)) || 
+                        (className === "repeat" && badRepeatIndices.has(i))
+                    )) {
+                        finalHtml += esc(text[i]); i++;
                     }
                     finalHtml += `</mark>`;
-                } else { finalHtml += text[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); i++; }
+                } else { finalHtml += esc(text[i]); i++; }
             }
             highlightLayer.innerHTML = finalHtml + (text.endsWith('\n') ? '\n ' : '');
             document.getElementById('total-parasites').innerText = totalParasites;
@@ -761,9 +825,41 @@
 
         function updateSidebars(pCounts, rCounts) {
             const pList = document.getElementById('word-list'); const rList = document.getElementById('repeat-list');
-            pList.innerHTML = Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="sidebar-item flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span>${w}</span><span style="color: var(--accent-color);">${c}</span></li>`).join('') || 'RAS';
-            rList.innerHTML = Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).map(([w,c])=>`<li class="sidebar-item flex justify-between items-center uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1"><span onclick="toggleFocus(\`${w.replace(/`/g, "\\`")}\`)" class="flex-1 truncate">${w}</span><div class="flex items-center gap-2"><span class="text-amber-500">${c+1}x</span><button onclick="ignoreWord('${w}')" class="ignore-btn">✕</button></div></li>`).join('') || 'RAS';
-            if (ignoredRepeats.size > 0) { document.getElementById('ignored-section').classList.remove('hidden'); document.getElementById('ignored-list').innerHTML = Array.from(ignoredRepeats).map(w => `<li onclick="unignoreWord('${w}')" class="bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer">#${w}</li>`).join(''); } else document.getElementById('ignored-section').classList.add('hidden');
+            pList.innerHTML = "";
+            Object.entries(pCounts).sort((a,b)=>b[1]-a[1]).forEach(([w,c]) => {
+                const li = document.createElement('li');
+                li.className = "sidebar-item flex justify-between uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1";
+                li.innerHTML = `<span></span><span style="color: var(--accent-color);"></span>`;
+                li.querySelector('span:first-child').textContent = w;
+                li.querySelector('span:last-child').textContent = c;
+                li.onclick = () => toggleFocus(w);
+                pList.appendChild(li);
+            });
+            
+            rList.innerHTML = "";
+            Object.entries(rCounts).sort((a,b)=>b[1]-a[1]).forEach(([w,c]) => {
+                const li = document.createElement('li');
+                li.className = "sidebar-item flex justify-between items-center uppercase font-bold p-2 bg-slate-800/50 rounded-lg mb-1";
+                li.innerHTML = `<span class="flex-1 truncate"></span><div class="flex items-center gap-2"><span class="text-amber-500"></span><button class="ignore-btn">✕</button></div>`;
+                li.querySelector('.flex-1').textContent = w;
+                li.querySelector('.text-amber-500').textContent = (c+1) + "x";
+                li.querySelector('.flex-1').onclick = () => toggleFocus(w);
+                li.querySelector('.ignore-btn').onclick = () => ignoreWord(w);
+                rList.appendChild(li);
+            });
+
+            if (ignoredRepeats.size > 0) { 
+                document.getElementById('ignored-section').classList.remove('hidden'); 
+                const ignList = document.getElementById('ignored-list');
+                ignList.innerHTML = "";
+                Array.from(ignoredRepeats).forEach(w => {
+                    const li = document.createElement('li');
+                    li.className = "bg-red-500/20 text-red-400 px-2 py-1 rounded cursor-pointer";
+                    li.textContent = "#" + w;
+                    li.onclick = () => unignoreWord(w);
+                    ignList.appendChild(li);
+                });
+            } else document.getElementById('ignored-section').classList.add('hidden');
         }
 
         async function shareByEmail() {
@@ -771,7 +867,10 @@
             const email = document.getElementById('share-email').value.trim().toLowerCase();
             const role = document.getElementById('share-role').value;
             if (!email) return;
-            try { await db.collection('scripts').doc(currentScriptId).update({ [role]: firebase.firestore.FieldValue.arrayUnion(email) }); alert("Ajouté !"); } catch (e) { alert("Erreur."); }
+            try { 
+                await db.collection('scripts').doc(currentScriptId).update({ [role]: firebase.firestore.FieldValue.arrayUnion(email) }); 
+                alert("Ajouté !"); 
+            } catch (e) { alert("Erreur lors du partage."); }
         }
 
         async function generateInviteLink() {
@@ -789,25 +888,32 @@
 
         async function consumeInvite(tokenId) {
             try {
-                const doc = await db.collection('invites').doc(tokenId).get();
-                if (!doc.exists || doc.data().used === true) return;
-                const data = doc.data();
-                await db.collection('scripts').doc(data.scriptId).update({ [data.role]: firebase.firestore.FieldValue.arrayUnion(currentUser.email) });
-                await db.collection('invites').doc(tokenId).update({ used: true, usedBy: currentUser.email });
+                await db.runTransaction(async (transaction) => {
+                    const docRef = db.collection('invites').doc(tokenId);
+                    const doc = await transaction.get(docRef);
+                    if (!doc.exists || doc.data().used === true) return;
+                    const data = doc.data();
+                    transaction.update(db.collection('scripts').doc(data.scriptId), {
+                        [data.role]: firebase.firestore.FieldValue.arrayUnion(currentUser.email)
+                    });
+                    transaction.update(docRef, { used: true, usedBy: currentUser.email });
+                });
                 alert("Accès activé !");
-            } catch (e) {}
+            } catch (e) { console.error(e); }
         }
 
-        function toggleFocus(w) { activeFocusWord = (activeFocusWord === w) ? null : w; process(); }
-        function ignoreWord(w) { ignoredRepeats.add(w.toLowerCase()); autoSave(); process(); }
-        function unignoreWord(w) { ignoredRepeats.delete(w); autoSave(); process(); }
+        function toggleFocus(w) { activeFocusWord = (activeFocusWord === w) ? null : w; debouncedProcess(); }
+        function ignoreWord(w) { ignoredRepeats.add(w.toLowerCase()); autoSave(); debouncedProcess(); }
+        function unignoreWord(w) { ignoredRepeats.delete(w); autoSave(); debouncedProcess(); }
         function copyText() { navigator.clipboard.writeText(textarea.value); alert("Copié !"); }
         function downloadText() { const blob = new Blob([textarea.value], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `script.txt`; a.click(); }
+        
         function toggleShareModal() { 
             const m = document.getElementById('share-modal');
-            const isVisible = window.getComputedStyle(m).display !== 'none';
-            m.style.setProperty('display', isVisible ? 'none' : 'flex', 'important');
+            const isHidden = window.getComputedStyle(m).display === 'none';
+            m.style.display = isHidden ? 'flex' : 'none';
         }
+
         function updateCollaboratorsUI(data) {
             const list = document.getElementById('collaborators-list'); list.innerHTML = "";
             const ed = data.editors || []; const vi = data.viewers || [];
@@ -815,7 +921,9 @@
             document.getElementById('collaborators-section').classList.remove('hidden');
             [...ed.map(e=>({e,r:'editors',l:'Éditeur'})), ...vi.map(e=>({e,r:'viewers',l:'Lecteur'}))].forEach(o => {
                 const li = document.createElement('li'); li.className = "flex justify-between items-center bg-slate-800/40 p-2 rounded-lg border border-slate-700 mb-1";
-                li.innerHTML = `<span class="text-[10px] font-bold uppercase truncate max-w-[120px]">${o.e}</span><button onclick="removeCollaborator('${o.e}', '${o.r}')" class="text-slate-500 hover:text-red-500 px-2">✕</button>`;
+                li.innerHTML = `<span class="text-[10px] font-bold uppercase truncate max-w-[120px]"></span><button class="text-slate-500 hover:text-red-500 px-2">✕</button>`;
+                li.querySelector('span').textContent = o.e;
+                li.querySelector('button').onclick = () => removeCollaborator(o.e, o.r);
                 list.appendChild(li);
             });
         }
@@ -827,7 +935,7 @@
             document.documentElement.style.setProperty('--accent-soft', color + '26');
             localStorage.setItem('purge-theme', color);
             if (shouldSave && currentUser) db.collection('users').doc(currentUser.uid).set({ preferredTheme: color }, { merge: true });
-            process(); if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
+            debouncedProcess(); if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
         }
 
         window.onload = () => {
