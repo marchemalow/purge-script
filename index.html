@@ -55,13 +55,11 @@
             border: 2px solid #334155;
             border-radius: 1.25rem;
             cursor: grab;
-            user-select: none;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
             z-index: 10;
-            transition: border-color 0.2s, box-shadow 0.2s;
         }
         .bubble:active { cursor: grabbing; }
-        .bubble.is-dragging { opacity: 0.9; box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.7); z-index: 1000 !important; }
+        .bubble.is-dragging { opacity: 0.9; z-index: 1000 !important; cursor: grabbing; }
 
         /* Timeline Blocks (Step 2) */
         #timeline-container {
@@ -83,17 +81,16 @@
             display: flex;
             align-items: center;
             gap: 15px;
-            cursor: move;
-            transition: transform 0.2s, box-shadow 0.2s, border-color 0.3s;
+            transition: transform 0.2s, box-shadow 0.2s;
             border-top: 1px solid #334155;
             border-right: 1px solid #334155;
             border-bottom: 1px solid #334155;
             height: 80px;
             position: relative;
         }
-        .timeline-block.dragging { opacity: 0.5; transform: scale(0.98); }
+        .timeline-block.dragging { opacity: 0.5; transform: scale(0.98); background: #334155; }
 
-        /* Color Picker Component */
+        /* Color Picker */
         .color-picker-trigger {
             width: 28px;
             height: 28px;
@@ -102,11 +99,9 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: background 0.2s;
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
         }
-        .color-picker-trigger:hover { background: rgba(255,255,255,0.1); }
         
         .color-menu {
             display: none; 
@@ -125,17 +120,10 @@
         }
         .color-menu.active { display: grid; }
         
-        .color-dot-btn { 
-            width: 18px; 
-            height: 18px; 
-            border-radius: 50%; 
-            cursor: pointer; 
-            border: 1px solid rgba(255,255,255,0.2); 
-            transition: transform 0.1s; 
-        }
+        .color-dot-btn { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); }
         .color-dot-btn:hover { transform: scale(1.3); }
 
-        /* Step 3 Styling */
+        /* Editor Step 3 */
         .editor-container { 
             position: relative; 
             min-height: 600px; 
@@ -158,15 +146,13 @@
         #highlight-layer { z-index: 1; pointer-events: none; color: #e2e8f0 !important; }
         
         mark { background: none; color: inherit; }
-        .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); border-radius: 2px; }
-        .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; border-radius: 2px; }
+        .show-parasites mark.parasite { background-color: var(--accent-soft); border-bottom: 2px solid var(--accent-color); }
+        .show-repeats mark.repeat { background-color: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; }
         mark.focus-active { background-color: rgba(240, 46, 101, 0.3) !important; border-bottom: 2px solid var(--focus-color) !important; font-weight: 600; }
         .show-montage mark.montage { background-color: var(--montage-color) !important; color: #0369a1 !important; font-weight: 700; }
         
         .sidebar-item { cursor: pointer; transition: all 0.2s; }
         .sidebar-item:hover { background-color: rgba(255,255,255,0.05); }
-        
-        .bg-card { background-color: #1e293b; border: 1px solid #334155; border-left: 4px solid var(--accent-color); }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -183,25 +169,25 @@
         .modal-content { background: #1e293b; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 440px; color: white; border: 1px solid #334155; }
         .project-tab.active { color: white; background-color: var(--accent-color) !important; }
 
-        .wf-tab { position: relative; padding: 1rem 1.5rem; cursor: pointer; color: #64748b; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; transition: all 0.3s; }
+        .wf-tab { position: relative; padding: 1rem 1.5rem; cursor: pointer; color: #64748b; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; }
         .wf-tab.active { color: white; }
         .wf-tab.active::after { content: ""; position: absolute; bottom: 0; left: 25%; width: 50%; height: 3px; background: var(--accent-color); border-radius: 10px 10px 0 0; }
         .wf-step-num { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid currentColor; margin-right: 8px; font-size: 10px; }
         .wf-tab.active .wf-step-num { background: var(--accent-color); border-color: var(--accent-color); color: white; }
 
-        .drag-handle { cursor: grab; color: #475569; }
+        .drag-handle { cursor: grab; color: #475569; padding: 10px; display: flex; align-items: center; justify-content: center; }
+        .drag-handle:active { cursor: grabbing; }
         .sync-input { background: transparent; border: none; outline: none; color: white; width: 100%; font-weight: 500; height: 100%; resize: none; overflow: hidden; }
-        .bubble-input-field { background: transparent; border: none; outline: none; color: white; width: 100%; font-size: 11px; font-weight: 600; min-height: 40px; resize: none; }
+        .bubble-input-field { background: transparent; border: none; outline: none; color: white; width: 100%; font-size: 11px; font-weight: 600; min-height: 50px; resize: none; user-select: text; cursor: text; }
     </style>
 </head>
 <body class="antialiased">
 
-    <!-- Modal de Partage -->
+    <!-- Modal Partage -->
     <div id="share-modal">
-        <div class="modal-content shadow-2xl">
+        <div class="modal-content">
             <h3 class="text-xl font-extrabold mb-2">Partager le script</h3>
-            <p class="text-xs text-slate-400 mb-6">Invitez des collaborateurs par email ou via un lien unique.</p>
-            
+            <p class="text-xs text-slate-400 mb-6">Invitez des collaborateurs par email ou via un lien.</p>
             <div class="space-y-4 mb-6">
                 <div>
                     <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Ajouter par Email</label>
@@ -211,12 +197,12 @@
                     </div>
                 </div>
                 <div>
-                    <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Permission du lien</label>
+                    <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Permission</label>
                     <select id="share-role" class="w-full p-3 rounded-xl border bg-slate-900 border-slate-700 outline-none text-white text-sm mb-3">
                         <option value="editors">Éditeur (Peut modifier)</option>
                         <option value="viewers">Lecteur (Lecture seule)</option>
                     </select>
-                    <button id="gen-link-btn" onclick="generateInviteLink()" class="w-full py-4 rounded-2xl font-bold text-sm transition text-white shadow-lg flex items-center justify-center gap-2" style="background-color: var(--accent-color);">
+                    <button id="gen-link-btn" onclick="generateInviteLink()" class="w-full py-4 rounded-2xl font-bold text-sm transition text-white shadow-lg" style="background-color: var(--accent-color);">
                         <span id="gen-btn-text">Générer et copier le lien</span>
                     </button>
                 </div>
@@ -236,7 +222,7 @@
                 <p class="text-slate-500 text-sm font-medium italic mt-1"><span id="user-display">Mode Local</span></p>
             </div>
             <div class="flex flex-wrap items-center gap-4">
-                <button id="share-btn" onclick="toggleShareModal()" class="hidden items-center gap-2 px-5 py-2.5 text-white rounded-xl text-xs font-bold hover:scale-105 transition shadow-lg">Inviter</button>
+                <button id="share-btn" onclick="toggleShareModal()" class="hidden items-center gap-2 px-5 py-2.5 text-white rounded-xl text-xs font-bold transition shadow-lg">Inviter</button>
                 <button id="auth-btn" onclick="handleAuth()" class="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold shadow-sm transition"><span id="auth-btn-text">Se connecter</span></button>
                 <div class="bg-slate-800 p-3 rounded-2xl shadow-sm border border-slate-700 flex items-center gap-4">
                     <div class="flex flex-wrap gap-1.5 max-w-[130px]" id="theme-picker"></div>
@@ -295,7 +281,7 @@
                 <div id="step-1-view" class="space-y-4">
                     <div id="canvas-container" class="shadow-2xl"></div>
                     <div class="flex gap-3 bg-slate-900/50 p-4 rounded-3xl border border-slate-800 max-w-2xl mx-auto w-full">
-                        <input type="text" id="bubble-input" class="flex-1 bg-slate-800 border border-slate-700 rounded-2xl px-6 py-3 text-white placeholder-slate-500 font-medium outline-none focus:border-indigo-500" placeholder="Une idée ? Tapez Entrée...">
+                        <input type="text" id="bubble-input" class="flex-1 bg-slate-800 border border-slate-700 rounded-2xl px-6 py-3 text-white placeholder-slate-500 outline-none focus:border-indigo-500" placeholder="Une idée ? Tapez Entrée...">
                         <button onclick="createBubbleFromInput()" class="text-white p-4 rounded-2xl hover:brightness-110 transition" style="background-color: var(--accent-color);">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                         </button>
@@ -304,7 +290,7 @@
 
                 <!-- STEP 2 VIEW -->
                 <div id="step-2-view" class="hidden space-y-4">
-                    <div id="timeline-container" class="shadow-inner"></div>
+                    <div id="timeline-container"></div>
                 </div>
 
                 <!-- STEP 3 VIEW -->
@@ -328,8 +314,8 @@
                     </div>
                     
                     <div class="flex gap-4">
-                        <button onclick="copyText()" class="text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest hover:scale-105 transition" style="background-color: var(--accent-color);">Copier le texte</button>
-                        <button onclick="downloadText()" class="bg-slate-700 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg uppercase text-xs tracking-widest transition">Exporter .txt</button>
+                        <button onclick="copyText()" class="text-white px-8 py-3.5 rounded-2xl font-bold uppercase text-xs tracking-widest hover:scale-105 transition" style="background-color: var(--accent-color);">Copier le texte</button>
+                        <button onclick="downloadText()" class="bg-slate-700 text-white px-8 py-3.5 rounded-2xl font-bold uppercase text-xs tracking-widest transition">Exporter .txt</button>
                     </div>
                 </div>
             </div>
@@ -384,7 +370,6 @@
         function updateWpmDisplay(v) { document.getElementById('wpm-value').innerText = v; }
         function handleAuth() { if (currentUser) auth.signOut(); else auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
 
-        // --- GESTION DES CLICS GLOBAUX ---
         window.addEventListener('click', (e) => {
             if (!e.target.closest('.color-picker-trigger') && !e.target.closest('.color-menu')) {
                 document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
@@ -426,23 +411,14 @@
             }
         }
 
-        // --- GESTION DES BULLES (ONGLET 1) ---
+        // --- DRAFT (ETAPE 1) ---
         bubbleInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') createBubbleFromInput(); });
 
         function createBubbleFromInput() {
             const text = bubbleInput.value.trim();
             if (!text) return;
             const currentAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim() || '#ef4444';
-            
-            const newBubble = {
-                id: "b_" + Date.now(),
-                text: text,
-                x: 50 + Math.random() * 100,
-                y: 50 + Math.random() * 100,
-                order: bubbles.length,
-                color: currentAccent
-            };
-            bubbles.push(newBubble);
+            bubbles.push({ id: "b_" + Date.now(), text: text, x: 50 + Math.random() * 100, y: 50 + Math.random() * 100, order: bubbles.length, color: currentAccent });
             bubbleInput.value = "";
             renderDraft();
             autoSave();
@@ -456,7 +432,6 @@
             if (!wasActive) menu.classList.add('active');
         }
 
-        // --- NOUVEAU RENDER DRAFT ---
         function renderDraft() {
             canvas.innerHTML = "";
             bubbles.forEach(b => {
@@ -467,9 +442,7 @@
                 el.style.top = b.y + "px";
                 el.style.borderColor = b.color;
                 
-                const paletteHtml = bubblePalette.map(c => `
-                    <div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor(event, '${b.id}', '${c}')"></div>
-                `).join('');
+                const paletteHtml = bubblePalette.map(c => `<div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor(event, '${b.id}', '${c}')"></div>`).join('');
 
                 el.innerHTML = `
                     <div class="mb-3">
@@ -487,32 +460,26 @@
                         </button>
                     </div>`;
 
-                // LOGIQUE DRAG AMÉLIORÉE
                 el.addEventListener('mousedown', (e) => {
-                    if (e.target.closest('button') || e.target.closest('.color-picker-trigger') || e.target.closest('.color-menu') || e.target.closest('textarea')) return;
+                    // SI ON CLIQUE SUR LE TEXTAREA, ON NE DRAG PAS
+                    if (e.target.closest('textarea') || e.target.closest('button') || e.target.closest('.color-picker-trigger')) return;
                     
                     e.preventDefault();
                     highestZ++;
-                    el.classList.add('is-dragging');
                     el.style.zIndex = highestZ;
+                    el.classList.add('is-dragging');
 
                     const rect = el.getBoundingClientRect();
                     const offsetX = e.clientX - rect.left;
                     const offsetY = e.clientY - rect.top;
 
-                    function onMouseMove(moveEvent) {
+                    function onMouseMove(me) {
                         const canvasRect = canvas.getBoundingClientRect();
-                        let newX = moveEvent.clientX - canvasRect.left - offsetX;
-                        let newY = moveEvent.clientY - canvasRect.top - offsetY;
-
-                        newX = Math.max(0, Math.min(newX, canvas.clientWidth - el.offsetWidth));
-                        newY = Math.max(0, Math.min(newY, canvas.clientHeight - el.offsetHeight));
-
-                        el.style.left = newX + "px";
-                        el.style.top = newY + "px";
-                        
-                        b.x = newX;
-                        b.y = newY;
+                        let nx = me.clientX - canvasRect.left - offsetX;
+                        let ny = me.clientY - canvasRect.top - offsetY;
+                        el.style.left = nx + "px";
+                        el.style.top = ny + "px";
+                        b.x = nx; b.y = ny;
                     }
 
                     function onMouseUp() {
@@ -530,51 +497,49 @@
             });
         }
 
-        // --- NOUVEAU RENDER TIMELINE ---
+        // --- TIMELINE (ETAPE 2) ---
         function renderTimeline() {
             timeline.innerHTML = "";
             const sorted = [...bubbles].sort((a, b) => a.order - b.order);
             sorted.forEach((b) => {
                 const block = document.createElement('div');
                 block.className = 'timeline-block'; 
-                block.draggable = true; 
                 block.dataset.id = b.id; 
                 block.style.borderColor = b.color;
                 
-                const paletteHtml = bubblePalette.map(c => `
-                    <div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor(event, '${b.id}', '${c}')"></div>
-                `).join('');
+                const paletteHtml = bubblePalette.map(c => `<div class="color-dot-btn" style="background:${c}" onclick="setBubbleColor(event, '${b.id}', '${c}')"></div>`).join('');
                 
                 block.innerHTML = `
-                    <div class="drag-handle"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 9h8v2H8zm0 4h8v2H8z"></path></svg></div>
+                    <div class="drag-handle" draggable="true">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 9h8v2H8zm0 4h8v2H8z M11 7h2v2h-2z M11 15h2v2h-2z"></path></svg>
+                    </div>
                     <div class="relative">
                         <div class="color-picker-trigger" onclick="toggleColorMenu(event, '${b.id}_tl_menu')">
                             <div class="w-3.5 h-3.5 rounded-full border border-white/20" style="background-color: ${b.color}"></div>
                         </div>
                         <div id="${b.id}_tl_menu" class="color-menu">${paletteHtml}</div>
                     </div>
-                    <div class="flex-1 h-full py-3"><textarea class="sync-input editor-font" oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea></div>
-                    <button onclick="deleteBubble('${b.id}')" class="text-slate-500 hover:text-red-400 ml-2 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>`;
+                    <div class="flex-1 h-full py-3">
+                        <textarea class="sync-input editor-font" oninput="updateBubbleText('${b.id}', this.value)">${b.text}</textarea>
+                    </div>
+                    <button onclick="deleteBubble('${b.id}')" class="text-slate-500 hover:text-red-400 ml-2 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>`;
                 
-                block.addEventListener('dragstart', (e) => {
-                    if(e.target.closest('.color-menu')) return e.preventDefault();
-                    block.classList.add('dragging');
-                });
-                block.addEventListener('dragend', () => { 
-                    block.classList.remove('dragging'); 
-                    reorderTimeline(); 
-                });
+                const handle = block.querySelector('.drag-handle');
+                handle.addEventListener('dragstart', () => block.classList.add('dragging'));
+                handle.addEventListener('dragend', () => { block.classList.remove('dragging'); reorderTimeline(); });
+
                 timeline.appendChild(block);
             });
             
             timeline.addEventListener('dragover', e => {
                 e.preventDefault();
-                const afterElement = getDragAfterElement(timeline, e.clientY);
                 const dragging = document.querySelector('.dragging');
-                if (dragging) { 
-                    if (afterElement == null) timeline.appendChild(dragging); 
-                    else timeline.insertBefore(dragging, afterElement); 
-                }
+                if (!dragging) return;
+                const afterElement = getDragAfterElement(timeline, e.clientY);
+                if (afterElement == null) timeline.appendChild(dragging); 
+                else timeline.insertBefore(dragging, afterElement);
             });
         }
 
@@ -604,24 +569,19 @@
         }
         
         function setBubbleColor(e, id, color) {
-            e.stopPropagation(); // ÉVITE DE FERMER LE MENU IMMÉDIATEMENT
+            e.stopPropagation();
             const b = bubbles.find(b => b.id === id); 
             if (b) {
                 b.color = color;
                 document.querySelectorAll('.color-menu').forEach(m => m.classList.remove('active'));
-                if(currentStep === 1) renderDraft(); 
-                else if(currentStep === 2) renderTimeline();
+                if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
                 autoSave();
             }
         }
         
-        function deleteBubble(id) { 
-            bubbles = bubbles.filter(b => b.id !== id); 
-            currentStep === 1 ? renderDraft() : renderTimeline(); 
-            autoSave(); 
-        }
+        function deleteBubble(id) { bubbles = bubbles.filter(b => b.id !== id); currentStep === 1 ? renderDraft() : renderTimeline(); autoSave(); }
 
-        // --- FIREBASE & CORE (INCHANGÉ) ---
+        // --- FIREBASE CORE ---
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
             if (user) {
@@ -668,16 +628,13 @@
                     return;
                 }
                 const data = doc.data();
-                
                 if (data.content !== undefined && data.content !== textarea.value) {
-                    const start = textarea.selectionStart;
-                    const end = textarea.selectionEnd;
+                    const start = textarea.selectionStart; const end = textarea.selectionEnd;
                     const isFocused = document.activeElement === textarea;
                     textarea.value = data.content || "";
                     if (isFocused) { textarea.setSelectionRange(start, end); }
                     process();
                 }
-
                 if (JSON.stringify(data.bubbles) !== JSON.stringify(bubbles)) { 
                     bubbles = data.bubbles || []; 
                     if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline(); 
@@ -815,33 +772,26 @@
         }
 
         async function shareByEmail() {
-            if (!currentUser) return alert("Connectez-vous pour inviter des collaborateurs.");
-            if (!currentScriptId) return alert("Aucun projet chargé.");
-            const emailInput = document.getElementById('share-email');
-            const email = emailInput.value.trim().toLowerCase();
+            if (!currentUser) return alert("Connectez-vous pour inviter.");
+            const email = document.getElementById('share-email').value.trim().toLowerCase();
             const role = document.getElementById('share-role').value;
-            if (!email || !email.includes('@')) return alert("Veuillez entrer un email valide.");
+            if (!email) return;
             try {
                 await db.collection('scripts').doc(currentScriptId).update({ [role]: firebase.firestore.FieldValue.arrayUnion(email) });
-                alert(`Autorisation accordée à ${email} !`);
-                emailInput.value = "";
-            } catch (e) { alert("Erreur lors du partage."); }
+                alert("Ajouté !");
+            } catch (e) { alert("Erreur."); }
         }
 
         async function generateInviteLink() {
-            if (!currentUser) return alert("Connectez-vous pour générer un lien d'invitation.");
+            if (!currentUser) return alert("Connectez-vous.");
             const btn = document.getElementById('gen-link-btn');
-            const btnText = document.getElementById('gen-btn-text');
             const role = document.getElementById('share-role').value;
             try {
                 const inviteRef = await db.collection('invites').add({ scriptId: currentScriptId, role: role, createdBy: currentUser.email, used: false, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
                 const inviteURL = `${window.location.origin}${window.location.pathname}?invite=${inviteRef.id}`;
                 await navigator.clipboard.writeText(inviteURL);
-                const oldText = btnText.innerText;
-                btnText.innerText = "Lien copié ! ✓";
-                btn.style.backgroundColor = "#22c55e"; 
-                setTimeout(() => { btnText.innerText = oldText; btn.style.backgroundColor = "var(--accent-color)"; }, 2500);
-            } catch (e) { alert("Erreur de génération."); }
+                alert("Lien copié !");
+            } catch (e) { alert("Erreur."); }
         }
 
         async function consumeInvite(tokenId) {
@@ -851,50 +801,46 @@
                 const data = doc.data();
                 await db.collection('scripts').doc(data.scriptId).update({ [data.role]: firebase.firestore.FieldValue.arrayUnion(currentUser.email) });
                 await db.collection('invites').doc(tokenId).update({ used: true, usedBy: currentUser.email });
-                alert("Accès au projet collaboratif activé !");
+                alert("Accès activé !");
             } catch (e) {}
         }
 
         function toggleFocus(w) { activeFocusWord = (activeFocusWord === w) ? null : w; process(); }
         function ignoreWord(w) { ignoredRepeats.add(w.toLowerCase()); autoSave(); process(); }
         function unignoreWord(w) { ignoredRepeats.delete(w); autoSave(); process(); }
-        function copyText() { navigator.clipboard.writeText(textarea.value); alert("Texte copié !"); }
+        function copyText() { navigator.clipboard.writeText(textarea.value); alert("Copié !"); }
         function downloadText() { const blob = new Blob([textarea.value], { type: 'text/plain' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `script.txt`; a.click(); }
-        
         function toggleShareModal() { 
             const m = document.getElementById('share-modal');
             const isVisible = window.getComputedStyle(m).display !== 'none';
             m.style.setProperty('display', isVisible ? 'none' : 'flex', 'important');
         }
-        
         function updateCollaboratorsUI(data) {
-            const list = document.getElementById('collaborators-list'); list.innerHTML = ""; const ed = data.editors || []; const vi = data.viewers || [];
+            const list = document.getElementById('collaborators-list'); list.innerHTML = "";
+            const ed = data.editors || []; const vi = data.viewers || [];
             if (ed.length === 0 && vi.length === 0) { document.getElementById('collaborators-section').classList.add('hidden'); return; }
             document.getElementById('collaborators-section').classList.remove('hidden');
             [...ed.map(e=>({e,r:'editors',l:'Éditeur'})), ...vi.map(e=>({e,r:'viewers',l:'Lecteur'}))].forEach(o => {
-                const li = document.createElement('li'); li.className = "flex justify-between items-center bg-slate-800/40 p-2 rounded-lg border border-slate-700";
-                li.innerHTML = `<div class="flex flex-col"><span class="font-bold truncate max-w-[100px] text-[10px]">${o.e}</span><span class="text-[8px] text-slate-500 uppercase">${o.l}</span></div><button onclick="removeCollaborator('${o.e}', '${o.r}')" class="text-slate-500 hover:text-red-500 px-2">✕</button>`;
+                const li = document.createElement('li'); li.className = "flex justify-between items-center bg-slate-800/40 p-2 rounded-lg";
+                li.innerHTML = `<span class="text-[10px] font-bold">${o.e}</span><button onclick="removeCollaborator('${o.e}', '${o.r}')" class="text-slate-500 hover:text-red-500 px-2">✕</button>`;
                 list.appendChild(li);
             });
         }
         async function removeCollaborator(e, r) { if (confirm(`Retirer ${e} ?`)) await db.collection('scripts').doc(currentScriptId).update({ [r]: firebase.firestore.FieldValue.arrayRemove(e) }); }
-        async function renameCurrentProject() { const n = prompt("Nouveau nom du projet :"); if(n) await db.collection('scripts').doc(currentScriptId).update({ title: n }); }
+        async function renameCurrentProject() { const n = prompt("Nom :"); if(n) await db.collection('scripts').doc(currentScriptId).update({ title: n }); }
 
         function applyTheme(color, shouldSave = true) {
             document.documentElement.style.setProperty('--accent-color', color); 
             document.documentElement.style.setProperty('--accent-soft', color + '26');
             localStorage.setItem('purge-theme', color);
             if (shouldSave && currentUser) db.collection('users').doc(currentUser.uid).set({ preferredTheme: color }, { merge: true });
-            process(); 
-            if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
+            process(); if(currentStep === 1) renderDraft(); else if(currentStep === 2) renderTimeline();
         }
 
         window.onload = () => {
             bubblePalette.forEach(color => {
-                const b = document.createElement('button'); 
-                b.className = 'w-4 h-4 rounded-full border border-white/20 hover:scale-125 transition'; 
-                b.style.backgroundColor = color;
-                b.onclick = () => applyTheme(color);
+                const b = document.createElement('button'); b.className = 'w-4 h-4 rounded-full border border-white/20'; 
+                b.style.backgroundColor = color; b.onclick = () => applyTheme(color);
                 document.getElementById('theme-picker').appendChild(b);
             });
             const savedTheme = localStorage.getItem('purge-theme');
